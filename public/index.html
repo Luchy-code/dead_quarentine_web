@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Dead Quarantine - Telemetría Central</title>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=Chivo:wght@300..900&family=JetBrains+Mono:wght@100..800&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet"/>
+  <style>
+    @layer base { html, body { margin: 0; padding: 0; } }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-variant": "#313539",
+            "secondary-fixed-dim": "#ffba38",
+            "tertiary-fixed-dim": "#00e2a0",
+            "surface-bright": "#363a3d",
+            "tertiary-container": "#00a574",
+            "primary": "#ffb4a9",
+            "surface-container-low": "#181c1f",
+            "surface-container-lowest": "#0b0f12",
+            "surface-container-highest": "#313539",
+            "surface": "#101417",
+            "surface-container": "#1c2023",
+            "surface-container-high": "#262a2e",
+            "primary-container": "#ff5545",
+            "tertiary": "#00e2a0",
+            "outline": "#ac8883",
+            "outline-variant": "#5c403c",
+            "on-surface": "#e0e3e7",
+            "on-surface-variant": "#e6bdb7",
+            "error": "#ffb4ab"
+          },
+          fontFamily: {
+            "label-sm": ["JetBrains Mono"],
+            "label-md": ["JetBrains Mono"],
+            "headline-md": ["Space Grotesk"],
+            "headline-lg": ["Space Grotesk"],
+            "headline-sm": ["Space Grotesk"],
+            "body-md": ["Chivo"]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-surface-container-lowest font-body-md text-on-surface antialiased">
+  
+  <!-- BARRA DE NAVEGACIÓN GLOBAL -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl shadow-lg">
+    <div class="w-full px-6 bg-surface-container-low py-1 flex items-center justify-between text-on-surface-variant font-label-sm text-xs uppercase tracking-wider">
+      <div class="flex items-center gap-4">
+        <span class="text-secondary-fixed-dim">DATABASE LIVE SYNC</span>
+      </div>
+      <div class="flex items-center gap-4 text-tertiary">
+        <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+        <span>AIVEN MYSQL: ONLINE</span>
+      </div>
+    </div>
+    <div class="h-16 w-full px-6 flex items-center justify-between">
+      <div class="flex flex-col">
+        <span class="font-headline-sm uppercase tracking-widest text-on-surface font-bold text-sm">DEAD QUARANTINE</span>
+        <span class="font-label-sm text-[10px] text-outline tracking-widest">CENTRAL TELEMETRY DATABASE</span>
+      </div>
+      <nav class="flex items-center gap-2 font-label-md text-xs uppercase">
+        <button id="nav-ranking" onclick="mostrarPestaña('ranking')" class="px-4 py-2 rounded font-bold transition-all bg-primary-container text-black shadow-[0_0_12px_rgba(255,85,69,0.35)]">
+          TOP GLOBAL RANKING
+        </button>
+        <button id="nav-logros" onclick="mostrarPestaña('logros')" class="px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">
+          MATRIZ DE LOGROS
+        </button>
+      </nav>
+      <div class="font-label-sm text-xs text-secondary-fixed-dim">MODO TELEMETRÍA // AGENTE</div>
+    </div>
+  </header>
+
+  <main class="w-full pt-24 min-h-screen px-6 max-w-7xl mx-auto pb-16">
+    
+    <!-- ==================== PESTAÑA 1: RANKING ==================== -->
+    <section id="vista-ranking" class="flex flex-col gap-6">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-surface-container-high pb-4">
+        <div>
+          <div class="flex items-center gap-2 font-label-sm text-xs text-primary uppercase">
+            <span class="w-2 h-2 rounded-full bg-primary-container animate-ping"></span> TABLA `ranking` ACTIVA
+          </div>
+          <h1 class="font-headline-lg text-3xl font-bold uppercase">TOP GLOBAL RANKING</h1>
+        </div>
+        <!-- Filtros interactivos -->
+        <div class="flex flex-wrap gap-2 text-xs font-label-sm">
+          <input id="rank-search" type="text" placeholder="BUSCAR SUPERVIVIENTE..." class="bg-surface-container px-3 py-1.5 rounded uppercase focus:outline-none border border-surface-variant text-on-surface w-48"/>
+          <select id="rank-country" class="bg-surface-container px-3 py-1.5 rounded uppercase focus:outline-none border border-surface-variant">
+            <option value="ALL">🌍 TODOS LOS PAÍSES</option>
+            <option value="AR">🇦🇷 ARGENTINA</option>
+            <option value="ES">🇪🇸 ESPAÑA</option>
+            <option value="US">🇺🇸 USA</option>
+            <option value="MX">🇲🇽 MÉXICO</option>
+            <option value="CL">🇨🇱 CHILE</option>
+            <option value="NL">🇳🇱 PAÍSES BAJOS</option>
+            <option value="UY">🇺🇾 URUGUAY</option>
+          </select>
+          <select id="rank-mode" class="bg-surface-container px-3 py-1.5 rounded uppercase focus:outline-none border border-surface-variant">
+            <option value="ALL">TODOS LOS MODOS</option>
+            <option value="Singleplayer">SINGLEPLAYER</option>
+            <option value="Multiplayer">MULTIPLAYER</option>
+          </select>
+          <label class="flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded cursor-pointer border border-surface-variant">
+            <input id="rank-vpn" type="checkbox" class="rounded bg-surface-container-lowest text-tertiary">
+            <span>SIN VPN</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Podio Superior (Top 3) -->
+      <div id="podium-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Rellenado dinámicamente -->
+      </div>
+
+      <!-- Tabla Completa -->
+      <div class="bg-surface-container-lowest rounded-lg border border-surface-container-high overflow-x-auto shadow-md">
+        <table class="w-full text-left font-label-sm text-xs">
+          <thead class="bg-surface-container-low text-outline uppercase border-b border-surface-container-high">
+            <tr>
+              <th class="p-3 text-center">POS</th>
+              <th class="p-3">SUPERVIVIENTE</th>
+              <th class="p-3">MODO</th>
+              <th class="p-3 text-right">PUNTOS</th>
+              <th class="p-3">ORIGEN / PAÍS</th>
+              <th class="p-3">TELEMETRÍA IP / VPN</th>
+              <th class="p-3">FECHA</th>
+            </tr>
+          </thead>
+          <tbody id="ranking-tbody" class="divide-y divide-surface-container">
+            <!-- Filas dinámicas -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ==================== PESTAÑA 2: MATRIZ DE LOGROS ==================== -->
+    <section id="vista-logros" class="hidden flex flex-col gap-6">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-surface-container-high pb-4">
+        <div>
+          <div class="flex items-center gap-2 font-label-sm text-xs text-secondary-fixed-dim uppercase">
+            <span>DIRECTORIO TÁCTICO // DB_QUARANTINE</span>
+          </div>
+          <h1 class="font-headline-lg text-3xl font-bold uppercase">MATRIZ DE LOGROS GLOBALES</h1>
+          <p class="text-outline text-sm">Hitos y sublogros verificados en tiempo real contra los registros de jugadores en MySQL.</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="alternarTodos(true)" class="px-3 py-1.5 bg-surface-container hover:bg-surface-variant rounded text-xs font-label-sm uppercase">Desplegar Todos</button>
+          <button onclick="alternarTodos(false)" class="px-3 py-1.5 bg-surface-container hover:bg-surface-variant rounded text-xs font-label-sm uppercase">Colapsar</button>
+        </div>
+      </div>
+
+      <!-- Grid de Logros Principales y Sublogros -->
+      <div id="logros-container" class="flex flex-col gap-4">
+        <!-- Rellenado dinámicamente con sub-acordeones -->
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // --- NAVEGACIÓN ENTRE PESTAÑAS ---
+    function mostrarPestaña(pestaña) {
+      const vistaRanking = document.getElementById('vista-ranking');
+      const vistaLogros = document.getElementById('vista-logros');
+      const btnRanking = document.getElementById('nav-ranking');
+      const btnLogros = document.getElementById('nav-logros');
+
+      if (pestaña === 'ranking') {
+        vistaRanking.classList.remove('hidden');
+        vistaLogros.classList.add('hidden');
+        btnRanking.className = 'px-4 py-2 rounded font-bold transition-all bg-primary-container text-black shadow-[0_0_12px_rgba(255,85,69,0.35)]';
+        btnLogros.className = 'px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all';
+      } else {
+        vistaRanking.classList.add('hidden');
+        vistaLogros.classList.remove('hidden');
+        btnLogros.className = 'px-4 py-2 rounded font-bold transition-all bg-primary-container text-black shadow-[0_0_12px_rgba(255,85,69,0.35)]';
+        btnRanking.className = 'px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all';
+      }
+    }
+
+    // --- CARGAR DATOS DE RANKING ---
+    async function cargarRanking() {
+      const search = document.getElementById('rank-search').value;
+      const country = document.getElementById('rank-country').value;
+      const mode = document.getElementById('rank-mode').value;
+      const vpnOnly = document.getElementById('rank-vpn').checked;
+
+      const url = new URL('/api/ranking', window.location.origin);
+      if (search) url.searchParams.append('search', search);
+      if (country !== 'ALL') url.searchParams.append('country', country);
+      if (mode !== 'ALL') url.searchParams.append('mode', mode);
+      if (vpnOnly) url.searchParams.append('vpnOnly', 'true');
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        // Render Podio (Top 3)
+        const podiumContainer = document.getElementById('podium-container');
+        podiumContainer.innerHTML = '';
+        data.slice(0, 3).forEach((item, index) => {
+          const colores = [
+            'border-primary-container bg-surface-container-high',
+            'border-secondary-fixed-dim bg-surface-container',
+            'border-tertiary bg-surface-container'
+          ];
+          podiumContainer.innerHTML += `
+            <div class="p-4 rounded-lg border ${colores[index]} flex flex-col justify-between shadow-lg">
+              <div class="flex justify-between items-center text-xs font-label-sm">
+                <span class="font-bold uppercase text-primary">#${index + 1} // PODIO</span>
+                <span>${item.codigo_pais || 'N/A'}</span>
+              </div>
+              <div class="my-3">
+                <div class="font-headline-sm text-xl font-bold uppercase">${item.username}</div>
+                <div class="text-2xl font-bold text-secondary-fixed-dim font-label-md">${item.puntos.toLocaleString()} PTS</div>
+              </div>
+              <div class="text-[11px] text-outline font-label-sm flex justify-between">
+                <span>MODO: ${item.modo}</span>
+                <span>${item.usa_vpn ? '⚠️ VPN' : '🛡️ DIRECTO'}</span>
+              </div>
+            </div>
+          `;
+        });
+
+        // Render Tabla
+        const tbody = document.getElementById('ranking-tbody');
+        tbody.innerHTML = '';
+        data.forEach((row, idx) => {
+          tbody.innerHTML += `
+            <tr class="hover:bg-surface-container-high transition-colors">
+              <td class="p-3 text-center font-bold text-primary">#${idx + 1}</td>
+              <td class="p-3 font-bold uppercase text-on-surface">${row.username}</td>
+              <td class="p-3 text-outline">${row.modo}</td>
+              <td class="p-3 text-right font-bold text-secondary-fixed-dim">${row.puntos.toLocaleString()}</td>
+              <td class="p-3">${row.pais} (${row.codigo_pais})</td>
+              <td class="p-3">
+                ${row.usa_vpn 
+                  ? '<span class="text-error flex items-center gap-1 font-bold">⚠️ VPN DETECTADA</span>' 
+                  : '<span class="text-tertiary flex items-center gap-1 font-bold">🛡️ SIN VPN</span>'}
+              </td>
+              <td class="p-3 text-outline">${new Date(row.creado_en).toLocaleDateString()}</td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        console.error('Error cargando ranking:', err);
+      }
+    }
+
+    // --- CARGAR MATRIZ DE LOGROS ---
+    async function cargarLogros() {
+      try {
+        const res = await fetch('/api/logros/globales');
+        const { logros, total_usuarios } = await res.json();
+        const container = document.getElementById('logros-container');
+        container.innerHTML = '';
+
+        logros.forEach(logro => {
+          let sublogrosHtml = '';
+          logro.sublogros.forEach(sub => {
+            sublogrosHtml += `
+              <div class="p-3 bg-surface-container rounded flex justify-between items-center text-xs font-label-sm border border-surface-variant/30">
+                <div class="flex items-center gap-3">
+                  <span class="text-tertiary font-bold">0${sub.orden}</span>
+                  <span class="text-on-surface font-semibold">${sub.titulo}</span>
+                  <code class="text-outline text-[10px] hidden sm:inline">${sub.clave}</code>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-secondary-fixed-dim font-bold">${sub.porcentaje_global || 0}% GLOBAL</span>
+                  <span class="text-outline text-[11px]">(${sub.completados_global}/${total_usuarios} jug.)</span>
+                </div>
+              </div>
+            `;
+          });
+
+          container.innerHTML += `
+            <div class="achievement-card bg-surface-container rounded-lg border border-surface-container-high overflow-hidden shadow">
+              <div onclick="alternarTarjeta(this)" class="p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 cursor-pointer hover:bg-surface-container-high transition-colors">
+                <div>
+                  <div class="flex items-center gap-2 mb-1 text-xs font-label-sm">
+                    <span class="px-2 py-0.5 bg-error/20 text-primary rounded uppercase font-bold">${logro.categoria}</span>
+                    <span class="text-outline uppercase">${logro.modo}</span>
+                    <span class="text-outline-variant">// ${logro.clave}</span>
+                  </div>
+                  <h3 class="font-headline-sm text-lg font-bold text-on-surface uppercase">${logro.titulo}</h3>
+                  <p class="text-outline text-xs mt-0.5">${logro.descripcion}</p>
+                </div>
+                <div class="flex items-center gap-6 self-end md:self-auto">
+                  <div class="text-right font-label-sm">
+                    <div class="text-xs text-outline">REQUERIDOS: ${logro.sublogros_requeridos}</div>
+                    <div class="text-sm font-bold text-tertiary">${logro.porcentaje_global || 0}% JUGADORES</div>
+                    <div class="text-[10px] text-outline">(${logro.completados_global} personas en el mundo)</div>
+                  </div>
+                  <span class="material-symbols-outlined text-outline transition-transform chevron">expand_more</span>
+                </div>
+              </div>
+              <div class="sub-matrix hidden p-4 bg-surface-container-low border-t border-surface-container-high flex flex-col gap-2">
+                ${sublogrosHtml}
+              </div>
+            </div>
+          `;
+        });
+      } catch (err) {
+        console.error('Error cargando logros:', err);
+      }
+    }
+
+    // Acordeones de logros
+    function alternarTarjeta(el) {
+      const card = el.closest('.achievement-card');
+      const body = card.querySelector('.sub-matrix');
+      const chevron = card.querySelector('.chevron');
+      body.classList.toggle('hidden');
+      chevron.classList.toggle('rotate-180');
+    }
+
+    function alternarTodos(desplegar) {
+      document.querySelectorAll('.achievement-card').forEach(card => {
+        const body = card.querySelector('.sub-matrix');
+        const chevron = card.querySelector('.chevron');
+        if (desplegar) {
+          body.classList.remove('hidden');
+          chevron.classList.add('rotate-180');
+        } else {
+          body.classList.add('hidden');
+          chevron.classList.remove('rotate-180');
+        }
+      });
+    }
+
+    // Event listeners para filtros de ranking
+    document.getElementById('rank-search').addEventListener('input', cargarRanking);
+    document.getElementById('rank-country').addEventListener('change', cargarRanking);
+    document.getElementById('rank-mode').addEventListener('change', cargarRanking);
+    document.getElementById('rank-vpn').addEventListener('change', cargarRanking);
+
+    // Carga inicial
+    document.addEventListener('DOMContentLoaded', () => {
+      const vistaInicial = new URLSearchParams(window.location.search).get('view');
+      mostrarPestaña(vistaInicial === 'logros' ? 'logros' : 'ranking');
+      cargarRanking();
+      cargarLogros();
+    });
+  </script>
+</body>
+</html>

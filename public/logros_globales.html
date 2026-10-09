@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,300..900;1,300..900&amp;family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;family=Space+Grotesk:wght@300..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "surface-variant": "#313539",
+          "secondary-fixed-dim": "#ffba38",
+          "tertiary-fixed-dim": "#00e2a0",
+          "surface-bright": "#363a3d",
+          "tertiary-container": "#00a574",
+          "on-tertiary": "#003825",
+          "on-secondary-container": "#6a4800",
+          "inverse-surface": "#e0e3e7",
+          "on-secondary": "#432c00",
+          "surface-container-low": "#181c1f",
+          "primary": "#ffb4a9",
+          "inverse-on-surface": "#2d3134",
+          "on-secondary-fixed": "#281900",
+          "on-tertiary-fixed-variant": "#005138",
+          "primary-fixed": "#ffdad5",
+          "on-surface": "#e0e3e7",
+          "surface-container-lowest": "#0b0f12",
+          "surface-container-highest": "#313539",
+          "surface": "#101417",
+          "on-error": "#690005",
+          "background": "#101417",
+          "surface-dim": "#101417",
+          "on-primary-fixed-variant": "#930005",
+          "on-primary-fixed": "#410001",
+          "tertiary": "#00e2a0",
+          "primary-container": "#ff5545",
+          "on-error-container": "#ffdad6",
+          "error": "#ffb4ab",
+          "tertiary-fixed": "#43ffbb",
+          "on-secondary-fixed-variant": "#604100",
+          "on-surface-variant": "#e6bdb7",
+          "surface-tint": "#ffb4a9",
+          "on-tertiary-container": "#003120",
+          "surface-container": "#1c2023",
+          "surface-container-high": "#262a2e",
+          "secondary-fixed": "#ffdeac",
+          "secondary-container": "#feb300",
+          "error-container": "#93000a",
+          "secondary": "#ffd799",
+          "on-tertiary-fixed": "#002114",
+          "outline": "#ac8883",
+          "on-background": "#e0e3e7",
+          "on-primary-container": "#5c0002",
+          "primary-fixed-dim": "#ffb4a9",
+          "on-primary": "#690002",
+          "inverse-primary": "#be0b0e",
+          "outline-variant": "#5c403c"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "gutter": "1rem",
+          "space-xs": "0.25rem",
+          "space-xl": "2.5rem",
+          "margin-lg": "3rem",
+          "margin-md": "2rem",
+          "space-sm": "0.5rem",
+          "space-md": "1rem",
+          "space-lg": "1.5rem",
+          "gutter-lg": "1.5rem",
+          "margin": "1rem"
+        },
+        "fontFamily": {
+          "label-sm": [
+            "JetBrains Mono"
+          ],
+          "label-lg": [
+            "JetBrains Mono"
+          ],
+          "headline-md": [
+            "Space Grotesk"
+          ],
+          "headline-lg": [
+            "Space Grotesk"
+          ],
+          "body-sm": [
+            "Chivo"
+          ],
+          "display-lg": [
+            "Space Grotesk"
+          ],
+          "display-lg-mobile": [
+            "Space Grotesk"
+          ],
+          "headline-lg-mobile": [
+            "Space Grotesk"
+          ],
+          "body-lg": [
+            "Chivo"
+          ],
+          "body-md": [
+            "Chivo"
+          ],
+          "headline-sm": [
+            "Space Grotesk"
+          ],
+          "label-md": [
+            "JetBrains Mono"
+          ]
+        },
+        "fontSize": {
+          "label-sm": [
+            "10px",
+            {
+              "lineHeight": "14px",
+              "letterSpacing": "0.1em",
+              "fontWeight": "500"
+            }
+          ],
+          "label-lg": [
+            "14px",
+            {
+              "lineHeight": "18px",
+              "letterSpacing": "0.08em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-md": [
+            "24px",
+            {
+              "lineHeight": "32px",
+              "letterSpacing": "0em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-lg": [
+            "32px",
+            {
+              "lineHeight": "40px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "body-sm": [
+            "12px",
+            {
+              "lineHeight": "18px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "400"
+            }
+          ],
+          "display-lg": [
+            "48px",
+            {
+              "lineHeight": "56px",
+              "letterSpacing": "-0.02em",
+              "fontWeight": "700"
+            }
+          ],
+          "display-lg-mobile": [
+            "32px",
+            {
+              "lineHeight": "40px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-lg-mobile": [
+            "24px",
+            {
+              "lineHeight": "32px",
+              "letterSpacing": "0em",
+              "fontWeight": "600"
+            }
+          ],
+          "body-lg": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "letterSpacing": "0em",
+              "fontWeight": "400"
+            }
+          ],
+          "body-md": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-sm": [
+            "18px",
+            {
+              "lineHeight": "26px",
+              "letterSpacing": "0.02em",
+              "fontWeight": "600"
+            }
+          ],
+          "label-md": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0.06em",
+              "fontWeight": "500"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-surface-container-lowest font-body-md text-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_2px_16px_rgba(0,0,0,0.85)]"><div class="w-full px-gutter bg-surface-container-low py-space-xs flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider"><div class="flex items-center gap-space-md"><span class="flex items-center gap-space-xs text-primary font-bold"><span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>INFESTATION LEVEL: CRITICAL</span><span class="text-outline-variant">//</span><span class="text-secondary-fixed-dim">OUTBREAK DAY 284</span><span class="hidden lg:inline text-outline-variant">//</span><span class="hidden lg:inline text-on-surface-variant">SECTOR GRID 09-EAST</span></div><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-xs text-tertiary"><span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span><span class="font-label-sm text-label-sm">SEC-NET PING: 18MS</span></div><span class="text-outline-variant">|</span><div class="flex items-center gap-space-xs text-on-surface-variant"><span class="material-symbols-outlined text-[14px]">wifi_tethering</span><span class="font-label-sm text-label-sm">TELEMETRY LIVE</span></div></div></div><div class="h-20 w-full px-gutter flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md flex-shrink-0"><img alt="Dead Quarantine Emblem" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5fzSPZhNIdSo1D117x45OTIl0_m6Wk3q0jjCh-ObyeXEIE3XYrIh_8PGctDLHD6PIA-lsSxriz9SYtmBnMI9p94oaxS8CgiUATwUFTGjoKCTxdQT5LQH4kFCeHoVdRHkL7HFZJ0r65QHrG0XljgWFX1wMIQoNk6eDs9JbPMxOFEilKM2oVFQxfvu5P4ebGbvGutDJ69y9JdC5VOkvCqyPSrdbhnVFOyay_wFNwygR3aK6NeNP0zyT"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm uppercase tracking-widest text-on-surface font-bold">DEAD QUARANTINE</span><span class="font-label-sm text-label-sm text-outline tracking-widest">TACTICAL HUD BIO-CORE</span></div></div><nav class="hidden xl:flex items-center gap-space-xs font-label-md text-label-md uppercase" data-active-classes="bg-primary-container text-on-primary-container font-bold rounded shadow-[0_0_12px_rgba(255,85,69,0.35)]"><a class="px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="top-global-ranking" href="#">TOP GLOBAL RANKING</a><a aria-current="page" class="px-space-md py-space-sm transition-all bg-primary-container text-on-primary-container font-bold rounded shadow-[0_0_12px_rgba(255,85,69,0.35)]" data-path="matriz-de-logros" href="#">MATRIZ DE LOGROS</a><a class="px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="expediente-superviviente" href="#">EXPEDIENTE SUPERVIVIENTE</a><a class="px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="sala-de-tiro-estadisticas" href="#">SALA DE TIRO &amp; ESTADÍSTICAS</a></nav><div class="flex items-center gap-space-md"><div class="hidden md:flex items-center bg-surface-container-low px-space-md py-space-xs rounded gap-space-sm"><span class="material-symbols-outlined text-outline text-[18px]">search</span><input class="bg-transparent font-label-sm text-label-sm text-on-surface placeholder:text-outline-variant focus:outline-none w-44 tracking-wider uppercase" placeholder="SEARCH SURVIVOR TAG..." type="text"/></div><div class="flex items-center gap-space-md bg-surface-container-low px-space-md py-space-xs rounded"><div class="flex flex-col text-right"><span class="font-label-md text-label-md font-bold text-on-surface uppercase">Sgt. Ramos #4092</span><span class="font-label-sm text-label-sm text-secondary-fixed-dim uppercase tracking-wider">BIO-TIER 5 // OPERATOR</span></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNNFmUxz_hWZCHGADqBiW0Mxra-fvefy_kJQWbm4Y5yeS-Ewc9I3Cl4Y0xJVWvcDMoZrwNVYfiKI8eOfuQpwFYNcCMze89cNfKiBEO9fGPHhP25aimVCH7n0nzwL3fIbJi-J7jZvaPwAf_nosjqxrKvPNUXAMvngQXxyc0d4jycnM9GemfIpUkl_s4Nz4kUSEC2tFcOWK3wVf__aUWhQkI1jU6yAZq04NJRbJ7GAYwmC5Zie3V4z6B"/></div></div></div></header><main class="w-full pt-28 bg-surface-container-lowest min-h-screen"><div class="flex flex-col w-full">
+<div class="w-full px-gutter md:px-margin-lg py-space-lg flex flex-col gap-space-xl max-w-7xl mx-auto">
+<!-- Top Diagnostic Banner & Tactical Title Bar -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-lg">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm font-label-sm text-label-sm uppercase tracking-widest text-secondary-fixed-dim">
+<span class="inline-block w-2 h-2 bg-secondary-container rounded-none"></span>
+<span>DIRECTORIO TÁCTICO // DB_QUARANTINE_V1.04</span>
+<span class="text-outline-variant">///</span>
+<span class="text-tertiary">ENLACE NEURAL ACTIVO</span>
+</div>
+<div class="flex items-center gap-space-md flex-wrap">
+<span class="font-display-lg text-display-lg tracking-tight uppercase text-on-surface font-headline-lg">MATRIZ DE LOGROS GLOBALES</span>
+<span class="px-space-sm py-space-xs bg-error-container/40 text-primary font-label-sm text-label-sm tracking-wider uppercase rounded">PROTOCOLO EXPEDIENTE 09</span>
+</div>
+<p class="font-body-md text-body-md text-outline max-w-2xl">
+          Registro centralizado de proezas operativas, contingencias biológicas y sub-hitos de supervivencia clasificados para agentes en zona cero.
+        </p>
+</div>
+<!-- Quick Action Controls -->
+<div class="flex items-center gap-space-md self-start md:self-auto">
+<button class="px-space-md py-space-sm bg-surface-container-high text-on-surface font-label-md text-label-md uppercase tracking-wider rounded hover:bg-surface-variant transition-colors flex items-center gap-space-xs shadow-sm" id="expand-all-btn">
+<span class="material-symbols-outlined text-[16px]">unfold_more</span>
+<span>Desplegar Todos</span>
+</button>
+<button class="px-space-md py-space-sm bg-surface-container-low text-on-surface-variant font-label-md text-label-md uppercase tracking-wider rounded hover:bg-surface-container transition-colors flex items-center gap-space-xs" id="collapse-all-btn">
+<span class="material-symbols-outlined text-[16px]">unfold_less</span>
+<span>Colapsar</span>
+</button>
+</div>
+</div>
+<!-- Telemetry Overview Bento Grid (Key Metrics) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- Metric 1: Major Achievements -->
+<div class="bg-surface-container p-space-lg rounded flex flex-col justify-between gap-space-md relative overflow-hidden shadow-md">
+<div class="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">LOGROS MAYORES</span>
+<span class="material-symbols-outlined text-primary text-[20px]">military_tech</span>
+</div>
+<div class="flex items-baseline gap-space-sm">
+<span class="font-display-lg text-display-lg text-on-surface font-bold tracking-tight">5</span>
+<span class="font-label-sm text-label-sm text-outline uppercase">PROTOCOLOS NUCLEARES</span>
+</div>
+<div class="flex items-center gap-space-xs text-tertiary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span>100% REGISTRADOS EN DB</span>
+</div>
+</div>
+<!-- Metric 2: Sub-achievements Total -->
+<div class="bg-surface-container p-space-lg rounded flex flex-col justify-between gap-space-md relative overflow-hidden shadow-md">
+<div class="absolute -right-4 -bottom-4 w-24 h-24 bg-secondary-container/5 rounded-full pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">SUB-LOGROS ACTIVOS</span>
+<span class="material-symbols-outlined text-secondary-fixed-dim text-[20px]">checklist_rtl</span>
+</div>
+<div class="flex items-baseline gap-space-sm">
+<span class="font-display-lg text-display-lg text-secondary font-bold tracking-tight">13</span>
+<span class="font-label-sm text-label-sm text-outline uppercase">SUB-HITOS TÁCTICOS</span>
+</div>
+<div class="w-full bg-surface-container-lowest h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary-fixed-dim h-full" style="width: 100%"></div>
+</div>
+</div>
+<!-- Metric 3: Global Unlock Rate -->
+<div class="bg-surface-container p-space-lg rounded flex flex-col justify-between gap-space-md relative overflow-hidden shadow-md">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">TASA DESBLOQUEO GLOBAL</span>
+<span class="material-symbols-outlined text-tertiary text-[20px]">monitoring</span>
+</div>
+<div class="flex items-baseline gap-space-sm">
+<span class="font-display-lg text-display-lg text-tertiary font-bold tracking-tight">41.8%</span>
+<span class="font-label-sm text-label-sm text-outline uppercase">PROMEDIO OPERADORES</span>
+</div>
+<div class="flex items-center gap-space-sm text-outline font-label-sm text-label-sm">
+<span class="text-tertiary">+3.4%</span> en las últimas 48 hrs
+        </div>
+</div>
+<!-- Metric 4: Combat Ratio / SVG Ring -->
+<div class="bg-surface-container p-space-lg rounded flex items-center justify-between gap-space-md relative shadow-md">
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">INTEGRIDAD SECTOR</span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold">ZONA 09</span>
+<span class="font-label-sm text-label-sm text-primary uppercase flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-ping"></span>
+            DEFENSA ACTIVA
+          </span>
+</div>
+<!-- Inline Telemetry Radial Gauge SVG -->
+<div class="relative w-16 h-16 flex items-center justify-center flex-shrink-0">
+<svg class="w-16 h-16 transform -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+<path class="text-primary-container" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="72, 100" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<span class="absolute font-label-sm text-label-sm font-bold text-on-surface">72%</span>
+</div>
+</div>
+</div>
+<!-- Category Filter Controls & Telemetry Search -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md p-space-md bg-surface-container-low rounded">
+<!-- Filter Chips -->
+<div class="flex items-center gap-space-xs flex-wrap" id="category-filters">
+<button class="cat-pill active px-space-md py-space-xs rounded font-label-md text-label-md uppercase tracking-wider bg-primary-container text-on-primary-container font-bold shadow-sm transition-all" data-cat="all">
+          Todas las Categorías [5]
+        </button>
+<button class="cat-pill px-space-md py-space-xs rounded font-label-md text-label-md uppercase tracking-wider bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" data-cat="Bajas">
+          Bajas [1]
+        </button>
+<button class="cat-pill px-space-md py-space-xs rounded font-label-md text-label-md uppercase tracking-wider bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" data-cat="Historia">
+          Historia [2]
+        </button>
+<button class="cat-pill px-space-md py-space-xs rounded font-label-md text-label-md uppercase tracking-wider bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" data-cat="Minijuego">
+          Minijuego [1]
+        </button>
+<button class="cat-pill px-space-md py-space-xs rounded font-label-md text-label-md uppercase tracking-wider bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" data-cat="Easter Egg">
+          Easter Egg [1]
+        </button>
+</div>
+<!-- Quick Search Bar inside Tactical Header -->
+<div class="flex items-center bg-surface-container px-space-md py-space-xs rounded gap-space-sm w-full lg:w-72">
+<span class="material-symbols-outlined text-outline text-[18px]">filter_alt</span>
+<input class="bg-transparent font-label-sm text-label-sm text-on-surface placeholder:text-outline-variant focus:outline-none w-full tracking-wider uppercase" id="matrix-search" placeholder="FILTRAR LOGRO O CLAVE..." type="text"/>
+</div>
+</div>
+<!-- MAIN ACHIEVEMENTS MATRIX (DATABASE REPLICA) -->
+<div class="flex flex-col gap-space-lg" id="achievements-container">
+<!-- LOGRO 1: DERROTADOR SUPREMO -->
+<div class="achievement-card bg-surface-container rounded overflow-hidden shadow-lg transition-all" data-category="Bajas" data-clave="derrotador_supremo">
+<!-- Card Header / Summary -->
+<div class="p-space-lg flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg cursor-pointer toggle-panel bg-gradient-to-r from-surface-container via-surface-container to-surface-container-high">
+<div class="flex items-start sm:items-center gap-space-lg">
+<!-- Insignia Slot -->
+<div class="w-16 h-16 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
+<span class="material-symbols-outlined text-primary-container text-[36px]">skull</span>
+<div class="absolute bottom-0 right-0 px-1 bg-primary text-on-primary font-label-sm text-[9px] uppercase font-bold">S-1</div>
+</div>
+<!-- Achievement Metadata -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="px-space-sm py-0.5 bg-error-container/30 text-primary font-label-sm text-label-sm tracking-wider uppercase rounded">
+                  Bajas
+                </span>
+<span class="px-space-sm py-0.5 bg-surface-variant text-on-surface-variant font-label-sm text-label-sm tracking-wider uppercase rounded">
+                  Singleplayer
+                </span>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-widest">
+                  ID: #LOG-01 // CLAVE: <code class="text-secondary-fixed-dim">derrotador_supremo</code>
+</span>
+</div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight uppercase flex items-center gap-space-sm">
+                Derrotador supremo
+              </h3>
+<p class="font-body-md text-body-md text-outline">
+                Demuestra maestría en la erradicación biológica neutralizando oleadas hostiles de infectados confirmados.
+              </p>
+</div>
+</div>
+<!-- Progress Widget & Expand Indicator -->
+<div class="flex items-center gap-space-lg justify-between lg:justify-end flex-shrink-0">
+<div class="flex flex-col items-start lg:items-end gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-outline uppercase">REQUERIDOS:</span>
+<span class="font-label-md text-label-md text-primary font-bold">3 / 3</span>
+</div>
+<div class="w-36 bg-surface-container-lowest h-2 rounded overflow-hidden">
+<div class="bg-primary-container h-full" style="width: 100%;"></div>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary">33.4% JUGADORES GLOBAL</span>
+</div>
+<button class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-transform duration-200 chevron-btn">
+<span class="material-symbols-outlined text-[24px]">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Sub-achievements Breakdown (Accordion Body) -->
+<div class="sub-matrix px-space-lg pb-space-lg pt-space-md bg-surface-container-low flex flex-col gap-space-sm">
+<div class="w-full flex items-center justify-between pb-space-xs">
+<span class="font-label-sm text-label-sm uppercase text-outline tracking-wider">MATRIZ DE SUB-LOGROS (TABLA: `sublogros`)</span>
+<span class="font-label-sm text-label-sm text-secondary-fixed-dim uppercase">ORDEN DE SECUENCIA ASCENDENTE</span>
+</div>
+<!-- Sublogro 1 -->
+<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold text-tertiary">01</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Derrota 50 zombies.</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">CLAVE: <code class="text-on-surface-variant">derrota_50_zombies</code> // ORDEN: 1</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg justify-between sm:justify-end">
+<span class="px-space-sm py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-sm text-label-sm uppercase tracking-wider">Común</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">88.5% GLOBAL</span>
+<span class="material-symbols-outlined text-tertiary text-[20px]" style="font-variation-settings: 'FILL' 1;">check_box</span>
+</div>
+</div>
+</div>
+<!-- Sublogro 2 -->
+<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold text-secondary-fixed-dim">02</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Derrota 100 zombies.</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">CLAVE: <code class="text-on-surface-variant">derrota_100_zombies</code> // ORDEN: 2</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg justify-between sm:justify-end">
+<span class="px-space-sm py-0.5 rounded bg-secondary-container/20 text-secondary font-label-sm text-label-sm uppercase tracking-wider">Élite</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">54.2% GLOBAL</span>
+<span class="material-symbols-outlined text-secondary-fixed-dim text-[20px]" style="font-variation-settings: 'FILL' 1;">check_box</span>
+</div>
+</div>
+</div>
+<!-- Sublogro 3 -->
+<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold text-primary">03</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Derrota 300 zombies.</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">CLAVE: <code class="text-on-surface-variant">derrota_300_zombies</code> // ORDEN: 3</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg justify-between sm:justify-end">
+<span class="px-space-sm py-0.5 rounded bg-error-container/40 text-primary font-label-sm text-label-sm uppercase tracking-wider">Pesadilla</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">33.4% GLOBAL</span>
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- LOGRO 2: SUPERVIVIENTE DEL INFIERNO -->
+<div class="achievement-card bg-surface-container rounded overflow-hidden shadow-lg transition-all" data-category="Historia" data-clave="superviviente_infierno">
+<!-- Card Header / Summary -->
+<div class="p-space-lg flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg cursor-pointer toggle-panel bg-gradient-to-r from-surface-container via-surface-container to-surface-container-high">
+<div class="flex items-start sm:items-center gap-space-lg">
+<!-- Insignia Slot -->
+<div class="w-16 h-16 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
+<span class="material-symbols-outlined text-secondary-fixed-dim text-[36px]">shield_with_heart</span>
+<div class="absolute bottom-0 right-0 px-1 bg-secondary-container text-on-secondary-container font-label-sm text-[9px] uppercase font-bold">S-2</div>
+</div>
+<!-- Achievement Metadata -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="px-space-sm py-0.5 bg-secondary-container/20 text-secondary font-label-sm text-label-sm tracking-wider uppercase rounded">
+                  Historia
+                </span>
+<span class="px-space-sm py-0.5 bg-surface-variant text-on-surface-variant font-label-sm text-label-sm tracking-wider uppercase rounded">
+                  Singleplayer
+                </span>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-widest">
+                  ID: #LOG-02 // CLAVE: <code class="text-secondary-fixed-dim">superviviente_infierno</code>
+</span>
+</div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight uppercase flex items-center gap-space-sm">
+                Superviviente del infierno
+              </h3>
+<p class="font-body-md text-body-md text-outline">
+                Soporta la campaña completa bajo las condiciones ambientales y de infestación más severas del brote.
+              </p>
+</div>
+</div>
+<!-- Progress Widget & Expand Indicator -->
+<div class="flex items-center gap-space-lg justify-between lg:justify-end flex-shrink-0">
+<div class="flex flex-col items-start lg:items-end gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-outline uppercase">REQUERIDOS:</span>
+<span class="font-label-md text-label-md text-secondary-fixed-dim font-bold">3 / 3</span>
+</div>
+<div class="w-36 bg-surface-container-lowest h-2 rounded overflow-hidden">
+<div class="bg-secondary-container h-full" style="width: 100%;"></div>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary">14.1% JUGADORES GLOBAL</span>
+</div>
+<button class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-transform duration-200 chevron-btn">
+<span class="material-symbols-outlined text-[24px]">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Sub-achievements Breakdown -->
+<div class="sub-matrix px-space-lg pb-space-lg pt-space-md bg-surface-container-low flex flex-col gap-space-sm">
+<div class="w-full flex items-center justify-between pb-space-xs">
+<span class="font-label-sm text-label-sm uppercase text-outline tracking-wider">MATRIZ DE SUB-LOGROS (TABLA: `sublogros`)</span>
+<span class="font-label-sm text-label-sm text-secondary-fixed-dim uppercase">PROGRESIÓN DE CAMPAÑA</span>
+</div>
+<!-- Sublogro 1 -->
+<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold text-tertiary">01</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Completar el modo supervivencia en dificultad Normal.</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">CLAVE: <code class="text-on-surface-variant">supervivencia_normal</code> // ORDEN: 1</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg justify-between sm:justify-end">
+<span class="px-space-sm py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-sm text-label-sm uppercase tracking-wider">Común</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">61.9% GLOBAL</span>
+<span class="material-symbols-outlined text-tertiary text-[20px]" style="font-variation-settings: 'FILL' 1;">check_box</span>
+</div>
+</div>
+</div>
+<!-- Sublogro 2 -->
+<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold text-secondary-fixed-dim">02</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Completar el modo supervivencia en dificultad Difícil.</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">CLAVE: <code class="text-on-surface-variant">supervivencia_dificil</code> // ORDEN: 2</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg justify-between sm:justify-end">
+<span class="px-space-sm py-0.5 rounded bg-secondary-container/20 text-secondary font-label-sm text-label-sm uppercase tracking-wider">Élite</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">28.0% GLOBAL</span>
+<span class="material-symbols-outlined text-secondary-fixed-dim text-[20px]" style="font-variation-settings: 'FILL' 1;">check_box</span>
+</div>
+</div>
+</div>
+<!-- Sublogro 3 -->
+<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold text-primary">03</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Completar el modo supervivencia en dificultad Pesadilla.</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">CLAVE: <code class="text-on-surface-variant">supervivencia_pesadilla</code> // ORDEN: 3</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg justify-between sm:justify-end">
+<span class="px-space-sm py-0.5 rounded bg-error-container/40 text-primary font-label-sm text-label-sm uppercase tracking-wider">Pesadilla</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">14.1% GLOBAL</span>
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- LOGRO 3: COMPLETADOR DE RONDAS -->
+<div class="achievement-card bg-surface-container rounded overflow-hidden shadow-lg transition-all" data-category="Historia" data-clave="completador_rondas">
+<!-- Card Header / Summary -->
+<div class="p-space-lg flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg cursor-pointer toggle-panel bg-gradient-to-r from-surface-container via-surface-container to-surface-container-high">
+<div class="flex items-start sm:items-center gap-space-lg">
+<!-- Insignia Slot -->
+<div class="w-16 h-16 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
+<span class="material-symbols-outlined text-primary text-[36px]">timer</span>
+<div class="absolute bottom-0 right-0 px-1 bg-primary text-on-primary font-label-sm text-[9px] uppercase font-bold">S-3</div>
+</div>
+<!-- Achievement Metadata -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="px-space-sm py-0.5 bg-secondary-container/20 text-secondary font-label-sm text-label-sm tracking-wider uppercase rounded">
+                  Historia
+                </span>
+<span class="px-space-sm py-0.5 bg-surface-variant text-on-surface-variant font-label-sm text-label-sm tracking-wider uppercase rounded">
+                  Singleplayer
+                </span>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-widest">
+                  ID: #LOG-03 // CLAVE: <code class="text-secondary-fixed-dim">completador_rondas</code>
+</span>
+</div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight uppercase flex items-center gap-space-sm">
+                Completador de rondas
+              </h3>
+<p class="font-body-md text-body-md text-outline">
+                Resiste el asedio ininterrumpido a través de sucesivas oleadas tácticas en todas las dificultades reguladas.
+              </p>
+</div>
+</div>
+<!-- Progress Widget & Expand Indicator -->
+<div class="flex items-center gap-space-lg justify-between lg:justify-end flex-shrink-0">
+<div class="flex flex-col items-start lg:items-end gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-outline uppercase">REQUERIDOS:</span>
+<span class="font-label-md text-label-md text-primary font-bold">3 / 3</span>
+</div>
+<div class="w-36 bg-surface-container-lowest h-2 rounded overflow-hidden">
+<div class="bg-primary-container h-full" style="width: 100%;"></div>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary">19.7% JUGADORES GLOBAL</span>
+</div>
+<button class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-transform duration-200 chevron-btn">
+<span class="material-symbols-outlined text-[24px]">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Sub-achievements Breakdown -->
+<div class="sub-matrix px-space-lg pb-space-lg pt-space-md bg-surface-container-low flex flex-col gap-space-sm">
+<div class="w-full flex items-center justify-between pb-space-xs">
+<span class="font-label-sm text-label-sm uppercase text-outline tracking-wider">MATRIZ DE SUB-LOGROS (TABLA: `sublogros`)</span>
+<span class="font-label-sm text-label-sm text-secondary-fixed-dim uppercase">RESISTENCIA POR OLEADAS</span>
+</div>
+<!-- Sublogro 1 -->
+<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold text-tertiary">01</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Completar el modo de rondas en dificultad Normal.</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">CLAVE: <code class="text-on-surface-variant">rondas_normal</code> // ORDEN: 1</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg justify-between sm:justify-end">
+<span class="px-space-sm py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-sm text-label-sm uppercase tracking-wider">Común</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">74.6% GLOBAL</span>
+<span class="material-symbols-outlined text-tertiary text-[20px]" style="font-variation-settings: 'FILL' 1;">check_box</span>
+</div>
+</div>
+</div>
+<!-- Sublogro 2 -->
+<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold text-secondary-fixed-dim">02</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Completar el modo de rondas en dificultad Difícil.</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">CLAVE: <code class="text-on-surface-variant">rondas_dificil</code> // ORDEN: 2</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg justify-between sm:justify-end">
+<span class="px-space-sm py-0.5 rounded bg-secondary-container/20 text-secondary font-label-sm text-label-sm uppercase tracking-wider">Élite</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">38.9% GLOBAL</span>
+<span class="material-symbols-outlined text-secondary-fixed-dim text-[20px]" style="font-variation-settings: 'FILL' 1;">check_box</span>
+</div>
+</div>
+</div>
+<!-- Sublogro 3 -->
+<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold text-primary">03</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Completar el modo de rondas en dificultad Pesadilla.</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">CLAVE: <code class="text-on-surface-variant">rondas_pesadilla</code> // ORDEN: 3</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg justify-between sm:justify-end">
+<span class="px-space-sm py-0.5 rounded bg-error-container/40 text-primary font-label-sm text-label-sm uppercase tracking-wider">Pesadilla</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">19.7% GLOBAL</span>
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- LOGRO 4: CAMPEÓN DEL POLÍGONO -->
+<div class="achievement-card bg-surface-container rounded overflow-hidden shadow-lg transition-all" data-category="Minijuego" data-clave="campeon_poligono">
+<!-- Card Header / Summary -->
+<div class="p-space-lg flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg cursor-pointer toggle-panel bg-gradient-to-r from-surface-container via-surface-container to-surface-container-high">
+<div class="flex items-start sm:items-center gap-space-lg">
+<!-- Insignia Slot -->
+<div class="w-16 h-16 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
+<span class="material-symbols-outlined text-tertiary text-[36px]">adjust</span>
+<div class="absolute bottom-0 right-0 px-1 bg-tertiary-container text-on-tertiary-container font-label-sm text-[9px] uppercase font-bold">S-4</div>
+</div>
+<!-- Achievement Metadata -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="px-space-sm py-0.5 bg-tertiary-container/20 text-tertiary font-label-sm text-label-sm tracking-wider uppercase rounded">
+                  Minijuego
+                </span>
+<span class="px-space-sm py-0.5 bg-surface-variant text-on-surface-variant font-label-sm text-label-sm tracking-wider uppercase rounded">
+                  Singleplayer
+                </span>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-widest">
+                  ID: #LOG-04 // CLAVE: <code class="text-secondary-fixed-dim">campeon_poligono</code>
+</span>
+</div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight uppercase flex items-center gap-space-sm">
+                Campeón del Polígono
+              </h3>
+<p class="font-body-md text-body-md text-outline">
+                Pon a prueba tus reflejos tácticos y precisión balística en la instalación de entrenamiento militar.
+              </p>
+</div>
+</div>
+<!-- Progress Widget & Expand Indicator -->
+<div class="flex items-center gap-space-lg justify-between lg:justify-end flex-shrink-0">
+<div class="flex flex-col items-start lg:items-end gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-outline uppercase">REQUERIDOS:</span>
+<span class="font-label-md text-label-md text-tertiary font-bold">1 / 1</span>
+</div>
+<div class="w-36 bg-surface-container-lowest h-2 rounded overflow-hidden">
+<div class="bg-tertiary h-full" style="width: 100%;"></div>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary">82.3% JUGADORES GLOBAL</span>
+</div>
+<button class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-transform duration-200 chevron-btn">
+<span class="material-symbols-outlined text-[24px]">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Sub-achievements Breakdown -->
+<div class="sub-matrix px-space-lg pb-space-lg pt-space-md bg-surface-container-low flex flex-col gap-space-sm">
+<div class="w-full flex items-center justify-between pb-space-xs">
+<span class="font-label-sm text-label-sm uppercase text-outline tracking-wider">MATRIZ DE SUB-LOGROS (TABLA: `sublogros`)</span>
+<span class="font-label-sm text-label-sm text-tertiary uppercase">PRUEBA DE TIRO DIRECTA</span>
+</div>
+<!-- Sublogro 1 -->
+<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold text-tertiary">01</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Completa el minijuego de la zona de tiro.</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">CLAVE: <code class="text-on-surface-variant">completar_poligono</code> // ORDEN: 1</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg justify-between sm:justify-end">
+<span class="px-space-sm py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-sm text-label-sm uppercase tracking-wider">Común</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">82.3% GLOBAL</span>
+<span class="material-symbols-outlined text-tertiary text-[20px]" style="font-variation-settings: 'FILL' 1;">check_box</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- LOGRO 5: DONDE ESTA WALLY -->
+<div class="achievement-card bg-surface-container rounded overflow-hidden shadow-lg transition-all" data-category="Easter Egg" data-clave="donde_esta_wally">
+<!-- Card Header / Summary -->
+<div class="p-space-lg flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg cursor-pointer toggle-panel bg-gradient-to-r from-surface-container via-surface-container to-surface-container-high">
+<div class="flex items-start sm:items-center gap-space-lg">
+<!-- Insignia Slot -->
+<div class="w-16 h-16 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
+<span class="material-symbols-outlined text-secondary-fixed-dim text-[36px]">travel_explore</span>
+<div class="absolute bottom-0 right-0 px-1 bg-secondary-container text-on-secondary-container font-label-sm text-[9px] uppercase font-bold">S-5</div>
+</div>
+<!-- Achievement Metadata -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="px-space-sm py-0.5 bg-secondary-container/20 text-secondary font-label-sm text-label-sm tracking-wider uppercase rounded">
+                  Easter Egg
+                </span>
+<span class="px-space-sm py-0.5 bg-surface-variant text-on-surface-variant font-label-sm text-label-sm tracking-wider uppercase rounded">
+                  Singleplayer
+                </span>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-widest">
+                  ID: #LOG-05 // CLAVE: <code class="text-secondary-fixed-dim">donde_esta_wally</code>
+</span>
+</div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight uppercase flex items-center gap-space-sm">
+                Donde esta Wally
+              </h3>
+<p class="font-body-md text-body-md text-outline">
+                Rastrea los secretos ocultos por los desarrolladores y el equipo de contención en las ruinas de la cuarentena.
+              </p>
+</div>
+</div>
+<!-- Progress Widget & Expand Indicator -->
+<div class="flex items-center gap-space-lg justify-between lg:justify-end flex-shrink-0">
+<div class="flex flex-col items-start lg:items-end gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-outline uppercase">REQUERIDOS:</span>
+<span class="font-label-md text-label-md text-secondary-fixed-dim font-bold">3 / 3</span>
+</div>
+<div class="w-36 bg-surface-container-lowest h-2 rounded overflow-hidden">
+<div class="bg-secondary-container h-full" style="width: 100%;"></div>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary">9.2% JUGADORES GLOBAL</span>
+</div>
+<button class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-transform duration-200 chevron-btn">
+<span class="material-symbols-outlined text-[24px]">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Sub-achievements Breakdown -->
+<div class="sub-matrix px-space-lg pb-space-lg pt-space-md bg-surface-container-low flex flex-col gap-space-sm">
+<div class="w-full flex items-center justify-between pb-space-xs">
+<span class="font-label-sm text-label-sm uppercase text-outline tracking-wider">MATRIZ DE SUB-LOGROS (TABLA: `sublogros`)</span>
+<span class="font-label-sm text-label-sm text-secondary-fixed-dim uppercase">LOCALIZACIONES OCULTAS</span>
+</div>
+<!-- Sublogro 1 -->
+<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold text-tertiary">01</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Encontrar un Easter Egg.</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">CLAVE: <code class="text-on-surface-variant">easter_egg_1</code> // ORDEN: 1</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg justify-between sm:justify-end">
+<span class="px-space-sm py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-sm text-label-sm uppercase tracking-wider">Común</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">42.1% GLOBAL</span>
+<span class="material-symbols-outlined text-tertiary text-[20px]" style="font-variation-settings: 'FILL' 1;">check_box</span>
+</div>
+</div>
+</div>
+<!-- Sublogro 2 -->
+<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold text-secondary-fixed-dim">02</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Encontrar dos Easter Eggs.</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">CLAVE: <code class="text-on-surface-variant">easter_egg_2</code> // ORDEN: 2</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg justify-between sm:justify-end">
+<span class="px-space-sm py-0.5 rounded bg-secondary-container/20 text-secondary font-label-sm text-label-sm uppercase tracking-wider">Élite</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">21.8% GLOBAL</span>
+<span class="material-symbols-outlined text-secondary-fixed-dim text-[20px]" style="font-variation-settings: 'FILL' 1;">check_box</span>
+</div>
+</div>
+</div>
+<!-- Sublogro 3 -->
+<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold text-primary">03</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Encontrar tres Easter Eggs.</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">CLAVE: <code class="text-on-surface-variant">easter_egg_3</code> // ORDEN: 3</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg justify-between sm:justify-end">
+<span class="px-space-sm py-0.5 rounded bg-error-container/40 text-primary font-label-sm text-label-sm uppercase tracking-wider">Pesadilla</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">9.2% GLOBAL</span>
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Technical Verification Card & Field Data -->
+<div class="mt-space-md p-space-lg bg-surface-container rounded flex flex-col md:flex-row items-center justify-between gap-space-lg shadow-md">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded bg-surface-container-highest flex items-center justify-center text-secondary-fixed-dim">
+<span class="material-symbols-outlined text-[28px]">verified_user</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold uppercase">SISTEMA ANTI-ALTERACIÓN ACTIVO</span>
+<span class="font-body-sm text-body-sm text-outline">Los registros de logros se autentican mediante firma criptográfica SHA-256 en servidores militares de Dead Quarantine.</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">ÚLTIMA SINCRONIZACIÓN:</span>
+<span class="font-label-md text-label-md text-tertiary font-bold tracking-wider uppercase">HACE 4 MINUTOS</span>
+</div>
+</div>
+</div>
+<!-- Inline Script for Accordion & Category Filter & Search -->
+<script>
+    (function initMatrix() {
+      // Accordion Toggle
+      const cards = document.querySelectorAll('.achievement-card');
+      cards.forEach(card => {
+        const toggleBtn = card.querySelector('.toggle-panel');
+        const chevron = card.querySelector('.chevron-btn');
+        const subMatrix = card.querySelector('.sub-matrix');
+
+        toggleBtn.addEventListener('click', () => {
+          const isHidden = subMatrix.classList.contains('hidden');
+          if (isHidden) {
+            subMatrix.classList.remove('hidden');
+            chevron.classList.add('rotate-180');
+          } else {
+            subMatrix.classList.add('hidden');
+            chevron.classList.remove('rotate-180');
+          }
+        });
+      });
+
+      // Expand / Collapse All
+      const expandAllBtn = document.getElementById('expand-all-btn');
+      const collapseAllBtn = document.getElementById('collapse-all-btn');
+
+      expandAllBtn.addEventListener('click', () => {
+        cards.forEach(card => {
+          const subMatrix = card.querySelector('.sub-matrix');
+          const chevron = card.querySelector('.chevron-btn');
+          subMatrix.classList.remove('hidden');
+          chevron.classList.add('rotate-180');
+        });
+      });
+
+      collapseAllBtn.addEventListener('click', () => {
+        cards.forEach(card => {
+          const subMatrix = card.querySelector('.sub-matrix');
+          const chevron = card.querySelector('.chevron-btn');
+          subMatrix.classList.add('hidden');
+          chevron.classList.remove('rotate-180');
+        });
+      });
+
+      // Category Pill Filters
+      const pills = document.querySelectorAll('.cat-pill');
+      pills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          pills.forEach(p => {
+            p.classList.remove('bg-primary-container', 'text-on-primary-container', 'font-bold');
+            p.classList.add('bg-surface-container', 'text-on-surface-variant');
+          });
+          pill.classList.remove('bg-surface-container', 'text-on-surface-variant');
+          pill.classList.add('bg-primary-container', 'text-on-primary-container', 'font-bold');
+
+          const category = pill.getAttribute('data-cat');
+          filterCards();
+        });
+      });
+
+      // Search Filter
+      const searchInput = document.getElementById('matrix-search');
+      if (searchInput) {
+        searchInput.addEventListener('input', () => {
+          filterCards();
+        });
+      }
+
+      function filterCards() {
+        const activePill = document.querySelector('.cat-pill.bg-primary-container');
+        const cat = activePill ? activePill.getAttribute('data-cat') : 'all';
+        const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+        cards.forEach(card => {
+          const cardCat = card.getAttribute('data-category');
+          const cardClave = card.getAttribute('data-clave') || '';
+          const cardText = card.innerText.toLowerCase();
+
+          const matchesCat = (cat === 'all' || cardCat === cat);
+          const matchesQuery = (query === '' || cardText.includes(query) || cardClave.includes(query));
+
+          if (matchesCat && matchesQuery) {
+            card.classList.remove('hidden');
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+      }
+    })();
+  </script>
+</div></main><footer class="w-full bg-surface-container-lowest py-space-xl shadow-[0_-2px_12px_rgba(0,0,0,0.8)]"><div class="w-full px-gutter flex flex-col md:flex-row items-center justify-between gap-space-lg text-on-surface-variant font-label-sm text-label-sm"><div class="flex flex-col sm:flex-row items-center gap-space-md"><span class="text-primary font-bold tracking-widest uppercase">TERMINAL TELEMETRY SEC-09</span><span class="hidden sm:inline text-outline-variant">//</span><span class="text-on-surface-variant">MILITARY DATABASE PROTOCOL ALPHA-09</span><span class="hidden sm:inline text-outline-variant">//</span><span class="text-secondary-fixed-dim">SYS.VER: v1.0.4-quarantine</span></div><div class="text-center md:text-right text-outline">© 2025 DEAD QUARANTINE SURVEILLANCE LOG. ALL ACCESS MONITORED UNDER EMERGENCY DIRECTIVE 99-C.</div></div></footer></body></html>
