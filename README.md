@@ -4,8 +4,8 @@
 
 1. Instala Node.js 20.9 o posterior.
 2. Ejecuta `npm install`.
-3. Configura las variables `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`,
-   `MYSQL_PASSWORD` y `MYSQL_DATABASE` en el entorno.
+3. Copia `.env.example` a `.env.local` y reemplaza los valores de ejemplo con
+   los datos reales de la base de datos MySQL. No subas `.env.local` a Git.
 4. Ejecuta `npm run dev` y abre `http://localhost:3000`.
 
 La página está en `public/index.html`; las APIs se ejecutan en Next.js y usan la

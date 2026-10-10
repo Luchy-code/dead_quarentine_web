@@ -8,7 +8,11 @@ export async function GET(request) {
   const mode = searchParams.get('mode');
   const vpnOnly = searchParams.get('vpnOnly');
   const search = searchParams.get('search');
-  let query = 'SELECT id, username, puntos, modo, ip, pais, codigo_pais, usa_vpn, creado_en FROM ranking WHERE 1=1';
+  const requestedLimit = Number.parseInt(searchParams.get('limit') ?? '', 10);
+  const limit = Number.isInteger(requestedLimit) && requestedLimit > 0
+    ? Math.min(requestedLimit, 100)
+    : 100;
+  let query = 'SELECT id, username, puntos, modo, pais, codigo_pais, usa_vpn, creado_en FROM ranking WHERE 1=1';
   const params = [];
 
   if (country && country !== 'ALL') {
@@ -27,7 +31,8 @@ export async function GET(request) {
     params.push(`%${search}%`);
   }
 
-  query += ' ORDER BY puntos DESC LIMIT 100';
+  query += ' ORDER BY puntos DESC LIMIT ?';
+  params.push(limit);
 
   try {
     const [rows] = await getPool().query(query, params);
