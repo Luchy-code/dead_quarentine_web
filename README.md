@@ -11,6 +11,12 @@
 La página está en `public/index.html`; las APIs se ejecutan en Next.js y usan la
 conexión MySQL configurada por variables de entorno.
 
+## Pruebas
+
+Ejecuta `npm test` para probar las APIs con una base de datos simulada, la
+configuración de MySQL, las redirecciones y las interacciones de las páginas
+HTML/CSS/JavaScript. Las pruebas no necesitan credenciales ni conexión a MySQL.
+
 ## Wasmer Edge
 
 Despliega la raíz del repositorio como una app Next.js. Desde la raíz, inicia

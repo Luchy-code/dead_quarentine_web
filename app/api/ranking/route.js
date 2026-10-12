@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type'
 };
 
@@ -55,6 +55,84 @@ export async function GET(request) {
     console.error('Error al obtener el ranking:', error);
     return Response.json(
       { error: 'Error al obtener ranking' },
+      { status: 500, headers: corsHeaders }
+    );
+  }
+}
+
+export async function POST(request) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      { error: 'El cuerpo debe ser JSON válido' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return Response.json(
+      { error: 'El cuerpo debe ser un objeto JSON' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  const username = typeof body.username === 'string' ? body.username.trim() : '';
+  const puntos = Number(body.puntos);
+  if (!username || body.puntos === undefined || body.puntos === null || body.puntos === ''
+    || !Number.isFinite(puntos) || puntos < 0) {
+    return Response.json(
+      { error: 'username y puntos válidos son obligatorios' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  const forwardedIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim();
+  const ip = request.headers.get('cf-connecting-ip')
+    || request.headers.get('x-real-ip')
+    || forwardedIp
+    || body.ip
+    || null;
+  const codigoPais = request.headers.get('cf-ipcountry')
+    || request.headers.get('x-vercel-ip-country')
+    || body.codigo_pais
+    || null;
+  const pais = (typeof body.pais === 'string' && body.pais.trim())
+    || codigoPais
+    || 'Desconocido';
+  const usaVpn = body.usa_vpn === true || body.usa_vpn === 1
+    || body.usa_vpn === '1' || body.usa_vpn === 'true'
+    ? 1
+    : body.usa_vpn === false || body.usa_vpn === 0
+      || body.usa_vpn === '0' || body.usa_vpn === 'false'
+      ? 0
+      : null;
+
+  try {
+    const [resultado] = await getPool().query(
+      `INSERT INTO ranking
+        (username, puntos, modo, ip, pais, codigo_pais, usa_vpn, creado_en)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [
+        username,
+        puntos,
+        typeof body.modo === 'string' && body.modo.trim() ? body.modo.trim() : 'Singleplayer',
+        ip,
+        pais,
+        codigoPais,
+        usaVpn
+      ]
+    );
+
+    return Response.json(
+      { message: 'Puntuación guardada exitosamente', id: resultado.insertId },
+      { status: 201, headers: corsHeaders }
+    );
+  } catch (error) {
+    console.error('Error al guardar puntaje:', error);
+    return Response.json(
+      { error: 'Error al insertar en la base de datos' },
       { status: 500, headers: corsHeaders }
     );
   }
