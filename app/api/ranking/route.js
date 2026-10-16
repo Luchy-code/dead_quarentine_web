@@ -8,64 +8,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type'
 };
 
-export async function GET(request) {
-  const searchParams = new URL(request.url).searchParams;
-  const country = searchParams.get('country');
-  const mode = searchParams.get('mode');
-  const vpnOnly = searchParams.get('vpnOnly');
-  const search = searchParams.get('search');
-  const requestedLimit = Number.parseInt(searchParams.get('limit') ?? '', 10);
-  const limit = Number.isInteger(requestedLimit) && requestedLimit > 0
-    ? Math.min(requestedLimit, 100)
-    : 100;
-
-  let query = `SELECT
-    r.id,
-    COALESCE(u.username, r.username) AS username,
-    r.user_id,
-    r.puntos,
-    r.modo,
-    r.pais,
-    r.codigo_pais,
-    r.usa_vpn,
-    r.creado_en,
-    CASE
-      WHEN r.puntos >= 13000 THEN 'Pesadilla'
-      WHEN r.puntos >= 9000 THEN 'Difícil'
-      WHEN r.puntos >= 5000 THEN 'Normal'
-      ELSE 'Fácil'
-    END AS dificultad
-    FROM ranking r
-    LEFT JOIN usuarios u ON r.user_id = u.id        --  usa la columna id de la tabla usuarios
-    WHERE 1=1`;
-  const params = [];
-
-  if (country && country !== 'ALL') {
-    query += ' AND r.codigo_pais = ?';
-    params.push(country);
-  }
-  if (mode && mode !== 'ALL') {
-    query += ' AND r.modo = ?';
-    params.push(mode);
-  }
-  if (vpnOnly === 'true') {
-    query += ' AND r.usa_vpn = 0';
-  }
-  if (search) {
-    query += ' AND COALESCE(u.username, r.username) LIKE ?';
-    params.push(`%${search}%`);
-  }
-
-  query += ' ORDER BY r.puntos DESC LIMIT ?';
-  params.push(limit);
-
+export async function GET() {
   try {
-    const [rows] = await getPool().query(query, params);
-    return Response.json(rows, { headers: corsHeaders });
+    const [usuarios] = await getPool().query(
+      'SELECT id, username, creado_en, actualizado_en FROM usuarios ORDER BY id ASC'
+    );
+    return Response.json(usuarios, { headers: corsHeaders });
   } catch (error) {
-    console.error('Error al obtener el ranking:', error);
     return Response.json(
-      { error: 'Error al obtener ranking', detalle: error.sqlMessage || error.message },
+      { error: 'Error al obtener usuarios', detalle: error.sqlMessage || error.message },
       { status: 500, headers: corsHeaders }
     );
   }
@@ -76,93 +27,92 @@ export async function POST(request) {
   try {
     body = await request.json();
   } catch {
-    return Response.json(
-      { error: 'El cuerpo debe ser JSON válido' },
-      { status: 400, headers: corsHeaders }
-    );
+    return Response.json({ error: 'JSON inválido' }, { status: 400, headers: corsHeaders });
   }
 
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return Response.json(
-      { error: 'El cuerpo debe ser un objeto JSON' },
-      { status: 400, headers: corsHeaders }
-    );
+  const username = typeof body.username === 'string' ? body.username.trim().slice(0, 50) : '';
+  const rawUserId = body.user_id !== undefined && body.user_id !== null ? String(body.user_id).trim() : null;
+
+  if (!username) {
+    return Response.json({ error: 'El campo username es obligatorio' }, { status: 400, headers: corsHeaders });
   }
-
-  const username = typeof body.username === 'string' ? body.username.trim() : '';
-  const puntos = Number(body.puntos);
-
-  if (!username || body.puntos === undefined || body.puntos === null || !Number.isFinite(puntos) || puntos < 0) {
-    return Response.json(
-      { error: 'username y puntos válidos son obligatorios' },
-      { status: 400, headers: corsHeaders }
-    );
-  }
-
-  if (body.user_id !== undefined && body.user_id !== null
-    && (typeof body.user_id !== 'string' || body.user_id.trim().length > 255)) {
-    return Response.json(
-      { error: 'user_id debe ser una cadena de hasta 255 caracteres' },
-      { status: 400, headers: corsHeaders }
-    );
-  }
-  const userId = typeof body.user_id === 'string' && body.user_id.trim()
-    ? body.user_id.trim()
-    : null;
-
-  // 1. IP
-  const forwardedIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim();
-  const rawIp = body.ip || request.headers.get('x-real-ip') || forwardedIp || '127.0.0.1';
-  const ip = typeof rawIp === 'string' ? rawIp.slice(0, 45) : '127.0.0.1';
-
-  // 2. Código de País (máximo 5 caracteres para columnas cortas como VARCHAR(2) o VARCHAR(5))
-  const rawCodigoPais = body.codigo_pais || request.headers.get('cf-ipcountry') || 'AR';
-  const codigoPais = typeof rawCodigoPais === 'string' ? rawCodigoPais.trim().slice(0, 5) : 'AR';
-
-  // 3. País
-  const pais = typeof body.pais === 'string' && body.pais.trim() ? body.pais.trim().slice(0, 100) : 'Argentina';
-
-  // 4. Modo de juego: Singleplayer o Multiplayer
-  const modo = typeof body.modo === 'string' && body.modo.trim()
-    ? body.modo.trim().slice(0, 50)
-    : 'Singleplayer';
-  // 5. USA VPN: Forzar a 0 o 1
-  const usaVpn = (body.usa_vpn === 1 || body.usa_vpn === '1' || body.usa_vpn === true) ? 1 : 0;
 
   try {
     const pool = getPool();
-    const [resultado] = await pool.query(
-      `INSERT INTO ranking
-        (user_id, username, puntos, modo, ip, pais, codigo_pais, usa_vpn, creado_en)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [
-        userId,
-        username,
-        puntos,
-        modo,
-        ip,
-        pais,
-        codigoPais,
-        usaVpn
-      ]
+
+    // Verificamos si rawUserId es un número entero válido existente en la tabla
+    let numericId = null;
+    if (rawUserId && /^\d+$/.test(rawUserId)) {
+      numericId = parseInt(rawUserId, 10);
+    }
+
+    // CASO 1: Ya tenemos un ID numérico válido asignado a este usuario
+    if (numericId !== null) {
+      const [existeUsuario] = await pool.query(
+        `SELECT id FROM usuarios WHERE id = ? LIMIT 1`,
+        [numericId]
+      );
+
+      if (existeUsuario.length > 0) {
+        // Actualizar el nombre en usuarios
+        await pool.query(
+          `UPDATE usuarios SET username = ?, actualizado_en = NOW() WHERE id = ?`,
+          [username, numericId]
+        );
+
+        // Actualizar los puntajes previos del ranking
+        await pool.query(
+          `UPDATE ranking SET username = ? WHERE user_id = ?`,
+          [username, numericId]
+        );
+
+        return Response.json({
+          message: 'Usuario actualizado con éxito',
+          user_id: String(numericId),
+          username
+        }, { status: 200, headers: corsHeaders });
+      }
+    }
+
+    // CASO 2: Primer registro o ID previo no numérico (UUID)
+    // Buscamos si el nombre ya existe en la tabla usuarios
+    const [existentes] = await pool.query(
+      `SELECT id FROM usuarios WHERE username = ? LIMIT 1`,
+      [username]
     );
 
-    return Response.json(
-      { message: 'Puntuación guardada exitosamente', id: resultado.insertId },
-      { status: 201, headers: corsHeaders }
+    let idFinal;
+    if (existentes.length > 0) {
+      idFinal = existentes[0].id;
+      await pool.query(
+        `UPDATE usuarios SET actualizado_en = NOW() WHERE id = ?`,
+        [idFinal]
+      );
+    } else {
+      // Inserción limpia: MySQL genera el id autoincremental (11, 12, etc.)
+      const [insertado] = await pool.query(
+        `INSERT INTO usuarios (username, creado_en, actualizado_en) VALUES (?, NOW(), NOW())`,
+        [username]
+      );
+      idFinal = insertado.insertId;
+    }
+
+    // Opcional: enlazar partidas previas que tuvieran este nombre y user_id en NULL
+    await pool.query(
+      `UPDATE ranking SET user_id = ? WHERE username = ? AND user_id IS NULL`,
+      [idFinal, username]
     );
+
+    return Response.json({
+      message: 'Usuario registrado correctamente',
+      user_id: String(idFinal),
+      username
+    }, { status: 200, headers: corsHeaders });
+
   } catch (error) {
-    console.error('Error detallado de MySQL al guardar puntaje:', {
-      sqlMessage: error.sqlMessage,
-      code: error.code,
-      message: error.message
-    });
-
+    console.error('Error al sincronizar usuario:', error);
     return Response.json(
-      { 
-        error: 'Error al insertar en la base de datos',
-        detalle: error.sqlMessage || error.message || String(error)
-      },
+      { error: 'Error en base de datos', detalle: error.sqlMessage || error.message },
       { status: 500, headers: corsHeaders }
     );
   }

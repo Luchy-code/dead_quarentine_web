@@ -40,54 +40,42 @@ export async function POST(request) {
   try {
     const pool = getPool();
 
-    // CASO 1: Unity nos mandó un user_id (sea número o string)
-    if (rawUserId) {
-      // Verificamos si existe ese id en usuarios
+    // Verificamos si rawUserId es un número entero válido existente en la tabla
+    let numericId = null;
+    if (rawUserId && /^\d+$/.test(rawUserId)) {
+      numericId = parseInt(rawUserId, 10);
+    }
+
+    // CASO 1: Ya tenemos un ID numérico válido asignado a este usuario
+    if (numericId !== null) {
       const [existeUsuario] = await pool.query(
-        `SELECT id, username FROM usuarios WHERE id = ? LIMIT 1`,
-        [rawUserId]
+        `SELECT id FROM usuarios WHERE id = ? LIMIT 1`,
+        [numericId]
       );
 
       if (existeUsuario.length > 0) {
-        // Actualizar el nombre del usuario
+        // Actualizar el nombre en usuarios
         await pool.query(
-          `UPDATE usuarios 
-           SET username = ?, actualizado_en = NOW() 
-           WHERE id = ?`,
-          [username, rawUserId]
+          `UPDATE usuarios SET username = ?, actualizado_en = NOW() WHERE id = ?`,
+          [username, numericId]
         );
 
-        // Actualizar automáticamente todas las partidas históricas en ranking
+        // Actualizar los puntajes previos del ranking
         await pool.query(
-          `UPDATE ranking 
-           SET username = ? 
-           WHERE user_id = ?`,
-          [username, rawUserId]
+          `UPDATE ranking SET username = ? WHERE user_id = ?`,
+          [username, numericId]
         );
 
-        return Response.json({ 
-          message: 'Usuario y partidas actualizados con éxito', 
-          user_id: rawUserId, 
-          username 
-        }, { status: 200, headers: corsHeaders });
-      } else {
-        // Si mandó un ID pero no está en la tabla (por ejemplo si la tabla usa VARCHAR para id)
-        const [insertado] = await pool.query(
-          `INSERT INTO usuarios (id, username, creado_en, actualizado_en)
-           VALUES (?, ?, NOW(), NOW())
-           ON DUPLICATE KEY UPDATE username = VALUES(username), actualizado_en = NOW()`,
-          [rawUserId, username]
-        );
-
-        return Response.json({ 
-          message: 'Usuario creado con ID especificado', 
-          user_id: rawUserId, 
-          username 
+        return Response.json({
+          message: 'Usuario actualizado con éxito',
+          user_id: String(numericId),
+          username
         }, { status: 200, headers: corsHeaders });
       }
     }
 
-    // CASO 2: No viene user_id (primer inicio o usuario nuevo)
+    // CASO 2: Primer registro o ID previo no numérico (UUID)
+    // Buscamos si el nombre ya existe en la tabla usuarios
     const [existentes] = await pool.query(
       `SELECT id FROM usuarios WHERE username = ? LIMIT 1`,
       [username]
@@ -96,7 +84,12 @@ export async function POST(request) {
     let idFinal;
     if (existentes.length > 0) {
       idFinal = existentes[0].id;
+      await pool.query(
+        `UPDATE usuarios SET actualizado_en = NOW() WHERE id = ?`,
+        [idFinal]
+      );
     } else {
+      // Inserción limpia: MySQL genera el id autoincremental (11, 12, etc.)
       const [insertado] = await pool.query(
         `INSERT INTO usuarios (username, creado_en, actualizado_en) VALUES (?, NOW(), NOW())`,
         [username]
@@ -104,10 +97,16 @@ export async function POST(request) {
       idFinal = insertado.insertId;
     }
 
-    return Response.json({ 
-      message: 'Usuario registrado', 
-      user_id: String(idFinal), 
-      username 
+    // Opcional: enlazar partidas previas que tuvieran este nombre y user_id en NULL
+    await pool.query(
+      `UPDATE ranking SET user_id = ? WHERE username = ? AND user_id IS NULL`,
+      [idFinal, username]
+    );
+
+    return Response.json({
+      message: 'Usuario registrado correctamente',
+      user_id: String(idFinal),
+      username
     }, { status: 200, headers: corsHeaders });
 
   } catch (error) {
