@@ -36,7 +36,7 @@ export async function GET(request) {
       ELSE 'Fácil'
     END AS dificultad
     FROM ranking r
-    LEFT JOIN usuarios u ON r.user_id = u.user_id
+    LEFT JOIN usuarios u ON r.user_id = u.id        --  usa la columna id de la tabla usuarios
     WHERE 1=1`;
   const params = [];
 
