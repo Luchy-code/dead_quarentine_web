@@ -18,6 +18,7 @@ export async function GET(request) {
   const limit = Number.isInteger(requestedLimit) && requestedLimit > 0
     ? Math.min(requestedLimit, 100)
     : 100;
+
   let query = `SELECT
     id, username, puntos, modo, pais, codigo_pais, usa_vpn, creado_en,
     CASE
@@ -54,7 +55,7 @@ export async function GET(request) {
   } catch (error) {
     console.error('Error al obtener el ranking:', error);
     return Response.json(
-      { error: 'Error al obtener ranking' },
+      { error: 'Error al obtener ranking', detalle: error.sqlMessage || error.message },
       { status: 500, headers: corsHeaders }
     );
   }
@@ -80,44 +81,42 @@ export async function POST(request) {
 
   const username = typeof body.username === 'string' ? body.username.trim() : '';
   const puntos = Number(body.puntos);
-  if (!username || body.puntos === undefined || body.puntos === null || body.puntos === ''
-    || !Number.isFinite(puntos) || puntos < 0) {
+
+  if (!username || body.puntos === undefined || body.puntos === null || !Number.isFinite(puntos) || puntos < 0) {
     return Response.json(
       { error: 'username y puntos válidos son obligatorios' },
       { status: 400, headers: corsHeaders }
     );
   }
 
+  // 1. IP
   const forwardedIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim();
-  const ip = request.headers.get('cf-connecting-ip')
-    || request.headers.get('x-real-ip')
-    || forwardedIp
-    || body.ip
-    || null;
-  const codigoPais = request.headers.get('cf-ipcountry')
-    || request.headers.get('x-vercel-ip-country')
-    || body.codigo_pais
-    || null;
-  const pais = (typeof body.pais === 'string' && body.pais.trim())
-    || codigoPais
-    || 'Desconocido';
-  const usaVpn = body.usa_vpn === true || body.usa_vpn === 1
-    || body.usa_vpn === '1' || body.usa_vpn === 'true'
-    ? 1
-    : body.usa_vpn === false || body.usa_vpn === 0
-      || body.usa_vpn === '0' || body.usa_vpn === 'false'
-      ? 0
-      : null;
+  const rawIp = body.ip || request.headers.get('x-real-ip') || forwardedIp || '127.0.0.1';
+  const ip = typeof rawIp === 'string' ? rawIp.slice(0, 45) : '127.0.0.1';
+
+  // 2. Código de País (máximo 5 caracteres para columnas cortas como VARCHAR(2) o VARCHAR(5))
+  const rawCodigoPais = body.codigo_pais || request.headers.get('cf-ipcountry') || 'AR';
+  const codigoPais = typeof rawCodigoPais === 'string' ? rawCodigoPais.trim().slice(0, 5) : 'AR';
+
+  // 3. País
+  const pais = typeof body.pais === 'string' && body.pais.trim() ? body.pais.trim().slice(0, 100) : 'Argentina';
+
+  // 4. Modo de juego
+  const modo = typeof body.modo === 'string' && body.modo.trim() ? body.modo.trim().slice(0, 50) : 'Supervivencia';
+
+  // 5. USA VPN: Forzar a 0 o 1
+  const usaVpn = (body.usa_vpn === 1 || body.usa_vpn === '1' || body.usa_vpn === true) ? 1 : 0;
 
   try {
-    const [resultado] = await getPool().query(
+    const pool = getPool();
+    const [resultado] = await pool.query(
       `INSERT INTO ranking
         (username, puntos, modo, ip, pais, codigo_pais, usa_vpn, creado_en)
        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         username,
         puntos,
-        typeof body.modo === 'string' && body.modo.trim() ? body.modo.trim() : 'Singleplayer',
+        modo,
         ip,
         pais,
         codigoPais,
@@ -130,9 +129,17 @@ export async function POST(request) {
       { status: 201, headers: corsHeaders }
     );
   } catch (error) {
-    console.error('Error al guardar puntaje:', error);
+    console.error('Error detallado de MySQL al guardar puntaje:', {
+      sqlMessage: error.sqlMessage,
+      code: error.code,
+      message: error.message
+    });
+
     return Response.json(
-      { error: 'Error al insertar en la base de datos' },
+      { 
+        error: 'Error al insertar en la base de datos',
+        detalle: error.sqlMessage || error.message || String(error)
+      },
       { status: 500, headers: corsHeaders }
     );
   }
