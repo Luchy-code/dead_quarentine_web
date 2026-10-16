@@ -20,33 +20,43 @@ export async function GET(request) {
     : 100;
 
   let query = `SELECT
-    id, username, puntos, modo, pais, codigo_pais, usa_vpn, creado_en,
+    r.id,
+    COALESCE(u.username, r.username) AS username,
+    r.user_id,
+    r.puntos,
+    r.modo,
+    r.pais,
+    r.codigo_pais,
+    r.usa_vpn,
+    r.creado_en,
     CASE
-      WHEN puntos >= 13000 THEN 'Pesadilla'
-      WHEN puntos >= 9000 THEN 'Difícil'
-      WHEN puntos >= 5000 THEN 'Normal'
+      WHEN r.puntos >= 13000 THEN 'Pesadilla'
+      WHEN r.puntos >= 9000 THEN 'Difícil'
+      WHEN r.puntos >= 5000 THEN 'Normal'
       ELSE 'Fácil'
     END AS dificultad
-    FROM ranking WHERE 1=1`;
+    FROM ranking r
+    LEFT JOIN usuarios u ON r.user_id = u.user_id
+    WHERE 1=1`;
   const params = [];
 
   if (country && country !== 'ALL') {
-    query += ' AND codigo_pais = ?';
+    query += ' AND r.codigo_pais = ?';
     params.push(country);
   }
   if (mode && mode !== 'ALL') {
-    query += ' AND modo = ?';
+    query += ' AND r.modo = ?';
     params.push(mode);
   }
   if (vpnOnly === 'true') {
-    query += ' AND usa_vpn = 0';
+    query += ' AND r.usa_vpn = 0';
   }
   if (search) {
-    query += ' AND username LIKE ?';
+    query += ' AND COALESCE(u.username, r.username) LIKE ?';
     params.push(`%${search}%`);
   }
 
-  query += ' ORDER BY puntos DESC LIMIT ?';
+  query += ' ORDER BY r.puntos DESC LIMIT ?';
   params.push(limit);
 
   try {
@@ -89,6 +99,17 @@ export async function POST(request) {
     );
   }
 
+  if (body.user_id !== undefined && body.user_id !== null
+    && (typeof body.user_id !== 'string' || body.user_id.trim().length > 255)) {
+    return Response.json(
+      { error: 'user_id debe ser una cadena de hasta 255 caracteres' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+  const userId = typeof body.user_id === 'string' && body.user_id.trim()
+    ? body.user_id.trim()
+    : null;
+
   // 1. IP
   const forwardedIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim();
   const rawIp = body.ip || request.headers.get('x-real-ip') || forwardedIp || '127.0.0.1';
@@ -101,9 +122,10 @@ export async function POST(request) {
   // 3. País
   const pais = typeof body.pais === 'string' && body.pais.trim() ? body.pais.trim().slice(0, 100) : 'Argentina';
 
-  // 4. Modo de juego
-  const modo = typeof body.modo === 'string' && body.modo.trim() ? body.modo.trim().slice(0, 50) : 'Supervivencia';
-
+  // 4. Modo de juego: Singleplayer o Multiplayer
+  const modo = typeof body.modo === 'string' && body.modo.trim()
+    ? body.modo.trim().slice(0, 50)
+    : 'Singleplayer';
   // 5. USA VPN: Forzar a 0 o 1
   const usaVpn = (body.usa_vpn === 1 || body.usa_vpn === '1' || body.usa_vpn === true) ? 1 : 0;
 
@@ -111,9 +133,10 @@ export async function POST(request) {
     const pool = getPool();
     const [resultado] = await pool.query(
       `INSERT INTO ranking
-        (username, puntos, modo, ip, pais, codigo_pais, usa_vpn, creado_en)
-       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+        (user_id, username, puntos, modo, ip, pais, codigo_pais, usa_vpn, creado_en)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
+        userId,
         username,
         puntos,
         modo,

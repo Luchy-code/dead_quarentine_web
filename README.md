@@ -11,6 +11,18 @@
 La página está en `public/index.html`; las APIs se ejecutan en Next.js y usan la
 conexión MySQL configurada por variables de entorno.
 
+## Sincronización de usuarios del juego
+
+Antes de desplegar las rutas actualizadas, ejecuta una vez
+`database/add_external_user_id.sql` en la base MySQL. La migración agrega el
+identificador externo `user_id` a `usuarios` y `ranking` sin cambiar los IDs
+internos existentes.
+
+El juego puede registrar o actualizar el nombre de un usuario con un `POST` a
+`/api/usuarios`, enviando `{ "user_id": "id-externo", "username": "Jugador" }`.
+Las nuevas puntuaciones pueden enviar también `user_id` a `/api/ranking`; así
+las actualizaciones de nombre se reflejan en sus registros históricos.
+
 ## Pruebas
 
 Ejecuta `npm test` para probar las APIs con una base de datos simulada, la

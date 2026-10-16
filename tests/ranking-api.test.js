@@ -24,7 +24,13 @@ describe('GET /api/ranking', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(rows);
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
-    expect(query).toHaveBeenCalledWith(expect.stringContaining('ORDER BY puntos DESC LIMIT ?'), [100]);
+    expect(query).toHaveBeenCalledWith(
+      expect.stringContaining('ORDER BY r.puntos DESC LIMIT ?'),
+      [100]
+    );
+    expect(query.mock.calls[0][0]).toContain('COALESCE(u.username, r.username) AS username');
+    expect(query.mock.calls[0][0]).toContain('LEFT JOIN usuarios u ON r.user_id = u.user_id');
+    expect(query.mock.calls[0][0]).toContain('r.user_id');
   });
 
   it('applies country, mode, VPN, search, and requested limit using parameters', async () => {
@@ -35,10 +41,10 @@ describe('GET /api/ranking', () => {
     ));
 
     const [sql, params] = query.mock.calls[0];
-    expect(sql).toContain('AND codigo_pais = ?');
-    expect(sql).toContain('AND modo = ?');
-    expect(sql).toContain('AND usa_vpn = 0');
-    expect(sql).toContain('AND username LIKE ?');
+    expect(sql).toContain('AND r.codigo_pais = ?');
+    expect(sql).toContain('AND r.modo = ?');
+    expect(sql).toContain('AND r.usa_vpn = 0');
+    expect(sql).toContain('AND COALESCE(u.username, r.username) LIKE ?');
     expect(params).toEqual(['AR', 'Multiplayer', '%Ana%', 25]);
   });
 
@@ -50,9 +56,9 @@ describe('GET /api/ranking', () => {
     ));
 
     const [sql, params] = query.mock.calls[0];
-    expect(sql).not.toContain('codigo_pais = ?');
-    expect(sql).not.toContain('modo = ?');
-    expect(sql).not.toContain('usa_vpn = 0');
+    expect(sql).not.toContain('r.codigo_pais = ?');
+    expect(sql).not.toContain('r.modo = ?');
+    expect(sql).not.toContain('r.usa_vpn = 0');
     expect(params).toEqual([100]);
   });
 
@@ -140,7 +146,7 @@ describe('POST /api/ranking', () => {
       id: 42
     });
     expect(query.mock.calls[0][1]).toEqual([
-      'Player', 0, 'Multiplayer', 'cloudflare-ip', 'AR', 'AR', 1
+      null, 'Player', 0, 'Multiplayer', 'cloudflare-ip', 'AR', 'AR', 1
     ]);
   });
 
@@ -155,7 +161,7 @@ describe('POST /api/ranking', () => {
     }));
 
     expect(query.mock.calls[0][1]).toEqual([
-      'Player', 25, 'Singleplayer', 'body-ip', 'Desconocido', null, null
+      null, 'Player', 25, 'Singleplayer', 'body-ip', 'Desconocido', null, null
     ]);
   });
 
@@ -174,7 +180,31 @@ describe('POST /api/ranking', () => {
 
     await POST(jsonRequest({ username: 'Player', puntos: 1, usa_vpn: vpnValue }));
 
-    expect(query.mock.calls[0][1][6]).toBe(expected);
+    expect(query.mock.calls[0][1][7]).toBe(expected);
+  });
+
+  it('stores an optional external user id with the score', async () => {
+    query.mockResolvedValueOnce([{ insertId: 5 }]);
+
+    await POST(jsonRequest({
+      user_id: ' external-123 ',
+      username: 'Player',
+      puntos: 10
+    }));
+
+    expect(query.mock.calls[0][0]).toContain('(user_id, username, puntos');
+    expect(query.mock.calls[0][1][0]).toBe('external-123');
+  });
+
+  it('rejects invalid external user ids', async () => {
+    const response = await POST(jsonRequest({
+      user_id: 12,
+      username: 'Player',
+      puntos: 10
+    }));
+
+    expect(response.status).toBe(400);
+    expect(query).not.toHaveBeenCalled();
   });
 
   it('returns a server error if inserting the score fails', async () => {
