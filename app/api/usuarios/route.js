@@ -4,9 +4,23 @@ export const dynamic = 'force-dynamic';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type'
 };
+
+export async function GET() {
+  try {
+    const [usuarios] = await getPool().query(
+      'SELECT id, username, creado_en, actualizado_en FROM usuarios ORDER BY id ASC'
+    );
+    return Response.json(usuarios, { headers: corsHeaders });
+  } catch (error) {
+    return Response.json(
+      { error: 'Error al obtener usuarios', detalle: error.sqlMessage || error.message },
+      { status: 500, headers: corsHeaders }
+    );
+  }
+}
 
 export async function POST(request) {
   let body;
@@ -17,7 +31,7 @@ export async function POST(request) {
   }
 
   const username = typeof body.username === 'string' ? body.username.trim().slice(0, 50) : '';
-  const userId = body.user_id ? String(body.user_id).trim() : null;
+  const rawUserId = body.user_id !== undefined && body.user_id !== null ? String(body.user_id).trim() : null;
 
   if (!username) {
     return Response.json({ error: 'El campo username es obligatorio' }, { status: 400, headers: corsHeaders });
@@ -26,29 +40,54 @@ export async function POST(request) {
   try {
     const pool = getPool();
 
-    // Caso A: El jugador ya tiene un user_id asignado -> Actualizamos su nombre
-    if (userId) {
-      await pool.query(
-        `UPDATE usuarios 
-         SET username = ?, actualizado_en = NOW() 
-         WHERE id = ?`,
-        [username, userId]
+    // CASO 1: Unity nos mandó un user_id (sea número o string)
+    if (rawUserId) {
+      // Verificamos si existe ese id en usuarios
+      const [existeUsuario] = await pool.query(
+        `SELECT id, username FROM usuarios WHERE id = ? LIMIT 1`,
+        [rawUserId]
       );
 
-      // Sincronizar también su nombre en sus registros de ranking
-      await pool.query(
-        `UPDATE ranking SET username = ? WHERE user_id = ?`,
-        [username, userId]
-      );
+      if (existeUsuario.length > 0) {
+        // Actualizar el nombre del usuario
+        await pool.query(
+          `UPDATE usuarios 
+           SET username = ?, actualizado_en = NOW() 
+           WHERE id = ?`,
+          [username, rawUserId]
+        );
 
-      return Response.json({ 
-        message: 'Usuario actualizado', 
-        user_id: userId, 
-        username 
-      }, { status: 200, headers: corsHeaders });
+        // Actualizar automáticamente todas las partidas históricas en ranking
+        await pool.query(
+          `UPDATE ranking 
+           SET username = ? 
+           WHERE user_id = ?`,
+          [username, rawUserId]
+        );
+
+        return Response.json({ 
+          message: 'Usuario y partidas actualizados con éxito', 
+          user_id: rawUserId, 
+          username 
+        }, { status: 200, headers: corsHeaders });
+      } else {
+        // Si mandó un ID pero no está en la tabla (por ejemplo si la tabla usa VARCHAR para id)
+        const [insertado] = await pool.query(
+          `INSERT INTO usuarios (id, username, creado_en, actualizado_en)
+           VALUES (?, ?, NOW(), NOW())
+           ON DUPLICATE KEY UPDATE username = VALUES(username), actualizado_en = NOW()`,
+          [rawUserId, username]
+        );
+
+        return Response.json({ 
+          message: 'Usuario creado con ID especificado', 
+          user_id: rawUserId, 
+          username 
+        }, { status: 200, headers: corsHeaders });
+      }
     }
 
-    // Caso B: Primer ingreso -> Insertar o recuperar el id
+    // CASO 2: No viene user_id (primer inicio o usuario nuevo)
     const [existentes] = await pool.query(
       `SELECT id FROM usuarios WHERE username = ? LIMIT 1`,
       [username]
@@ -67,7 +106,7 @@ export async function POST(request) {
 
     return Response.json({ 
       message: 'Usuario registrado', 
-      user_id: idFinal, 
+      user_id: String(idFinal), 
       username 
     }, { status: 200, headers: corsHeaders });
 
