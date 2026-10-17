@@ -15,6 +15,15 @@ beforeEach(() => {
 });
 
 describe('GET /api/ranking', () => {
+  it('marks ranking responses as non-cacheable', async () => {
+    query.mockResolvedValueOnce([[]]);
+
+    const response = await GET(new Request('http://localhost/api/ranking'));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+  });
+
   it('returns ranking rows and CORS headers', async () => {
     const rows = [{ id: 1, username: 'Luna', puntos: 12000 }];
     query.mockResolvedValueOnce([rows]);
@@ -24,6 +33,7 @@ describe('GET /api/ranking', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(rows);
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
+    expect(response.headers.get('cache-control')).toBe('no-store');
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining('ORDER BY r.puntos DESC LIMIT ?'),
       [100]
@@ -79,6 +89,7 @@ describe('GET /api/ranking', () => {
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({ error: 'Error al obtener ranking' });
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
+    expect(response.headers.get('cache-control')).toBe('no-store');
     expect(errorSpy).toHaveBeenCalledOnce();
   });
 });

@@ -125,7 +125,7 @@ describe('dashboard inline JavaScript', () => {
 
     expect(window.fetch).toHaveBeenCalledWith(expect.objectContaining({
       pathname: '/api/ranking'
-    }));
+    }), { cache: 'no-store' });
     expect(window.document.querySelectorAll('#podium-container > div')).toHaveLength(3);
     expect(window.document.querySelectorAll('#ranking-tbody tr')).toHaveLength(4);
     expect(window.document.querySelector('#ranking-tbody').textContent).toContain('Player4');
@@ -162,6 +162,7 @@ describe('dashboard inline JavaScript', () => {
     await window.cargarRanking();
 
     const requestUrl = new URL(window.fetch.mock.calls[0][0]);
+    expect(window.fetch.mock.calls[0][1]).toEqual({ cache: 'no-store' });
     expect(requestUrl.pathname).toBe('/api/ranking');
     expect(requestUrl.searchParams.get('search')).toBe('Alice');
     expect(requestUrl.searchParams.get('country')).toBe('AR');
