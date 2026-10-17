@@ -1,0 +1,2 @@
+ALTER TABLE ranking
+  ADD COLUMN dificultad VARCHAR(50) NULL AFTER modo;

@@ -76,7 +76,23 @@ describe('getPool', () => {
     getPool();
 
     expect(createPool).toHaveBeenCalledWith(expect.objectContaining({
-      ssl: { ca: 'test-ca-certificate' }
+      ssl: { ca: 'test-ca-certificate', rejectUnauthorized: true }
+    }));
+  });
+
+  it('converts escaped CA newlines to PEM line breaks', async () => {
+    Object.entries(requiredEnvironment).forEach(([key, value]) => vi.stubEnv(key, value));
+    vi.stubEnv('MYSQL_SSL_CA', '-----BEGIN CERTIFICATE-----\\ncertificate-data\\n-----END CERTIFICATE-----');
+    createPool.mockReturnValue({ query: vi.fn() });
+    const { getPool } = await loadMysqlModule();
+
+    getPool();
+
+    expect(createPool).toHaveBeenCalledWith(expect.objectContaining({
+      ssl: {
+        ca: '-----BEGIN CERTIFICATE-----\ncertificate-data\n-----END CERTIFICATE-----',
+        rejectUnauthorized: true
+      }
     }));
   });
 });

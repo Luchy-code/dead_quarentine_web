@@ -39,27 +39,87 @@ describe('static page HTML and CSS', () => {
       'rank-search',
       'rank-country',
       'rank-mode',
-      'rank-vpn',
       'podium-container',
       'ranking-tbody',
       'logros-container'
     ]) {
       expect(document.getElementById(id), `missing #${id}`).toBeTruthy();
     }
+    expect(document.getElementById('rank-vpn')).toBeNull();
+    expect(document.querySelector('#vista-ranking thead').textContent).not.toMatch(/TELEMETRÍA IP|VPN/i);
+    expect(document.querySelector('#vista-ranking thead').textContent).toContain('DIFICULTAD');
     expect(document.querySelector('html').getAttribute('lang')).toBe('es');
 
     dom.window.close();
   });
 
-  it('ranking page contains usable search, country, VPN, and reset controls', async () => {
+  it('ranking page contains usable filters without showing IP or VPN telemetry', async () => {
     const dom = await createPage('ranking.html');
     const { document } = dom.window;
 
     expect(document.getElementById('filter-search')?.type).toBe('text');
     expect(document.getElementById('filter-country')?.tagName).toBe('SELECT');
-    expect(document.getElementById('filter-vpn')?.type).toBe('checkbox');
+    expect(document.getElementById('filter-difficulty')?.tagName).toBe('SELECT');
+    expect(document.getElementById('filter-vpn')).toBeNull();
     expect(document.getElementById('reset-filters')?.tagName).toBe('BUTTON');
-    expect(document.querySelectorAll('#ranking-table-body tr').length).toBeGreaterThan(0);
+    expect(document.querySelector('thead').textContent).not.toMatch(/VPN|TELEMETRÍA IP/i);
+    expect(document.body.textContent).not.toMatch(/SOLO SIN VPN/i);
+    expect(document.querySelectorAll('#ranking-table-body tr')).toHaveLength(1);
+    expect(document.querySelector('#ranking-table-body').textContent)
+      .toContain('Cargando puntajes desde la base de datos');
+    expect(document.querySelector('#ranking-table-body').textContent)
+      .not.toContain('Kronos_ES');
+
+    dom.window.close();
+  });
+
+  it('loads ranking rows and mode/difficulty filters from the ranking API', async () => {
+    const dom = await createPage('ranking.html');
+    const { window } = dom;
+    window.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        rows: [{
+          puesto: 1,
+          username: 'Jugador DB',
+          puntos: 900,
+          modo: 'Horda',
+          dificultad: 'Pesadilla',
+          pais: 'Argentina',
+          codigo_pais: 'AR',
+          usa_vpn: 0,
+          creado_en: '2026-10-17T10:00:00.000Z'
+        }],
+        top: [{
+          username: 'Jugador DB',
+          puntos: 900,
+          modo: 'Horda',
+          dificultad: 'Pesadilla',
+          pais: 'Argentina',
+          codigo_pais: 'AR'
+        }],
+        total: 1,
+        page: 1,
+        limit: 10,
+        modos: ['Horda'],
+        dificultades: ['Pesadilla'],
+        paises: [{ codigo_pais: 'AR', pais: 'Argentina' }]
+      })
+    });
+    executeInlineScript(dom, (script) => script.includes("url.searchParams.set('view', 'table')"));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const requestUrl = new URL(window.fetch.mock.calls[0][0]);
+    expect(requestUrl.pathname).toBe('/api/ranking');
+    expect(requestUrl.searchParams.get('view')).toBe('table');
+    expect(window.document.querySelector('#ranking-table-body').textContent).toContain('Jugador DB');
+    expect(window.document.querySelector('#ranking-table-body').textContent).toContain('Pesadilla');
+    expect(window.document.querySelector('#ranking-table-body').textContent).not.toMatch(/VPN|TELEMETRÍA IP/i);
+    expect(window.document.querySelector('#ranking-podium').textContent).toContain('Horda');
+    expect(window.document.querySelector('#ranking-podium').textContent).not.toMatch(/VPN|TELEMETRÍA IP/i);
+    expect(window.document.querySelector('#filter-mode').textContent).toContain('Horda');
+    expect(window.document.querySelector('#filter-difficulty').textContent).toContain('Pesadilla');
+    expect(window.document.querySelector('#ranking-summary').textContent).toContain('DE 1 REGISTROS');
 
     dom.window.close();
   });
@@ -114,6 +174,7 @@ describe('dashboard inline JavaScript', () => {
       username: `Player${index + 1}`,
       puntos: 1000 - index,
       modo: 'Singleplayer',
+      dificultad: 'Normal',
       pais: 'Argentina',
       codigo_pais: 'AR',
       usa_vpn: 0,
@@ -129,6 +190,8 @@ describe('dashboard inline JavaScript', () => {
     expect(window.document.querySelectorAll('#podium-container > div')).toHaveLength(3);
     expect(window.document.querySelectorAll('#ranking-tbody tr')).toHaveLength(4);
     expect(window.document.querySelector('#ranking-tbody').textContent).toContain('Player4');
+    expect(window.document.querySelector('#ranking-tbody').textContent).toContain('Normal');
+    expect(window.document.querySelector('#podium-container').textContent).toContain('Normal');
 
     dom.window.close();
   });
@@ -157,7 +220,6 @@ describe('dashboard inline JavaScript', () => {
     window.document.getElementById('rank-search').value = 'Alice';
     window.document.getElementById('rank-country').value = 'AR';
     window.document.getElementById('rank-mode').value = 'Multiplayer';
-    window.document.getElementById('rank-vpn').checked = true;
 
     await window.cargarRanking();
 
@@ -167,7 +229,7 @@ describe('dashboard inline JavaScript', () => {
     expect(requestUrl.searchParams.get('search')).toBe('Alice');
     expect(requestUrl.searchParams.get('country')).toBe('AR');
     expect(requestUrl.searchParams.get('mode')).toBe('Multiplayer');
-    expect(requestUrl.searchParams.get('vpnOnly')).toBe('true');
+    expect(requestUrl.searchParams.has('vpnOnly')).toBe(false);
 
     dom.window.close();
   });
@@ -246,38 +308,65 @@ describe('dashboard inline JavaScript', () => {
 });
 
 describe('static ranking inline JavaScript', () => {
-  it('filters table rows by text, country, and VPN, then resets all controls', async () => {
+  function rankingResponse() {
+    return {
+      ok: true,
+      json: async () => ({
+        rows: [{
+          puesto: 1,
+          username: 'Luna',
+          puntos: 100,
+          modo: 'Horda',
+          dificultad: 'Pesadilla',
+          pais: 'Argentina',
+          codigo_pais: 'AR',
+          usa_vpn: 0,
+          creado_en: '2026-10-17T10:00:00.000Z'
+        }],
+        top: [],
+        total: 1,
+        page: 1,
+        limit: 10,
+        modos: ['Horda'],
+        dificultades: ['Pesadilla'],
+        paises: [{ codigo_pais: 'AR', pais: 'Argentina' }]
+      })
+    };
+  }
+
+  it('queries filtered ranking values and reloads after reset', async () => {
     const dom = await createPage('ranking.html');
     const { window } = dom;
-    executeInlineScript(dom, (script) => script.includes('function applyFilters'));
-    window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
+    window.fetch = vi.fn().mockResolvedValue(rankingResponse());
+    executeInlineScript(dom, (script) => script.includes("url.searchParams.set('view', 'table')"));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     const search = window.document.getElementById('filter-search');
     const country = window.document.getElementById('filter-country');
-    const vpn = window.document.getElementById('filter-vpn');
+    const mode = window.document.getElementById('filter-mode');
+    const difficulty = window.document.getElementById('filter-difficulty');
     const reset = window.document.getElementById('reset-filters');
-    const rows = [...window.document.querySelectorAll('#ranking-table-body tr')];
-    expect(rows.length).toBeGreaterThan(1);
 
-    search.value = 'no-such-player';
-    search.dispatchEvent(new window.Event('input'));
-    expect(rows.every((row) => row.style.display === 'none')).toBe(true);
-
-    search.value = '';
-    country.value = 'ES';
+    country.value = 'AR';
+    mode.value = 'Horda';
+    difficulty.value = 'Pesadilla';
     country.dispatchEvent(new window.Event('change'));
-    expect(rows.some((row) => row.style.display === '')).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
-    vpn.checked = true;
-    vpn.dispatchEvent(new window.Event('change'));
-    expect(rows.filter((row) => row.style.display !== 'none')
-      .every((row) => !row.textContent.toLowerCase().includes('vpn / proxy detectada'))).toBe(true);
+    const requestUrl = new URL(window.fetch.mock.calls.at(-1)[0]);
+    expect(requestUrl.searchParams.get('country')).toBe('AR');
+    expect(requestUrl.searchParams.get('mode')).toBe('Horda');
+    expect(requestUrl.searchParams.get('dificultad')).toBe('Pesadilla');
+    expect(requestUrl.searchParams.has('vpnOnly')).toBe(false);
+    expect(window.document.querySelector('#ranking-table-body').textContent).toContain('Luna');
 
     reset.click();
     expect(search.value).toBe('');
     expect(country.value).toBe('ALL');
-    expect(vpn.checked).toBe(false);
-    expect(rows.every((row) => row.style.display === '')).toBe(true);
+    expect(mode.value).toBe('ALL');
+    expect(difficulty.value).toBe('ALL');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(new URL(window.fetch.mock.calls.at(-1)[0]).searchParams.has('country')).toBe(false);
 
     dom.window.close();
   });
@@ -285,8 +374,8 @@ describe('static ranking inline JavaScript', () => {
   it('focuses and selects the search field for Ctrl+K and Meta+K', async () => {
     const dom = await createPage('ranking.html');
     const { window } = dom;
-    executeInlineScript(dom, (script) => script.includes('function applyFilters'));
-    window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
+    window.fetch = vi.fn().mockResolvedValue(rankingResponse());
+    executeInlineScript(dom, (script) => script.includes("url.searchParams.set('view', 'table')"));
     const search = window.document.getElementById('filter-search');
     const selectSpy = vi.spyOn(search, 'select');
 

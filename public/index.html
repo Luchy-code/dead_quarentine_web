@@ -111,10 +111,6 @@
             <option value="Singleplayer">SINGLEPLAYER</option>
             <option value="Multiplayer">MULTIPLAYER</option>
           </select>
-          <label class="flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded cursor-pointer border border-surface-variant">
-            <input id="rank-vpn" type="checkbox" class="rounded bg-surface-container-lowest text-tertiary">
-            <span>SIN VPN</span>
-          </label>
         </div>
       </div>
 
@@ -131,9 +127,9 @@
               <th class="p-3 text-center">POS</th>
               <th class="p-3">SUPERVIVIENTE</th>
               <th class="p-3">MODO</th>
+              <th class="p-3">DIFICULTAD</th>
               <th class="p-3 text-right">PUNTOS</th>
               <th class="p-3">ORIGEN / PAÍS</th>
-              <th class="p-3">TELEMETRÍA IP / VPN</th>
               <th class="p-3">FECHA</th>
             </tr>
           </thead>
@@ -194,13 +190,11 @@
       const search = document.getElementById('rank-search').value;
       const country = document.getElementById('rank-country').value;
       const mode = document.getElementById('rank-mode').value;
-      const vpnOnly = document.getElementById('rank-vpn').checked;
 
       const url = new URL('/api/ranking', window.location.origin);
       if (search) url.searchParams.append('search', search);
       if (country !== 'ALL') url.searchParams.append('country', country);
       if (mode !== 'ALL') url.searchParams.append('mode', mode);
-      if (vpnOnly) url.searchParams.append('vpnOnly', 'true');
 
       try {
         const res = await fetch(url, { cache: 'no-store' });
@@ -247,7 +241,7 @@
               </div>
               <div class="text-[11px] text-outline font-label-sm flex justify-between">
                 <span>MODO: ${item.modo}</span>
-                <span>${item.usa_vpn ? '⚠️ VPN' : '🛡️ SIN VPN'}</span>
+                <span>DIFICULTAD: ${item.dificultad || '--'}</span>
               </div>
             </div>
           `;
@@ -260,13 +254,9 @@
               <td class="p-3 text-center font-bold text-primary">#${idx + 1}</td>
               <td class="p-3 font-bold uppercase text-on-surface">${row.username}</td>
               <td class="p-3 text-outline">${row.modo}</td>
+              <td class="p-3 text-outline">${row.dificultad || '--'}</td>
               <td class="p-3 text-right font-bold text-secondary-fixed-dim">${Number(row.puntos).toLocaleString()}</td>
               <td class="p-3">${row.pais} (${row.codigo_pais})</td>
-              <td class="p-3">
-                ${row.usa_vpn 
-                  ? '<span class="text-error flex items-center gap-1 font-bold">⚠️ VPN DETECTADA</span>' 
-                  : '<span class="text-tertiary flex items-center gap-1 font-bold">🛡️ SIN VPN</span>'}
-              </td>
               <td class="p-3 text-outline">${new Date(row.creado_en).toLocaleDateString()}</td>
             </tr>
           `;
@@ -364,7 +354,6 @@
     document.getElementById('rank-search').addEventListener('input', cargarRanking);
     document.getElementById('rank-country').addEventListener('change', cargarRanking);
     document.getElementById('rank-mode').addEventListener('change', cargarRanking);
-    document.getElementById('rank-vpn').addEventListener('change', cargarRanking);
 
     // Carga inicial
     document.addEventListener('DOMContentLoaded', () => {

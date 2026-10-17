@@ -19,10 +19,29 @@ Antes de desplegar las rutas actualizadas, ejecuta una vez
 identificador externo `user_id` a `usuarios` y `ranking` sin cambiar los IDs
 internos existentes.
 
+Para guardar dificultad por partida, ejecuta también una vez
+`database/add_ranking_difficulty.sql`. El ranking mostrará modo y dificultad
+desde cada registro guardado en la base.
+
 El juego puede registrar o actualizar el nombre de un usuario con un `POST` a
 `/api/usuarios`, enviando `{ "user_id": "id-externo", "username": "Jugador" }`.
-Las nuevas puntuaciones pueden enviar también `user_id` a `/api/ranking`; así
-las actualizaciones de nombre se reflejan en sus registros históricos.
+Las nuevas puntuaciones pueden enviar `user_id`, `modo` y `dificultad` a
+`/api/ranking`; así las actualizaciones de nombre se reflejan en sus registros
+históricos. Por ejemplo, al terminar una partida:
+
+```js
+await fetch('/api/ranking', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    user_id: 'id-externo',
+    username: 'Jugador',
+    puntos: 1200,
+    modo: 'Horda',
+    dificultad: 'Pesadilla'
+  })
+});
+```
 
 ## Pruebas
 
@@ -42,8 +61,12 @@ de Aiven: `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD` y
 `MYSQL_DATABASE`. La aplicación los lee directamente de `process.env`; los
 secretos de Aiven no se comparten automáticamente con Wasmer. Para verificar el
 certificado TLS de Aiven, configura además `MYSQL_SSL_CA` con el contenido de su
-certificado CA. Si no está definido, se mantiene la conexión TLS sin validación
-del certificado por compatibilidad.
+certificado CA. En `.env.local`, encierra el certificado PEM completo entre
+comillas dobles para conservar los saltos de línea; en Wasmer, pega el PEM
+completo como secreto multilínea o usa `\n` entre las líneas. La aplicación
+convierte los `\n` escapados y verifica la cadena del certificado cuando se
+configura la CA. Si el certificado no se valida, descarga la CA actual desde
+Aiven y actualiza `MYSQL_SSL_CA`; no desactives la verificación TLS.
 
 Guarda los secretos en Wasmer y reinicia o vuelve a desplegar el servicio para
 que Node.js los reciba. No agregues credenciales al código ni a `.env.example`.

@@ -14,20 +14,22 @@ export async function GET(request) {
   const currentUserId = searchParams.get('user_id') ? String(searchParams.get('user_id')).trim() : '';
   const country = searchParams.get('country');
   const mode = searchParams.get('mode');
+  const difficulty = searchParams.get('dificultad');
   const vpnOnly = searchParams.get('vpnOnly');
   const search = searchParams.get('search');
+  const tableView = searchParams.get('view') === 'table';
 
   try {
     const pool = getPool();
 
     const score = searchParams.get('score');
-if (score !== null && score !== '' && Number.isFinite(Number(score))) {
-  const [r] = await pool.query(
-    'SELECT COUNT(*) + 1 AS puesto FROM ranking WHERE puntos >= ?',
-    [Number(score)]
-  );
-  return Response.json({ puesto: Number(r[0].puesto) }, { headers: rankingHeaders });
-}
+    if (score !== null && score !== '' && Number.isFinite(Number(score))) {
+      const [r] = await pool.query(
+        'SELECT COUNT(*) + 1 AS puesto FROM ranking WHERE puntos >= ?',
+        [Number(score)]
+      );
+      return Response.json({ puesto: Number(r[0].puesto) }, { headers: rankingHeaders });
+    }
 
     // Filtros dinámicos ranking_general
     let whereConditions = 'WHERE 1=1';
@@ -41,12 +43,79 @@ if (score !== null && score !== '' && Number.isFinite(Number(score))) {
       whereConditions += ' AND r.modo = ?';
       params.push(mode);
     }
+    if (difficulty && difficulty !== 'ALL' && difficulty !== 'Todos') {
+      whereConditions += ' AND r.dificultad = ?';
+      params.push(difficulty);
+    }
     if (vpnOnly === 'true') {
       whereConditions += ' AND r.usa_vpn = 0';
     }
     if (search) {
-      whereConditions += ' AND COALESCE(u.username, r.username) LIKE ?';
-      params.push(`%${search}%`);
+      whereConditions += ' AND (COALESCE(u.username, r.username) LIKE ? OR r.user_id LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    if (tableView) {
+      const requestedPage = Number(searchParams.get('page'));
+      const requestedLimit = Number(searchParams.get('limit'));
+      const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+      const limit = Number.isInteger(requestedLimit) && requestedLimit > 0
+        ? Math.min(requestedLimit, 100)
+        : 10;
+      const offset = (page - 1) * limit;
+      const from = `
+        FROM ranking r
+        LEFT JOIN usuarios u ON r.user_id = u.user_id
+        ${whereConditions}
+      `;
+      const [rows] = await pool.query(
+        `SELECT ROW_NUMBER() OVER (ORDER BY r.puntos DESC, r.creado_en ASC, r.id ASC) AS puesto,
+                r.id, COALESCE(u.username, r.username) AS username, r.user_id,
+                r.puntos, r.modo, r.dificultad, r.pais, r.codigo_pais,
+                r.creado_en
+         ${from}
+         ORDER BY r.puntos DESC, r.creado_en ASC, r.id ASC
+         LIMIT ? OFFSET ?`,
+        [...params, limit, offset]
+      );
+      const [[{ total }]] = await pool.query(
+        `SELECT COUNT(*) AS total ${from}`,
+        params
+      );
+      const [top] = await pool.query(
+        `SELECT COALESCE(u.username, r.username) AS username, r.user_id, r.puntos,
+                r.modo, r.dificultad, r.pais, r.codigo_pais, r.creado_en
+         ${from}
+         ORDER BY r.puntos DESC, r.creado_en ASC, r.id ASC
+         LIMIT 3`,
+        params
+      );
+      const [facets] = await pool.query(
+        `SELECT DISTINCT modo, dificultad, codigo_pais, pais
+         FROM ranking
+         WHERE modo IS NOT NULL OR dificultad IS NOT NULL
+               OR codigo_pais IS NOT NULL OR pais IS NOT NULL
+         ORDER BY modo, dificultad, codigo_pais`
+      );
+      const paises = [...new Map(
+        facets
+          .filter((row) => row.codigo_pais)
+          .map((row) => [row.codigo_pais, { codigo_pais: row.codigo_pais, pais: row.pais }])
+      ).values()];
+
+      return Response.json(
+        {
+          rows,
+          top,
+          total: Number(total),
+          page,
+          limit,
+          modos: [...new Set(facets.map((row) => row.modo).filter(Boolean))],
+          dificultades: [...new Set(facets.map((row) => row.dificultad).filter(Boolean))],
+          paises
+        },
+        { headers: rankingHeaders }
+      );
     }
 
     // Query CTE oiporúva UNION ALL: Top 5 + '...' + Ne récord iporãvéva
@@ -59,12 +128,13 @@ if (score !== null && score !== '' && Number.isFinite(Number(score))) {
           r.user_id,
           r.puntos,
           r.modo,
+          r.dificultad,
           r.pais,
           r.codigo_pais,
           r.usa_vpn,
           r.creado_en
         FROM ranking r
-        LEFT JOIN usuarios u ON r.user_id = u.id
+        LEFT JOIN usuarios u ON r.user_id = u.user_id
         ${whereConditions}
       ),
       top5 AS (
@@ -84,6 +154,7 @@ if (score !== null && score !== '' && Number.isFinite(Number(score))) {
         user_id, 
         puntos, 
         modo, 
+        dificultad,
         pais, 
         codigo_pais, 
         usa_vpn, 
@@ -102,6 +173,7 @@ if (score !== null && score !== '' && Number.isFinite(Number(score))) {
         NULL AS user_id, 
         0 AS puntos, 
         '...' AS modo, 
+        '...' AS dificultad,
         '...' AS pais, 
         '...' AS codigo_pais, 
         0 AS usa_vpn, 
@@ -121,6 +193,7 @@ if (score !== null && score !== '' && Number.isFinite(Number(score))) {
         user_id, 
         puntos, 
         modo, 
+        dificultad,
         pais, 
         codigo_pais, 
         usa_vpn, 
@@ -206,6 +279,9 @@ export async function POST(request) {
     ? body.pais.trim().slice(0, 100)
     : codigoPais || 'Desconocido';
   const modo = typeof body.modo === 'string' && body.modo.trim() ? body.modo.trim().slice(0, 50) : 'Singleplayer';
+  const dificultad = typeof body.dificultad === 'string' && body.dificultad.trim()
+    ? body.dificultad.trim().slice(0, 50)
+    : null;
   const usaVpn = body.usa_vpn === true || body.usa_vpn === 1 ||
     body.usa_vpn === '1' || body.usa_vpn === 'true'
     ? 1
@@ -220,7 +296,7 @@ export async function POST(request) {
     // Sincronizar peteĩha usuarios reheve oimérõ ou userId
     if (userId) {
       await pool.query(
-        `INSERT INTO usuarios (id, username, creado_en, actualizado_en)
+        `INSERT INTO usuarios (user_id, username, creado_en, actualizado_en)
          VALUES (?, ?, NOW(), NOW())
          ON DUPLICATE KEY UPDATE username = VALUES(username), actualizado_en = NOW()`,
         [userId, username]
@@ -229,9 +305,9 @@ export async function POST(request) {
 
     const [resultado] = await pool.query(
       `INSERT INTO ranking
-        (user_id, username, puntos, modo, ip, pais, codigo_pais, usa_vpn, creado_en)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [userId, username, puntos, modo, ip, pais, codigoPais, usaVpn]
+        (user_id, username, puntos, modo, dificultad, ip, pais, codigo_pais, usa_vpn, creado_en)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [userId, username, puntos, modo, dificultad, ip, pais, codigoPais, usaVpn]
     );
 
     return Response.json(

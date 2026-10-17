@@ -34,31 +34,30 @@ describe('GET /api/ranking', () => {
     expect(await response.json()).toEqual(rows);
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
     expect(response.headers.get('cache-control')).toBe('no-store');
-    expect(query).toHaveBeenCalledWith(
-      expect.stringContaining('ORDER BY r.puntos DESC LIMIT ?'),
-      [100]
-    );
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('WITH ranking_general'), ['']);
     expect(query.mock.calls[0][0]).toContain('COALESCE(u.username, r.username) AS username');
     expect(query.mock.calls[0][0]).toContain('LEFT JOIN usuarios u ON r.user_id = u.user_id');
     expect(query.mock.calls[0][0]).toContain('r.user_id');
+    expect(query.mock.calls[0][0]).toContain('r.dificultad');
   });
 
-  it('applies country, mode, VPN, search, and requested limit using parameters', async () => {
+  it('applies country, mode, difficulty, VPN, and search using parameters', async () => {
     query.mockResolvedValueOnce([[]]);
 
     await GET(new Request(
-      'http://localhost/api/ranking?country=AR&mode=Multiplayer&vpnOnly=true&search=Ana&limit=25'
+      'http://localhost/api/ranking?country=AR&mode=Multiplayer&dificultad=Pesadilla&vpnOnly=true&search=Ana'
     ));
 
     const [sql, params] = query.mock.calls[0];
     expect(sql).toContain('AND r.codigo_pais = ?');
     expect(sql).toContain('AND r.modo = ?');
+    expect(sql).toContain('AND r.dificultad = ?');
     expect(sql).toContain('AND r.usa_vpn = 0');
-    expect(sql).toContain('AND COALESCE(u.username, r.username) LIKE ?');
-    expect(params).toEqual(['AR', 'Multiplayer', '%Ana%', 25]);
+    expect(sql).toContain('COALESCE(u.username, r.username) LIKE ? OR r.user_id LIKE ?');
+    expect(params).toEqual(['AR', 'Multiplayer', 'Pesadilla', '%Ana%', '%Ana%', '']);
   });
 
-  it('ignores ALL filters and caps limits at 100', async () => {
+  it('ignores ALL filters and limits the regular ranking to five rows', async () => {
     query.mockResolvedValueOnce([[]]);
 
     await GET(new Request(
@@ -69,15 +68,48 @@ describe('GET /api/ranking', () => {
     expect(sql).not.toContain('r.codigo_pais = ?');
     expect(sql).not.toContain('r.modo = ?');
     expect(sql).not.toContain('r.usa_vpn = 0');
-    expect(params).toEqual([100]);
+    expect(sql).toContain('LIMIT 5');
+    expect(params).toEqual(['']);
   });
 
-  it.each(['0', '-1', 'invalid', ''])('uses the default limit for invalid limit %j', async (limit) => {
-    query.mockResolvedValueOnce([[]]);
+  it('returns paginated database rows, top three, and filter options in table view', async () => {
+    const rows = [{ id: 12, username: 'Luna', puntos: 12000, dificultad: 'Pesadilla' }];
+    const top = [{ username: 'Luna', puntos: 12000, dificultad: 'Pesadilla' }];
+    const facets = [
+      { modo: 'Horda', dificultad: 'Pesadilla', codigo_pais: 'AR', pais: 'Argentina' },
+      { modo: 'Rondas', dificultad: 'Normal', codigo_pais: 'AR', pais: 'Argentina' }
+    ];
+    query
+      .mockResolvedValueOnce([rows])
+      .mockResolvedValueOnce([[{ total: 51 }]])
+      .mockResolvedValueOnce([top])
+      .mockResolvedValueOnce([facets]);
 
-    await GET(new Request(`http://localhost/api/ranking?limit=${limit}`));
+    const response = await GET(new Request(
+      'http://localhost/api/ranking?view=table&page=3&limit=25&country=AR&mode=Horda&dificultad=Pesadilla&vpnOnly=true&search=Luna'
+    ));
 
-    expect(query.mock.calls[0][1]).toEqual([100]);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      rows,
+      top,
+      total: 51,
+      page: 3,
+      limit: 25,
+      modos: ['Horda', 'Rondas'],
+      dificultades: ['Pesadilla', 'Normal'],
+      paises: [{ codigo_pais: 'AR', pais: 'Argentina' }]
+    });
+    expect(query).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('r.puntos DESC, r.creado_en ASC, r.id ASC'),
+      ['AR', 'Horda', 'Pesadilla', '%Luna%', '%Luna%', 25, 50]
+    );
+    expect(query).toHaveBeenNthCalledWith(2, expect.stringContaining('COUNT(*) AS total'), [
+      'AR', 'Horda', 'Pesadilla', '%Luna%', '%Luna%'
+    ]);
+    expect(query.mock.calls[0][0]).toContain('r.dificultad');
+    expect(query.mock.calls[0][0]).toContain('LIMIT ? OFFSET ?');
   });
 
   it('returns a server error if the database query fails', async () => {
@@ -87,7 +119,7 @@ describe('GET /api/ranking', () => {
     const response = await GET(new Request('http://localhost/api/ranking'));
 
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({ error: 'Error al obtener ranking' });
+    expect(await response.json()).toMatchObject({ error: 'Error al obtener ranking' });
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(errorSpy).toHaveBeenCalledOnce();
@@ -139,6 +171,7 @@ describe('POST /api/ranking', () => {
       username: '  Player  ',
       puntos: '0',
       modo: '  Multiplayer ',
+      dificultad: '  Pesadilla ',
       pais: ' ',
       ip: 'body-ip',
       codigo_pais: 'BR',
@@ -157,7 +190,7 @@ describe('POST /api/ranking', () => {
       id: 42
     });
     expect(query.mock.calls[0][1]).toEqual([
-      null, 'Player', 0, 'Multiplayer', 'cloudflare-ip', 'AR', 'AR', 1
+      null, 'Player', 0, 'Multiplayer', 'Pesadilla', 'cloudflare-ip', 'AR', 'AR', 1
     ]);
   });
 
@@ -172,7 +205,7 @@ describe('POST /api/ranking', () => {
     }));
 
     expect(query.mock.calls[0][1]).toEqual([
-      null, 'Player', 25, 'Singleplayer', 'body-ip', 'Desconocido', null, null
+      null, 'Player', 25, 'Singleplayer', null, 'body-ip', 'Desconocido', null, null
     ]);
   });
 
@@ -191,11 +224,11 @@ describe('POST /api/ranking', () => {
 
     await POST(jsonRequest({ username: 'Player', puntos: 1, usa_vpn: vpnValue }));
 
-    expect(query.mock.calls[0][1][7]).toBe(expected);
+    expect(query.mock.calls[0][1][8]).toBe(expected);
   });
 
   it('stores an optional external user id with the score', async () => {
-    query.mockResolvedValueOnce([{ insertId: 5 }]);
+    query.mockResolvedValueOnce([{}]).mockResolvedValueOnce([{ insertId: 5 }]);
 
     await POST(jsonRequest({
       user_id: ' external-123 ',
@@ -203,8 +236,10 @@ describe('POST /api/ranking', () => {
       puntos: 10
     }));
 
-    expect(query.mock.calls[0][0]).toContain('(user_id, username, puntos');
-    expect(query.mock.calls[0][1][0]).toBe('external-123');
+    expect(query.mock.calls[0][0]).toContain('INSERT INTO usuarios (user_id, username');
+    expect(query.mock.calls[1][0]).toContain('(user_id, username, puntos');
+    expect(query.mock.calls[1][0]).toContain('dificultad');
+    expect(query.mock.calls[1][1][0]).toBe('external-123');
   });
 
   it('rejects invalid external user ids', async () => {
@@ -225,7 +260,7 @@ describe('POST /api/ranking', () => {
     const response = await POST(jsonRequest({ username: 'Player', puntos: 1 }));
 
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({ error: 'Error al insertar en la base de datos' });
+    expect(await response.json()).toMatchObject({ error: 'Error al insertar en la base de datos' });
   });
 });
 
