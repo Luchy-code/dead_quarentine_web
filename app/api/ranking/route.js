@@ -20,7 +20,16 @@ export async function GET(request) {
   try {
     const pool = getPool();
 
-    // Filtros dinámicos ranking_general-pe g̃uarã
+    const score = searchParams.get('score');
+if (score !== null && score !== '' && Number.isFinite(Number(score))) {
+  const [r] = await pool.query(
+    'SELECT COUNT(*) + 1 AS puesto FROM ranking WHERE puntos >= ?',
+    [Number(score)]
+  );
+  return Response.json({ puesto: Number(r[0].puesto) }, { headers: rankingHeaders });
+}
+
+    // Filtros dinámicos ranking_general
     let whereConditions = 'WHERE 1=1';
     const params = [];
 
@@ -59,8 +68,8 @@ export async function GET(request) {
         ${whereConditions}
       ),
       top5 AS (
-        SELECT * FROM ranking_general LIMIT 5
-      ),
+  SELECT * FROM ranking_general ORDER BY puesto LIMIT 5
+),
       mi_mejor_puntaje AS (
         SELECT * FROM ranking_general
         WHERE user_id = ?
@@ -79,7 +88,8 @@ export async function GET(request) {
         codigo_pais, 
         usa_vpn, 
         creado_en, 
-        1 AS bloque_orden
+        1 AS bloque_orden,
+        puesto AS orden
       FROM top5
 
       UNION ALL
@@ -96,7 +106,8 @@ export async function GET(request) {
         '...' AS codigo_pais, 
         0 AS usa_vpn, 
         NULL AS creado_en, 
-        2 AS bloque_orden
+        2 AS bloque_orden,
+        0 AS orden
       FROM mi_mejor_puntaje 
       WHERE puesto > 5
 
@@ -114,14 +125,14 @@ export async function GET(request) {
         codigo_pais, 
         usa_vpn, 
         creado_en, 
-        3 AS bloque_orden
+        3 AS bloque_orden,
+        puesto AS orden
       FROM mi_mejor_puntaje 
       WHERE puesto > 5
 
-      ORDER BY bloque_orden ASC, puntos DESC;
+      ORDER BY bloque_orden ASC, orden ASC;
     `;
 
-    // Oñembojoaju currentUserId params apytépe
     const queryParams = [...params, currentUserId];
 
     const [rows] = await pool.query(sql, queryParams);
