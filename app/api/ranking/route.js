@@ -235,6 +235,10 @@ export async function POST(request) {
     );
   }
 
+  const rawDificultad = typeof body.dificultad === 'string' ? body.dificultad.trim() : 'Normal';
+  const dificultadValida = ['Normal', 'Difícil', 'Pesadilla'].includes(rawDificultad) 
+    ? rawDificultad 
+    : 'Normal';
   const username = typeof body.username === 'string' ? body.username.trim().slice(0, 50) : '';
   const puntos = typeof body.puntos === 'number' ||
     (typeof body.puntos === 'string' && body.puntos.trim() !== '')
