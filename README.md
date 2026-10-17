@@ -43,6 +43,11 @@ await fetch('/api/ranking', {
 });
 ```
 
+La página web consulta `GET /api/ranking?view=table` y pagina los registros de
+la base (hasta 100 filas por petición). Para conservar el comportamiento del
+juego, este debe seguir consultando `GET /api/ranking` sin `view=table`: esa
+respuesta mantiene el formato del top 5 y el récord personal del jugador.
+
 ## Pruebas
 
 Ejecuta `npm test` para probar las APIs con una base de datos simulada, la

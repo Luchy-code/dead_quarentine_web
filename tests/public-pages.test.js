@@ -41,6 +41,11 @@ describe('static page HTML and CSS', () => {
       'rank-mode',
       'podium-container',
       'ranking-tbody',
+      'ranking-page-size',
+      'ranking-page-summary',
+      'ranking-page-number',
+      'ranking-page-prev',
+      'ranking-page-next',
       'logros-container'
     ]) {
       expect(document.getElementById(id), `missing #${id}`).toBeTruthy();
@@ -146,7 +151,9 @@ describe('dashboard inline JavaScript', () => {
     const dom = await createPage('index.html', url);
     const { window } = dom;
     window.tailwind = {};
-    window.fetch = vi.fn().mockResolvedValue({ json: async () => [] });
+    window.fetch = vi.fn().mockResolvedValue({
+      json: async () => ({ rows: [], top: [], total: 0, page: 1, limit: 100 })
+    });
     window.console.error = vi.fn();
     executeInlineScript(dom, (script) => script.includes('function mostrarPestaña'));
     return dom;
@@ -180,18 +187,72 @@ describe('dashboard inline JavaScript', () => {
       usa_vpn: 0,
       creado_en: '2026-01-01T00:00:00.000Z'
     }));
-    window.fetch.mockResolvedValueOnce({ json: async () => rows });
+    window.fetch.mockResolvedValueOnce({
+      json: async () => ({
+        rows,
+        top: rows.slice(0, 3),
+        total: 4,
+        page: 1,
+        limit: 100
+      })
+    });
 
     await window.cargarRanking();
 
     expect(window.fetch).toHaveBeenCalledWith(expect.objectContaining({
       pathname: '/api/ranking'
     }), { cache: 'no-store' });
+    const requestUrl = new URL(window.fetch.mock.calls.at(-1)[0]);
+    expect(requestUrl.searchParams.get('view')).toBe('table');
+    expect(requestUrl.searchParams.get('limit')).toBe('100');
     expect(window.document.querySelectorAll('#podium-container > div')).toHaveLength(3);
     expect(window.document.querySelectorAll('#ranking-tbody tr')).toHaveLength(4);
     expect(window.document.querySelector('#ranking-tbody').textContent).toContain('Player4');
     expect(window.document.querySelector('#ranking-tbody').textContent).toContain('Normal');
     expect(window.document.querySelector('#podium-container').textContent).toContain('Normal');
+
+    dom.window.close();
+  });
+
+  it('loads later website pages without changing the game top-five endpoint', async () => {
+    const dom = await loadDashboard();
+    const { window } = dom;
+    window.fetch = vi.fn(async (requestUrl) => {
+      const requestedPage = Number(new URL(requestUrl).searchParams.get('page'));
+      const row = {
+        puesto: requestedPage === 1 ? 1 : 101,
+        username: `Player${requestedPage}`,
+        puntos: 1000,
+        modo: 'Singleplayer',
+        dificultad: 'Normal',
+        pais: 'Argentina',
+        codigo_pais: 'AR',
+        creado_en: '2026-01-01T00:00:00.000Z'
+      };
+      return {
+        ok: true,
+        json: async () => ({
+          rows: [row],
+          top: [{ ...row, puesto: 1 }],
+          total: 101,
+          page: requestedPage,
+          limit: 100
+        })
+      };
+    });
+
+    await window.cargarRanking();
+    expect(window.document.getElementById('ranking-page-next').disabled).toBe(false);
+    window.document.getElementById('ranking-page-next').click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const requestedPages = window.fetch.mock.calls.map(([url]) =>
+      new URL(url).searchParams.get('page')
+    );
+    expect(requestedPages).toContain('1');
+    expect(requestedPages).toContain('2');
+    expect(window.document.querySelector('#ranking-tbody').textContent).toContain('#101');
+    expect(window.document.getElementById('ranking-page-number').textContent).toContain('2 / 2');
 
     dom.window.close();
   });
@@ -229,6 +290,9 @@ describe('dashboard inline JavaScript', () => {
     expect(requestUrl.searchParams.get('search')).toBe('Alice');
     expect(requestUrl.searchParams.get('country')).toBe('AR');
     expect(requestUrl.searchParams.get('mode')).toBe('Multiplayer');
+    expect(requestUrl.searchParams.get('view')).toBe('table');
+    expect(requestUrl.searchParams.get('page')).toBe('1');
+    expect(requestUrl.searchParams.get('limit')).toBe('100');
     expect(requestUrl.searchParams.has('vpnOnly')).toBe(false);
 
     dom.window.close();

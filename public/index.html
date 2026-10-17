@@ -138,6 +138,23 @@
           </tbody>
         </table>
       </div>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-label-sm text-outline"
+           id="ranking-pagination">
+        <label class="flex items-center gap-2" for="ranking-page-size">
+          REGISTROS POR PÁGINA
+          <select id="ranking-page-size" class="bg-surface-container px-2 py-1.5 rounded text-on-surface">
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+          </select>
+        </label>
+        <span id="ranking-page-summary">CARGANDO REGISTROS...</span>
+        <div class="flex items-center gap-2">
+          <button id="ranking-page-prev" class="bg-surface-container px-3 py-1.5 rounded text-on-surface disabled:opacity-40" disabled>ANTERIOR</button>
+          <span id="ranking-page-number">PÁGINA 1</span>
+          <button id="ranking-page-next" class="bg-surface-container px-3 py-1.5 rounded text-on-surface disabled:opacity-40" disabled>SIGUIENTE</button>
+        </div>
+      </div>
     </section>
 
     <!-- ==================== PESTAÑA 2: MATRIZ DE LOGROS ==================== -->
@@ -185,6 +202,21 @@
       }
     }
 
+    let rankingPage = 1;
+
+    function renderPaginacionRanking(total, page, limit) {
+      const pageCount = Math.max(1, Math.ceil(total / limit));
+      const first = total === 0 ? 0 : (page - 1) * limit + 1;
+      const last = Math.min(page * limit, total);
+
+      document.getElementById('ranking-page-summary').textContent =
+        `MOSTRANDO ${first}-${last} DE ${total} REGISTROS`;
+      document.getElementById('ranking-page-number').textContent =
+        `PÁGINA ${page} / ${pageCount}`;
+      document.getElementById('ranking-page-prev').disabled = page <= 1;
+      document.getElementById('ranking-page-next').disabled = page >= pageCount;
+    }
+
     // --- CARGAR DATOS DE RANKING ---
     async function cargarRanking() {
       const search = document.getElementById('rank-search').value;
@@ -192,6 +224,9 @@
       const mode = document.getElementById('rank-mode').value;
 
       const url = new URL('/api/ranking', window.location.origin);
+      url.searchParams.set('view', 'table');
+      url.searchParams.set('page', String(rankingPage));
+      url.searchParams.set('limit', document.getElementById('ranking-page-size').value);
       if (search) url.searchParams.append('search', search);
       if (country !== 'ALL') url.searchParams.append('country', country);
       if (mode !== 'ALL') url.searchParams.append('mode', mode);
@@ -202,7 +237,9 @@
           throw new Error(`La API respondió con estado ${res.status}`);
         }
         const data = await res.json();
-        if (!Array.isArray(data) || data.some((row) =>
+        if (!data || !Array.isArray(data.rows) || !Array.isArray(data.top) ||
+          !Number.isFinite(Number(data.total)) || !Number.isFinite(Number(data.page)) ||
+          !Number.isFinite(Number(data.limit)) || data.rows.some((row) =>
           !row ||
           typeof row.username !== 'string' ||
           row.puntos === null ||
@@ -217,13 +254,17 @@
         podiumContainer.innerHTML = '';
         const tbody = document.getElementById('ranking-tbody');
         tbody.innerHTML = '';
+        renderPaginacionRanking(Number(data.total), Number(data.page), Number(data.limit));
 
-        if (data.length === 0) {
+        if (data.rows.length === 0) {
           tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-outline">Todavía no hay puntuaciones registradas.</td></tr>';
-          return;
         }
 
-        data.slice(0, 3).forEach((item, index) => {
+        if (data.top.length === 0) {
+          podiumContainer.innerHTML = '<p class="col-span-full p-4 text-center text-outline">Todavía no hay puntuaciones registradas.</p>';
+        }
+
+        data.top.slice(0, 3).forEach((item, index) => {
           const colores = [
             'border-primary-container bg-surface-container-high',
             'border-secondary-fixed-dim bg-surface-container',
@@ -248,10 +289,10 @@
         });
 
         // Render Tabla
-        data.forEach((row, idx) => {
+        data.rows.forEach((row, idx) => {
           tbody.innerHTML += `
             <tr class="hover:bg-surface-container-high transition-colors">
-              <td class="p-3 text-center font-bold text-primary">#${idx + 1}</td>
+              <td class="p-3 text-center font-bold text-primary">#${row.puesto || ((Number(data.page) - 1) * Number(data.limit) + idx + 1)}</td>
               <td class="p-3 font-bold uppercase text-on-surface">${row.username}</td>
               <td class="p-3 text-outline">${row.modo}</td>
               <td class="p-3 text-outline">${row.dificultad || '--'}</td>
@@ -266,6 +307,7 @@
         document.getElementById('podium-container').innerHTML = '';
         document.getElementById('ranking-tbody').innerHTML =
           '<tr><td colspan="7" class="p-4 text-center text-error">No se pudo cargar el ranking. Verifica que la API devuelva puntajes y vuelve a desplegar la versión más reciente.</td></tr>';
+        document.getElementById('ranking-page-summary').textContent = 'ERROR AL CARGAR EL RANKING';
       }
     }
 
@@ -351,9 +393,25 @@
     }
 
     // Event listeners para filtros de ranking
-    document.getElementById('rank-search').addEventListener('input', cargarRanking);
-    document.getElementById('rank-country').addEventListener('change', cargarRanking);
-    document.getElementById('rank-mode').addEventListener('change', cargarRanking);
+    function cargarPrimeraPaginaRanking() {
+      rankingPage = 1;
+      cargarRanking();
+    }
+
+    document.getElementById('rank-search').addEventListener('input', cargarPrimeraPaginaRanking);
+    document.getElementById('rank-country').addEventListener('change', cargarPrimeraPaginaRanking);
+    document.getElementById('rank-mode').addEventListener('change', cargarPrimeraPaginaRanking);
+    document.getElementById('ranking-page-size').addEventListener('change', cargarPrimeraPaginaRanking);
+    document.getElementById('ranking-page-prev').addEventListener('click', () => {
+      if (rankingPage > 1) {
+        rankingPage -= 1;
+        cargarRanking();
+      }
+    });
+    document.getElementById('ranking-page-next').addEventListener('click', () => {
+      rankingPage += 1;
+      cargarRanking();
+    });
 
     // Carga inicial
     document.addEventListener('DOMContentLoaded', () => {
