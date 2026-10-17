@@ -20,120 +20,43 @@ export async function GET(request) {
   try {
     const pool = getPool();
 
-    // Filtros dinámicos ranking_general-pe g̃uarã
-    let whereConditions = 'WHERE 1=1';
-    const params = [];
-
-    if (country && country !== 'ALL') {
-      whereConditions += ' AND r.codigo_pais = ?';
-      params.push(country);
-    }
-    if (mode && mode !== 'ALL' && mode !== 'Todos') {
-      whereConditions += ' AND r.modo = ?';
-      params.push(mode);
-    }
-    if (vpnOnly === 'true') {
-      whereConditions += ' AND r.usa_vpn = 0';
-    }
-    if (search) {
-      whereConditions += ' AND COALESCE(u.username, r.username) LIKE ?';
-      params.push(`%${search}%`);
+    // 1. Si userId es un número entero, intentamos actualizar/crear en 'usuarios'
+    // Si es un UUID (string con letras/guiones), no forzamos el insert numérico en 'usuarios' para evitar el Error 3780
+    if (userId && /^\d+$/.test(userId)) {
+      try {
+        await pool.query(
+          `INSERT INTO usuarios (id, username, creado_en, actualizado_en)
+           VALUES (?, ?, NOW(), NOW())
+           ON DUPLICATE KEY UPDATE username = VALUES(username), actualizado_en = NOW()`,
+          [parseInt(userId, 10), username]
+        );
+      } catch (e) {
+        console.warn('Aviso: No se pudo actualizar tabla usuarios:', e.message);
+      }
     }
 
-    // Query CTE oiporúva UNION ALL: Top 5 + '...' + Ne récord iporãvéva
-    const sql = `
-      WITH ranking_general AS (
-        SELECT 
-          ROW_NUMBER() OVER (ORDER BY r.puntos DESC, r.creado_en ASC) AS puesto,
-          r.id,
-          COALESCE(u.username, r.username) AS username,
-          r.user_id,
-          r.puntos,
-          r.modo,
-          r.pais,
-          r.codigo_pais,
-          r.usa_vpn,
-          r.creado_en
-        FROM ranking r
-        LEFT JOIN usuarios u ON r.user_id = u.id
-        ${whereConditions}
-      ),
-      top5 AS (
-        SELECT * FROM ranking_general LIMIT 5
-      ),
-      mi_mejor_puntaje AS (
-        SELECT * FROM ranking_general
-        WHERE user_id = ?
-        ORDER BY puntos DESC, creado_en ASC
-        LIMIT 1
-      )
-      -- Bloque 1: Top 5
-      SELECT 
-        CAST(puesto AS CHAR) AS puesto, 
-        id, 
-        username, 
-        user_id, 
-        puntos, 
-        modo, 
-        pais, 
-        codigo_pais, 
-        usa_vpn, 
-        creado_en, 
-        1 AS bloque_orden
-      FROM top5
+    // 2. Insertar el score en la tabla ranking
+    const [resultado] = await pool.query(
+      `INSERT INTO ranking
+        (user_id, username, puntos, modo, ip, pais, codigo_pais, usa_vpn, creado_en)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [userId, username, puntos, modo, ip, pais, codigoPais, usaVpn]
+    );
 
-      UNION ALL
-
-      -- Bloque 2: Fila orekóva '...' (oñemoĩnte puesto > 5 jave)
-      SELECT 
-        '...' AS puesto, 
-        NULL AS id, 
-        '...' AS username, 
-        NULL AS user_id, 
-        0 AS puntos, 
-        '...' AS modo, 
-        '...' AS pais, 
-        '...' AS codigo_pais, 
-        0 AS usa_vpn, 
-        NULL AS creado_en, 
-        2 AS bloque_orden
-      FROM mi_mejor_puntaje 
-      WHERE puesto > 5
-
-      UNION ALL
-
-      -- Bloque 3: Nde récord iporãvéva
-      SELECT 
-        CAST(puesto AS CHAR) AS puesto, 
-        id, 
-        username, 
-        user_id, 
-        puntos, 
-        modo, 
-        pais, 
-        codigo_pais, 
-        usa_vpn, 
-        creado_en, 
-        3 AS bloque_orden
-      FROM mi_mejor_puntaje 
-      WHERE puesto > 5
-
-      ORDER BY bloque_orden ASC, puntos DESC;
-    `;
-
-    // Oñembojoaju currentUserId params apytépe
-    const queryParams = [...params, currentUserId];
-
-    const [rows] = await pool.query(sql, queryParams);
-    return Response.json(rows, { headers: rankingHeaders });
-
-  } catch (error) {
-    console.error('Error al obtener ranking:', error);
     return Response.json(
-      { error: 'Error al obtener ranking', detalle: error.sqlMessage || error.message },
-      { status: 500, headers: rankingHeaders }
+      { message: 'Puntuación guardada exitosamente', id: resultado.insertId },
+      { status: 201, headers: corsHeaders }
+    );
+  } catch (error) {
+    console.error('Error al insertar score:', error);
+    return Response.json(
+      { error: 'Error al insertar en la base de datos', detalle: error.sqlMessage || error.message },
+      { status: 500, headers: corsHeaders }
     );
   }
+
+
+
 }
 
 export async function POST(request) {
