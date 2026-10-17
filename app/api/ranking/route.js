@@ -235,10 +235,12 @@ export async function POST(request) {
     );
   }
 
+  // Normalizar dificultad: si viene vacía o desconocida, queda en 'Normal'
   const rawDificultad = typeof body.dificultad === 'string' ? body.dificultad.trim() : 'Normal';
   const dificultadValida = ['Normal', 'Difícil', 'Pesadilla'].includes(rawDificultad) 
     ? rawDificultad 
     : 'Normal';
+
   const username = typeof body.username === 'string' ? body.username.trim().slice(0, 50) : '';
   const puntos = typeof body.puntos === 'number' ||
     (typeof body.puntos === 'string' && body.puntos.trim() !== '')
@@ -283,9 +285,7 @@ export async function POST(request) {
     ? body.pais.trim().slice(0, 100)
     : codigoPais || 'Desconocido';
   const modo = typeof body.modo === 'string' && body.modo.trim() ? body.modo.trim().slice(0, 50) : 'Singleplayer';
-  const dificultad = typeof body.dificultad === 'string' && body.dificultad.trim()
-    ? body.dificultad.trim().slice(0, 50)
-    : null;
+  
   const usaVpn = body.usa_vpn === true || body.usa_vpn === 1 ||
     body.usa_vpn === '1' || body.usa_vpn === 'true'
     ? 1
@@ -297,21 +297,22 @@ export async function POST(request) {
   try {
     const pool = getPool();
 
-    // Sincronizar peteĩha usuarios reheve oimérõ ou userId
+    // Sincronizar en tabla usuarios enviando id Y user_id para evitar "Field 'id' doesn't have a default value"
     if (userId) {
       await pool.query(
-        `INSERT INTO usuarios (user_id, username, creado_en, actualizado_en)
-         VALUES (?, ?, NOW(), NOW())
+        `INSERT INTO usuarios (id, user_id, username, creado_en, actualizado_en)
+         VALUES (?, ?, ?, NOW(), NOW())
          ON DUPLICATE KEY UPDATE username = VALUES(username), actualizado_en = NOW()`,
-        [userId, username]
+        [userId, userId, username]
       );
     }
 
+    // Insertar la fila de ranking
     const [resultado] = await pool.query(
       `INSERT INTO ranking
         (user_id, username, puntos, modo, dificultad, ip, pais, codigo_pais, usa_vpn, creado_en)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [userId, username, puntos, modo, dificultad, ip, pais, codigoPais, usaVpn]
+      [userId, username, puntos, modo, dificultadValida, ip, pais, codigoPais, usaVpn]
     );
 
     return Response.json(
