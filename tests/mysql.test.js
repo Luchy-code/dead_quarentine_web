@@ -66,4 +66,17 @@ describe('getPool', () => {
       ssl: { rejectUnauthorized: false }
     });
   });
+
+  it('uses the configured CA certificate to verify the database TLS connection', async () => {
+    Object.entries(requiredEnvironment).forEach(([key, value]) => vi.stubEnv(key, value));
+    vi.stubEnv('MYSQL_SSL_CA', 'test-ca-certificate');
+    createPool.mockReturnValue({ query: vi.fn() });
+    const { getPool } = await loadMysqlModule();
+
+    getPool();
+
+    expect(createPool).toHaveBeenCalledWith(expect.objectContaining({
+      ssl: { ca: 'test-ca-certificate' }
+    }));
+  });
 });

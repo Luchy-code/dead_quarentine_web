@@ -5,7 +5,8 @@
 1. Instala Node.js 20.9 o posterior.
 2. Ejecuta `npm install`.
 3. Copia `.env.example` a `.env.local` y reemplaza los valores de ejemplo con
-   los datos reales de la base de datos MySQL. No subas `.env.local` a Git.
+   los datos de conexión de MySQL. `.env.local` está excluido de Git: no guardes
+   credenciales reales en `.env.example` ni las subas al repositorio.
 4. Ejecuta `npm run dev` y abre `http://localhost:3000`.
 
 La página está en `public/index.html`; las APIs se ejecutan en Next.js y usan la
@@ -35,9 +36,21 @@ Despliega la raíz del repositorio como una app Next.js. Desde la raíz, inicia
 sesión en Wasmer CLI y ejecuta `wasmer deploy`, o conecta este repositorio desde
 el panel de Wasmer.
 
-Configura `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD` y
-`MYSQL_DATABASE` como secretos/variables de entorno de la app con los datos de
-la base MySQL existente. Rota primero la contraseña de MySQL que estaba en el
-código anterior y guarda la nueva solamente en Wasmer; no la incluyas en Git.
+En la configuración del servicio web de Wasmer, crea secretos/variables de
+entorno con estos nombres exactos y los valores de conexión del servicio MySQL
+de Aiven: `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD` y
+`MYSQL_DATABASE`. La aplicación los lee directamente de `process.env`; los
+secretos de Aiven no se comparten automáticamente con Wasmer. Para verificar el
+certificado TLS de Aiven, configura además `MYSQL_SSL_CA` con el contenido de su
+certificado CA. Si no está definido, se mantiene la conexión TLS sin validación
+del certificado por compatibilidad.
+
+Guarda los secretos en Wasmer y reinicia o vuelve a desplegar el servicio para
+que Node.js los reciba. No agregues credenciales al código ni a `.env.example`.
+Si alguna contraseña real estuvo guardada en un archivo del proyecto, rótala
+en Aiven antes de desplegar.
 
 Después del despliegue, valida `/`, `/api/ranking` y `/api/logros/globales`.
+`GET /api/ranking` debe devolver registros con `username` y `puntos`; una
+respuesta HTTP 200 que sólo contenga usuarios no confirma que el ranking
+actualizado esté desplegado.

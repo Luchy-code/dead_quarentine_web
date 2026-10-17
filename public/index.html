@@ -204,11 +204,31 @@
 
       try {
         const res = await fetch(url);
+        if (res.ok === false) {
+          throw new Error(`La API respondió con estado ${res.status}`);
+        }
         const data = await res.json();
-        
+        if (!Array.isArray(data) || data.some((row) =>
+          !row ||
+          typeof row.username !== 'string' ||
+          row.puntos === null ||
+          row.puntos === '' ||
+          !Number.isFinite(Number(row.puntos))
+        )) {
+          throw new Error('La API no devolvió registros de puntajes válidos');
+        }
+
         // Render Podio (Top 3)
         const podiumContainer = document.getElementById('podium-container');
         podiumContainer.innerHTML = '';
+        const tbody = document.getElementById('ranking-tbody');
+        tbody.innerHTML = '';
+
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-outline">Todavía no hay puntuaciones registradas.</td></tr>';
+          return;
+        }
+
         data.slice(0, 3).forEach((item, index) => {
           const colores = [
             'border-primary-container bg-surface-container-high',
@@ -223,7 +243,7 @@
               </div>
               <div class="my-3">
                 <div class="font-headline-sm text-xl font-bold uppercase">${item.username}</div>
-                <div class="text-2xl font-bold text-secondary-fixed-dim font-label-md">${item.puntos.toLocaleString()} PTS</div>
+                <div class="text-2xl font-bold text-secondary-fixed-dim font-label-md">${Number(item.puntos).toLocaleString()} PTS</div>
               </div>
               <div class="text-[11px] text-outline font-label-sm flex justify-between">
                 <span>MODO: ${item.modo}</span>
@@ -234,15 +254,13 @@
         });
 
         // Render Tabla
-        const tbody = document.getElementById('ranking-tbody');
-        tbody.innerHTML = '';
         data.forEach((row, idx) => {
           tbody.innerHTML += `
             <tr class="hover:bg-surface-container-high transition-colors">
               <td class="p-3 text-center font-bold text-primary">#${idx + 1}</td>
               <td class="p-3 font-bold uppercase text-on-surface">${row.username}</td>
               <td class="p-3 text-outline">${row.modo}</td>
-              <td class="p-3 text-right font-bold text-secondary-fixed-dim">${row.puntos.toLocaleString()}</td>
+              <td class="p-3 text-right font-bold text-secondary-fixed-dim">${Number(row.puntos).toLocaleString()}</td>
               <td class="p-3">${row.pais} (${row.codigo_pais})</td>
               <td class="p-3">
                 ${row.usa_vpn 
@@ -255,6 +273,9 @@
         });
       } catch (err) {
         console.error('Error cargando ranking:', err);
+        document.getElementById('podium-container').innerHTML = '';
+        document.getElementById('ranking-tbody').innerHTML =
+          '<tr><td colspan="7" class="p-4 text-center text-error">No se pudo cargar el ranking. Verifica que la API devuelva puntajes y vuelve a desplegar la versión más reciente.</td></tr>';
       }
     }
 

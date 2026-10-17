@@ -133,6 +133,24 @@ describe('dashboard inline JavaScript', () => {
     dom.window.close();
   });
 
+  it('shows an error when the ranking API returns users without scores', async () => {
+    const dom = await loadDashboard();
+    const { window } = dom;
+    window.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [{ id: 1, username: 'Player1', creado_en: '2026-01-01T00:00:00.000Z' }]
+    });
+
+    await window.cargarRanking();
+
+    expect(window.document.querySelector('#ranking-tbody').textContent)
+      .toContain('Verifica que la API devuelva puntajes');
+    expect(window.document.querySelectorAll('#podium-container > div')).toHaveLength(0);
+    expect(window.console.error).toHaveBeenCalledOnce();
+
+    dom.window.close();
+  });
+
   it('passes only active ranking filters to the API', async () => {
     const dom = await loadDashboard();
     const { window } = dom;

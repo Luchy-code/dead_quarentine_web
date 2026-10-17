@@ -1,0 +1,6 @@
+[env]
+MYSQL_HOST = { secret = "MYSQL_HOST" }
+MYSQL_PORT = { secret = "MYSQL_PORT" }
+MYSQL_USER = { secret = "MYSQL_USER" }
+MYSQL_PASSWORD = { secret = "MYSQL_PASSWORD" }
+MYSQL_DATABASE = { secret = "MYSQL_DATABASE" }
