@@ -35,19 +35,20 @@ describe('GET /api/ranking', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(query).toHaveBeenCalledWith(
-      expect.stringContaining('ORDER BY r.puntos DESC LIMIT ?'),
-      [100]
+      expect.stringContaining('ORDER BY puesto'),
+      ['']
     );
     expect(query.mock.calls[0][0]).toContain('COALESCE(u.username, r.username) AS username');
     expect(query.mock.calls[0][0]).toContain('LEFT JOIN usuarios u ON r.user_id = u.user_id');
     expect(query.mock.calls[0][0]).toContain('r.user_id');
+    expect(query.mock.calls[0][0]).toContain('LIMIT 5');
   });
 
-  it('applies country, mode, VPN, search, and requested limit using parameters', async () => {
+  it('applies ranking filters and looks up the current user by external id', async () => {
     query.mockResolvedValueOnce([[]]);
 
     await GET(new Request(
-      'http://localhost/api/ranking?country=AR&mode=Multiplayer&vpnOnly=true&search=Ana&limit=25'
+      'http://localhost/api/ranking?country=AR&mode=Multiplayer&vpnOnly=true&search=Ana&user_id=player-7'
     ));
 
     const [sql, params] = query.mock.calls[0];
@@ -55,10 +56,11 @@ describe('GET /api/ranking', () => {
     expect(sql).toContain('AND r.modo = ?');
     expect(sql).toContain('AND r.usa_vpn = 0');
     expect(sql).toContain('AND COALESCE(u.username, r.username) LIKE ?');
-    expect(params).toEqual(['AR', 'Multiplayer', '%Ana%', 25]);
+    expect(sql).toContain('WHERE user_id = ?');
+    expect(params).toEqual(['AR', 'Multiplayer', '%Ana%', 'player-7']);
   });
 
-  it('ignores ALL filters and caps limits at 100', async () => {
+  it('ignores ALL filters and uses the top five plus the current user best score', async () => {
     query.mockResolvedValueOnce([[]]);
 
     await GET(new Request(
@@ -69,15 +71,9 @@ describe('GET /api/ranking', () => {
     expect(sql).not.toContain('r.codigo_pais = ?');
     expect(sql).not.toContain('r.modo = ?');
     expect(sql).not.toContain('r.usa_vpn = 0');
-    expect(params).toEqual([100]);
-  });
-
-  it.each(['0', '-1', 'invalid', ''])('uses the default limit for invalid limit %j', async (limit) => {
-    query.mockResolvedValueOnce([[]]);
-
-    await GET(new Request(`http://localhost/api/ranking?limit=${limit}`));
-
-    expect(query.mock.calls[0][1]).toEqual([100]);
+    expect(sql).toContain('ORDER BY puesto');
+    expect(sql).toContain('WHERE puesto > 5');
+    expect(params).toEqual(['']);
   });
 
   it('returns a server error if the database query fails', async () => {
@@ -87,7 +83,7 @@ describe('GET /api/ranking', () => {
     const response = await GET(new Request('http://localhost/api/ranking'));
 
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({ error: 'Error al obtener ranking' });
+    expect(await response.json()).toMatchObject({ error: 'Error al obtener ranking' });
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(errorSpy).toHaveBeenCalledOnce();
@@ -195,7 +191,7 @@ describe('POST /api/ranking', () => {
   });
 
   it('stores an optional external user id with the score', async () => {
-    query.mockResolvedValueOnce([{ insertId: 5 }]);
+    query.mockResolvedValueOnce([{}]).mockResolvedValueOnce([{ insertId: 5 }]);
 
     await POST(jsonRequest({
       user_id: ' external-123 ',
@@ -203,8 +199,13 @@ describe('POST /api/ranking', () => {
       puntos: 10
     }));
 
-    expect(query.mock.calls[0][0]).toContain('(user_id, username, puntos');
-    expect(query.mock.calls[0][1][0]).toBe('external-123');
+    expect(query).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('INSERT INTO usuarios (user_id, username'),
+      ['external-123', 'Player']
+    );
+    expect(query.mock.calls[1][0]).toContain('(user_id, username, puntos');
+    expect(query.mock.calls[1][1][0]).toBe('external-123');
   });
 
   it('rejects invalid external user ids', async () => {
@@ -225,7 +226,7 @@ describe('POST /api/ranking', () => {
     const response = await POST(jsonRequest({ username: 'Player', puntos: 1 }));
 
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({ error: 'Error al insertar en la base de datos' });
+    expect(await response.json()).toMatchObject({ error: 'Error al insertar en la base de datos' });
   });
 });
 

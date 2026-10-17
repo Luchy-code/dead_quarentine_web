@@ -30,10 +30,17 @@ export async function POST(request) {
     return Response.json({ error: 'JSON inválido' }, { status: 400, headers: corsHeaders });
   }
 
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return Response.json(
+      { error: 'El cuerpo debe ser un objeto JSON' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
   const userId = typeof body.user_id === 'string' ? body.user_id.trim() : '';
   const username = typeof body.username === 'string' ? body.username.trim().slice(0, 50) : '';
 
-  if (!userId || !username) {
+  if (!userId || userId.length > 255 || !username) {
     return Response.json(
       { error: 'user_id y username son requeridos' },
       { status: 400, headers: corsHeaders }
@@ -45,7 +52,7 @@ export async function POST(request) {
 
     // 1. Guardar o actualizar en la tabla usuarios (UPSERT)
     await pool.query(
-      `INSERT INTO usuarios (id, username, creado_en, actualizado_en)
+      `INSERT INTO usuarios (user_id, username, creado_en, actualizado_en)
        VALUES (?, ?, NOW(), NOW())
        ON DUPLICATE KEY UPDATE username = VALUES(username), actualizado_en = NOW()`,
       [userId, username]

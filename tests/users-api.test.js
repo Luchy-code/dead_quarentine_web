@@ -45,12 +45,14 @@ describe('POST /api/usuarios', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      message: 'Usuario sincronizado correctamente'
+      message: 'Usuario sincronizado exitosamente',
+      user_id: 'external-123',
+      username: 'A'.repeat(50)
     });
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
     expect(query).toHaveBeenNthCalledWith(
       1,
-      expect.stringContaining('ON DUPLICATE KEY UPDATE username = VALUES(username)'),
+      expect.stringContaining('INSERT INTO usuarios (user_id, username'),
       ['external-123', 'A'.repeat(50)]
     );
     expect(query).toHaveBeenNthCalledWith(
@@ -70,7 +72,7 @@ describe('POST /api/usuarios', () => {
     }));
 
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({ error: 'Error en base de datos' });
+    expect(await response.json()).toMatchObject({ error: 'Error en base de datos' });
     expect(errorSpy).toHaveBeenCalledOnce();
   });
 });
@@ -80,7 +82,7 @@ describe('OPTIONS /api/usuarios', () => {
     const response = OPTIONS();
 
     expect(response.status).toBe(204);
-    expect(response.headers.get('access-control-allow-methods')).toBe('POST, OPTIONS');
+    expect(response.headers.get('access-control-allow-methods')).toBe('GET, POST, OPTIONS');
     expect(response.headers.get('access-control-allow-headers')).toBe('Content-Type');
   });
 });

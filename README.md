@@ -19,10 +19,29 @@ Antes de desplegar las rutas actualizadas, ejecuta una vez
 identificador externo `user_id` a `usuarios` y `ranking` sin cambiar los IDs
 internos existentes.
 
-El juego puede registrar o actualizar el nombre de un usuario con un `POST` a
-`/api/usuarios`, enviando `{ "user_id": "id-externo", "username": "Jugador" }`.
-Las nuevas puntuaciones pueden enviar también `user_id` a `/api/ranking`; así
-las actualizaciones de nombre se reflejan en sus registros históricos.
+Una sola ruta del ranking permite consultar y guardar puntuaciones:
+
+- `GET /api/ranking?user_id=id-externo` devuelve los cinco puntajes más altos
+  y, si el jugador no aparece entre ellos, su mejor puntaje personal.
+- Al terminar cada partida, el juego debe hacer un `POST /api/ranking` con los
+  datos de esa partida. Cada llamada inserta un nuevo registro:
+
+  ```js
+  await fetch('https://TU-DOMINIO/api/ranking', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      user_id: 'id-externo',
+      username: 'Jugador',
+      puntos: 1200,
+      modo: 'Singleplayer'
+    })
+  });
+  ```
+
+`user_id` debe ser el identificador estable del usuario en el juego. La ruta
+guarda el puntaje y sincroniza el nombre del usuario en la misma operación;
+`/api/usuarios` sigue disponible para sincronizar el perfil antes de jugar.
 
 ## Pruebas
 

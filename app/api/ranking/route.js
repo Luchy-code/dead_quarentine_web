@@ -20,7 +20,6 @@ export async function GET(request) {
   try {
     const pool = getPool();
 
-    // Filtros dinámicos ranking_general-pe g̃uarã
     let whereConditions = 'WHERE 1=1';
     const params = [];
 
@@ -40,88 +39,38 @@ export async function GET(request) {
       params.push(`%${search}%`);
     }
 
-    // Query CTE oiporúva UNION ALL: Top 5 + '...' + Ne récord iporãvéva
     const sql = `
-      WITH ranking_general AS (
-        SELECT 
-          ROW_NUMBER() OVER (ORDER BY r.puntos DESC, r.creado_en ASC) AS puesto,
-          r.id,
-          COALESCE(u.username, r.username) AS username,
-          r.user_id,
-          r.puntos,
-          r.modo,
-          r.pais,
-          r.codigo_pais,
-          r.usa_vpn,
-          r.creado_en
-        FROM ranking r
-        LEFT JOIN usuarios u ON r.user_id = u.id
-        ${whereConditions}
-      ),
-      top5 AS (
-        SELECT * FROM ranking_general LIMIT 5
-      ),
-      mi_mejor_puntaje AS (
-        SELECT * FROM ranking_general
-        WHERE user_id = ?
-        ORDER BY puntos DESC, creado_en ASC
-        LIMIT 1
-      )
-      -- Bloque 1: Top 5
-      SELECT 
-        CAST(puesto AS CHAR) AS puesto, 
-        id, 
-        username, 
-        user_id, 
-        puntos, 
-        modo, 
-        pais, 
-        codigo_pais, 
-        usa_vpn, 
-        creado_en, 
-        1 AS bloque_orden
-      FROM top5
+  WITH base AS (
+    SELECT r.id, COALESCE(u.username, r.username) AS username, r.user_id,
+           r.puntos, r.modo, r.pais, r.codigo_pais, r.usa_vpn, r.creado_en,
+           ROW_NUMBER() OVER (
+             PARTITION BY COALESCE(r.user_id, CONCAT('anon-', r.id))
+             ORDER BY r.puntos DESC, r.creado_en ASC, r.id ASC
+           ) AS rn_usuario
+    FROM ranking r
+    LEFT JOIN usuarios u ON r.user_id = u.user_id
+    ${whereConditions}
+  ),
+  ranking_cte AS (
+    SELECT ROW_NUMBER() OVER (ORDER BY puntos DESC, creado_en ASC, id ASC) AS puesto,
+           id, username, user_id, puntos, modo, pais, codigo_pais, usa_vpn, creado_en
+    FROM base WHERE rn_usuario = 1
+  ),
+  top5 AS (SELECT * FROM ranking_cte ORDER BY puesto LIMIT 5),
+  mi_mejor AS (SELECT * FROM ranking_cte WHERE user_id = ? AND puesto > 5)
+  SELECT CAST(puesto AS CHAR) AS puesto, id, username, user_id, puntos, modo, pais,
+         codigo_pais, usa_vpn, creado_en, 1 AS bloque_orden, puesto AS orden
+  FROM top5
+  UNION ALL
+  SELECT '...', NULL, '...', NULL, 0, '...', '...', '...', 0, NULL, 2, 0
+  FROM mi_mejor
+  UNION ALL
+  SELECT CAST(puesto AS CHAR), id, username, user_id, puntos, modo, pais,
+         codigo_pais, usa_vpn, creado_en, 3, puesto
+  FROM mi_mejor
+  ORDER BY bloque_orden, orden;
+`;
 
-      UNION ALL
-
-      -- Bloque 2: Fila orekóva '...' (oñemoĩnte puesto > 5 jave)
-      SELECT 
-        '...' AS puesto, 
-        NULL AS id, 
-        '...' AS username, 
-        NULL AS user_id, 
-        0 AS puntos, 
-        '...' AS modo, 
-        '...' AS pais, 
-        '...' AS codigo_pais, 
-        0 AS usa_vpn, 
-        NULL AS creado_en, 
-        2 AS bloque_orden
-      FROM mi_mejor_puntaje 
-      WHERE puesto > 5
-
-      UNION ALL
-
-      -- Bloque 3: Nde récord iporãvéva
-      SELECT 
-        CAST(puesto AS CHAR) AS puesto, 
-        id, 
-        username, 
-        user_id, 
-        puntos, 
-        modo, 
-        pais, 
-        codigo_pais, 
-        usa_vpn, 
-        creado_en, 
-        3 AS bloque_orden
-      FROM mi_mejor_puntaje 
-      WHERE puesto > 5
-
-      ORDER BY bloque_orden ASC, puntos DESC;
-    `;
-
-    // Oñembojoaju currentUserId params apytépe
     const queryParams = [...params, currentUserId];
 
     const [rows] = await pool.query(sql, queryParams);
@@ -184,7 +133,7 @@ export async function POST(request) {
     forwardedIp ||
     body.ip ||
     '127.0.0.1';
-  const ip = typeof rawIp === 'string' ? rawIp.slice(0, 45) : '127.0.0.1';
+  const ip = typeof rawIp === 'string' ? rawIp.replace(/^::ffff:/i, '').slice(0, 45) : '127.0.0.1';
 
   const rawCodigoPais = request.headers.get('cf-ipcountry') || body.codigo_pais;
   const codigoPais = typeof rawCodigoPais === 'string' && rawCodigoPais.trim()
@@ -206,10 +155,21 @@ export async function POST(request) {
   try {
     const pool = getPool();
 
-    // Sincronizar peteĩha usuarios reheve oimérõ ou userId
+    const score = searchParams.get('score');
+if (score !== null && score !== '' && Number.isFinite(Number(score))) {
+  const [r] = await pool.query(
+    `SELECT COUNT(*) + 1 AS puesto
+     FROM (SELECT MAX(puntos) AS mejor FROM ranking
+           GROUP BY COALESCE(user_id, CONCAT('anon-', id))) t
+     WHERE t.mejor > ?`,
+    [Number(score)]
+  );
+  return Response.json({ puesto: Number(r[0].puesto) }, { headers: rankingHeaders });
+}
+
     if (userId) {
       await pool.query(
-        `INSERT INTO usuarios (id, username, creado_en, actualizado_en)
+        `INSERT INTO usuarios (user_id, username, creado_en, actualizado_en)
          VALUES (?, ?, NOW(), NOW())
          ON DUPLICATE KEY UPDATE username = VALUES(username), actualizado_en = NOW()`,
         [userId, username]
