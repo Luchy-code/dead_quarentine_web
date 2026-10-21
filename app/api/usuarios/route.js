@@ -11,7 +11,7 @@ const corsHeaders = {
 export async function GET() {
   try {
     const [usuarios] = await getPool().query(
-      'SELECT id, user_id, username, creado_en, actualizado_en FROM usuarios ORDER BY actualizado_en DESC'
+      'SELECT id, id_local, nombre, creado_en FROM usuarios ORDER BY creado_en DESC'
     );
     return Response.json(usuarios, { headers: corsHeaders });
   } catch (error) {
@@ -50,18 +50,12 @@ export async function POST(request) {
   try {
     const pool = getPool();
 
-    // 1. Guardar o actualizar en la tabla usuarios (UPSERT)
+    // 1. Guardar o actualizar el usuario usando el ID local del juego.
     await pool.query(
-      `INSERT INTO usuarios (user_id, username, creado_en, actualizado_en)
-       VALUES (?, ?, NOW(), NOW())
-       ON DUPLICATE KEY UPDATE username = VALUES(username), actualizado_en = NOW()`,
+      `INSERT INTO usuarios (id_local, nombre, creado_en)
+       VALUES (?, ?, NOW())
+       ON DUPLICATE KEY UPDATE nombre = VALUES(nombre)`,
       [userId, username]
-    );
-
-    // 2. Propagar el nuevo nombre a todo su historial en el ranking
-    await pool.query(
-      `UPDATE ranking SET username = ? WHERE user_id = ?`,
-      [username, userId]
     );
 
     return Response.json({

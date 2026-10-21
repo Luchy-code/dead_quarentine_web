@@ -278,11 +278,6 @@
 </div>
 <!-- Filter Controls -->
 <div class="flex flex-wrap items-center gap-space-sm font-label-sm text-label-sm">
-<!-- Country Filter Dropdown -->
-<div class="relative">
-<select class="bg-surface-container px-space-md py-space-sm rounded text-on-surface font-label-sm uppercase cursor-pointer focus:outline-none appearance-none pr-8" id="filter-country"><option value="ALL">PAIS: TODOS</option></select>
-<span class="material-symbols-outlined text-outline absolute right-2 top-2 pointer-events-none text-[18px]">expand_more</span>
-</div>
 <!-- Mode Filter Dropdown -->
 <div class="relative">
 <select class="bg-surface-container px-space-md py-space-sm rounded text-on-surface font-label-sm uppercase cursor-pointer focus:outline-none appearance-none pr-8" id="filter-mode">
@@ -317,7 +312,7 @@
 <!-- SECTION: MASTER TACTICAL DATA TABLE -->
 <section class="w-full px-gutter md:px-margin-lg py-space-md">
 <div class="bg-surface-container-lowest rounded shadow-lg overflow-x-auto">
-<table class="w-full text-left font-body-md text-body-md border-collapse min-w-[980px]">
+<table class="w-full text-left font-body-md text-body-md border-collapse min-w-[800px]">
 <thead>
 <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
 <th class="py-space-md px-space-md w-16 text-center">POS</th>
@@ -325,13 +320,12 @@
 <th class="py-space-md px-space-md text-right">PUNTOS (PTS)</th>
 <th class="py-space-md px-space-md">MODO</th>
 <th class="py-space-md px-space-md">DIFICULTAD</th>
-<th class="py-space-md px-space-md">ORIGEN / PAÍS</th>
 <th class="py-space-md px-space-md">REGISTRO (CREADO_EN)</th>
 
 </tr>
 </thead>
 <tbody class="divide-y divide-surface-container font-label-sm text-label-sm" id="ranking-table-body">
-<tr><td class="py-space-lg px-space-md text-center text-outline" colspan="7">Cargando puntajes desde la base de datos...</td></tr>
+<tr><td class="py-space-lg px-space-md text-center text-outline" colspan="6">Cargando puntajes desde la base de datos...</td></tr>
 </tbody>
 </table>
 </div>
@@ -355,13 +349,11 @@
   const podium = document.getElementById('ranking-podium');
   const summaryCards = document.getElementById('ranking-summary-cards');
   const searchInput = document.getElementById('filter-search');
-  const countryFilter = document.getElementById('filter-country');
   const modeFilter = document.getElementById('filter-mode');
   const difficultyFilter = document.getElementById('filter-difficulty');
   const resetButton = document.getElementById('reset-filters');
   const pageSize = document.getElementById('page-size');
   const summary = document.getElementById('ranking-summary');
-  const countryLabel = countryFilter.querySelector('option').textContent;
   const pageControls = document.getElementById('ranking-page-controls');
   let page = 1;
   let requestId = 0;
@@ -385,17 +377,9 @@
     if (values.includes(selected)) select.value = selected;
   }
 
-  function updateCountryOptions(countries) {
-    const selected = countryFilter.value;
-    countryFilter.innerHTML = `<option value="ALL">${escapeHtml(countryLabel)}</option>` + countries
-      .map((country) => `<option value="${escapeHtml(country.codigo_pais)}">${escapeHtml(country.pais || country.codigo_pais)} (${escapeHtml(country.codigo_pais)})</option>`)
-      .join('');
-    if (countries.some((country) => country.codigo_pais === selected)) countryFilter.value = selected;
-  }
-
   function renderRows(rows, offset) {
     if (!rows.length) {
-      tableBody.innerHTML = '<tr><td class="py-space-lg px-space-md text-center text-outline" colspan="7">No hay puntajes para los filtros seleccionados.</td></tr>';
+      tableBody.innerHTML = '<tr><td class="py-space-lg px-space-md text-center text-outline" colspan="6">No hay puntajes para los filtros seleccionados.</td></tr>';
       return;
     }
     tableBody.innerHTML = rows.map((row, index) => {
@@ -406,7 +390,6 @@
         <td class="py-space-md px-space-md text-right font-bold text-secondary-fixed-dim">${Number(row.puntos).toLocaleString('es')}</td>
         <td class="py-space-md px-space-md">${displayValue(row.modo)}</td>
         <td class="py-space-md px-space-md">${displayValue(row.dificultad)}</td>
-        <td class="py-space-md px-space-md">${displayValue(row.pais)} (${displayValue(row.codigo_pais)})</td>
         <td class="py-space-md px-space-md text-outline">${dateLabel(row.creado_en)}</td>
       </tr>`;
     }).join('');
@@ -431,7 +414,6 @@
       <div class="font-headline-sm text-headline-sm font-bold uppercase text-on-surface">${displayValue(row.username)}</div>
       <div class="text-2xl font-bold ${colors[index]}">${Number(row.puntos).toLocaleString('es')} PTS</div>
       <div class="text-label-sm text-on-surface-variant">MODO: ${displayValue(row.modo)} <span class="text-outline-variant">|</span> DIFICULTAD: ${displayValue(row.dificultad)}</div>
-      <div class="text-label-sm text-outline">${displayValue(row.pais)} (${displayValue(row.codigo_pais)})</div>
     </article>`).join('');
   }
 
@@ -453,13 +435,12 @@
 
   async function loadRanking() {
     const currentRequest = ++requestId;
-    tableBody.innerHTML = '<tr><td class="py-space-lg px-space-md text-center text-outline" colspan="7">Consultando ranking...</td></tr>';
+    tableBody.innerHTML = '<tr><td class="py-space-lg px-space-md text-center text-outline" colspan="6">Consultando ranking...</td></tr>';
     const url = new URL('/api/ranking', window.location.origin);
     url.searchParams.set('view', 'table');
     url.searchParams.set('page', String(page));
     url.searchParams.set('limit', pageSize.value);
     if (searchInput.value.trim()) url.searchParams.set('search', searchInput.value.trim());
-    if (countryFilter.value !== 'ALL') url.searchParams.set('country', countryFilter.value);
     if (modeFilter.value !== 'ALL') url.searchParams.set('mode', modeFilter.value);
     if (difficultyFilter.value !== 'ALL') url.searchParams.set('dificultad', difficultyFilter.value);
     try {
@@ -470,7 +451,6 @@
         throw new Error('La API no devolvio el formato esperado para el ranking');
       }
       if (currentRequest !== requestId) return;
-      updateCountryOptions(data.paises || []);
       updateOptions(modeFilter, data.modos || [], 'MODO: TODOS');
       updateOptions(difficultyFilter, data.dificultades || [], 'DIFICULTAD: TODAS');
       renderSummaryCards(Number(data.total), data.top, data.modos || [], data.dificultades || []);
@@ -480,7 +460,7 @@
     } catch (error) {
       if (currentRequest !== requestId) return;
       console.error('No se pudo cargar el ranking:', error);
-      tableBody.innerHTML = '<tr><td class="py-space-lg px-space-md text-center text-error" colspan="7">No se pudo cargar el ranking. Verifica la conexion y vuelve a intentar.</td></tr>';
+      tableBody.innerHTML = '<tr><td class="py-space-lg px-space-md text-center text-error" colspan="6">No se pudo cargar el ranking. Verifica la conexion y vuelve a intentar.</td></tr>';
       podium.innerHTML = '<p class="lg:col-span-3 text-center text-error py-space-xl">No se pudo cargar el podio.</p>';
       summary.textContent = 'ERROR AL CARGAR EL RANKING';
       summaryCards.innerHTML = '<p class="text-error">No se pudieron cargar las estadisticas.</p>';
@@ -493,13 +473,12 @@
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(reloadFromFirstPage, 250);
   });
-  [countryFilter, modeFilter, difficultyFilter].forEach((filter) => {
+  [modeFilter, difficultyFilter].forEach((filter) => {
     filter.addEventListener('change', reloadFromFirstPage);
   });
   pageSize.addEventListener('change', reloadFromFirstPage);
   resetButton.addEventListener('click', () => {
     searchInput.value = '';
-    countryFilter.value = 'ALL';
     modeFilter.value = 'ALL';
     difficultyFilter.value = 'ALL';
     reloadFromFirstPage();

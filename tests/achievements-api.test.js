@@ -69,6 +69,10 @@ describe('POST /api/logros/desbloquear', () => {
     }));
     const missingFields = await POST(jsonRequest({ username: 'Player' }));
     const wrongTypes = await POST(jsonRequest({ username: 123, sublogro_clave: true }));
+    const missingLocalId = await POST(jsonRequest({
+      username: 'Player',
+      sublogro_clave: 'key'
+    }));
 
     expect(malformed.status).toBe(400);
     expect(await malformed.json()).toEqual({
@@ -76,6 +80,7 @@ describe('POST /api/logros/desbloquear', () => {
     });
     expect(missingFields.status).toBe(400);
     expect(wrongTypes.status).toBe(400);
+    expect(missingLocalId.status).toBe(400);
     expect(query).not.toHaveBeenCalled();
   });
 
@@ -86,13 +91,18 @@ describe('POST /api/logros/desbloquear', () => {
       .mockResolvedValueOnce([[]]);
 
     const response = await POST(jsonRequest({
+      id_local: 'local-1',
       username: '  Player ',
       sublogro_clave: ' unknown '
     }));
 
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ error: 'Sublogro no encontrado en la base' });
-    expect(query).toHaveBeenNthCalledWith(1, expect.stringContaining('INSERT IGNORE INTO usuarios'), ['Player']);
+    expect(query).toHaveBeenNthCalledWith(1, expect.stringContaining('INSERT INTO usuarios (id_local, nombre'), [
+      'local-1',
+      'Player'
+    ]);
+    expect(query).toHaveBeenNthCalledWith(2, 'SELECT id FROM usuarios WHERE id_local = ?', ['local-1']);
     expect(query).toHaveBeenNthCalledWith(3, expect.stringContaining('FROM sublogros'), ['unknown']);
   });
 
@@ -106,6 +116,7 @@ describe('POST /api/logros/desbloquear', () => {
       .mockResolvedValueOnce([[{ titulo: 'Dominador', sublogros_requeridos: 3 }]]);
 
     const response = await POST(jsonRequest({
+      id_local: 'local-1',
       username: 'Player',
       sublogro_clave: 'enemigo_derrotado'
     }));
@@ -131,6 +142,7 @@ describe('POST /api/logros/desbloquear', () => {
       .mockResolvedValueOnce([{}]);
 
     const response = await POST(jsonRequest({
+      id_local: 'local-1',
       username: 'Player',
       sublogro_clave: 'enemigo_derrotado'
     }));
@@ -152,6 +164,7 @@ describe('POST /api/logros/desbloquear', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const response = await POST(jsonRequest({
+      id_local: 'local-1',
       username: 'Player',
       sublogro_clave: 'any'
     }));
@@ -171,6 +184,7 @@ describe('POST /api/logros/desbloquear', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const response = await POST(jsonRequest({
+      id_local: 'local-1',
       username: 'Player',
       sublogro_clave: 'any'
     }));
@@ -184,6 +198,7 @@ describe('POST /api/logros/desbloquear', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const response = await POST(jsonRequest({
+      id_local: 'local-1',
       username: 'Player',
       sublogro_clave: 'any'
     }));

@@ -9,13 +9,17 @@ const corsHeaders = {
 };
 const rankingHeaders = { ...corsHeaders, 'Cache-Control': 'no-store' };
 
+function normalizeGameValue(value) {
+  return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 export async function GET(request) {
   const searchParams = new URL(request.url).searchParams;
   const currentUserId = searchParams.get('user_id') ? String(searchParams.get('user_id')).trim() : '';
-  const country = searchParams.get('country');
-  const mode = searchParams.get('mode');
-  const difficulty = searchParams.get('dificultad');
-  const vpnOnly = searchParams.get('vpnOnly');
+  const rawMode = searchParams.get('mode');
+  const mode = rawMode ? normalizeGameValue(rawMode.trim()) : '';
+  const rawDifficulty = searchParams.get('dificultad');
+  const difficulty = rawDifficulty ? normalizeGameValue(rawDifficulty.trim()) : '';
   const search = searchParams.get('search');
   const tableView = searchParams.get('view') === 'table';
 
@@ -35,23 +39,16 @@ export async function GET(request) {
     let whereConditions = 'WHERE 1=1';
     const params = [];
 
-    if (country && country !== 'ALL') {
-      whereConditions += ' AND r.codigo_pais = ?';
-      params.push(country);
-    }
-    if (mode && mode !== 'ALL' && mode !== 'Todos') {
+    if (mode && mode !== 'all' && mode !== 'todos') {
       whereConditions += ' AND r.modo = ?';
       params.push(mode);
     }
-    if (difficulty && difficulty !== 'ALL' && difficulty !== 'Todos') {
+    if (difficulty && difficulty !== 'all' && difficulty !== 'todos') {
       whereConditions += ' AND r.dificultad = ?';
       params.push(difficulty);
     }
-    if (vpnOnly === 'true') {
-      whereConditions += ' AND r.usa_vpn = 0';
-    }
     if (search) {
-      whereConditions += ' AND (COALESCE(u.username, r.username) LIKE ? OR r.user_id LIKE ?)';
+      whereConditions += ' AND (COALESCE(u.nombre, r.user_id) LIKE ? OR r.user_id LIKE ?)';
       params.push(`%${search}%`, `%${search}%`);
     }
 
@@ -65,14 +62,13 @@ export async function GET(request) {
       const offset = (page - 1) * limit;
       const from = `
         FROM ranking r
-        LEFT JOIN usuarios u ON r.user_id = u.user_id
+        LEFT JOIN usuarios u ON r.user_id = u.id_local
         ${whereConditions}
       `;
       const [rows] = await pool.query(
         `SELECT ROW_NUMBER() OVER (ORDER BY r.puntos DESC, r.creado_en ASC, r.id ASC) AS puesto,
-                r.id, COALESCE(u.username, r.username) AS username, r.user_id,
-                r.puntos, r.modo, r.dificultad, r.pais, r.codigo_pais,
-                r.creado_en
+                r.id, COALESCE(u.nombre, r.user_id) AS username, r.user_id,
+                r.puntos, r.modo, r.dificultad, r.creado_en
          ${from}
          ORDER BY r.puntos DESC, r.creado_en ASC, r.id ASC
          LIMIT ? OFFSET ?`,
@@ -83,25 +79,19 @@ export async function GET(request) {
         params
       );
       const [top] = await pool.query(
-        `SELECT COALESCE(u.username, r.username) AS username, r.user_id, r.puntos,
-                r.modo, r.dificultad, r.pais, r.codigo_pais, r.creado_en
+        `SELECT COALESCE(u.nombre, r.user_id) AS username, r.user_id, r.puntos,
+                r.modo, r.dificultad, r.creado_en
          ${from}
          ORDER BY r.puntos DESC, r.creado_en ASC, r.id ASC
          LIMIT 3`,
         params
       );
       const [facets] = await pool.query(
-        `SELECT DISTINCT modo, dificultad, codigo_pais, pais
+        `SELECT DISTINCT modo, dificultad
          FROM ranking
          WHERE modo IS NOT NULL OR dificultad IS NOT NULL
-               OR codigo_pais IS NOT NULL OR pais IS NOT NULL
-         ORDER BY modo, dificultad, codigo_pais`
+         ORDER BY modo, dificultad`
       );
-      const paises = [...new Map(
-        facets
-          .filter((row) => row.codigo_pais)
-          .map((row) => [row.codigo_pais, { codigo_pais: row.codigo_pais, pais: row.pais }])
-      ).values()];
 
       return Response.json(
         {
@@ -111,8 +101,7 @@ export async function GET(request) {
           page,
           limit,
           modos: [...new Set(facets.map((row) => row.modo).filter(Boolean))],
-          dificultades: [...new Set(facets.map((row) => row.dificultad).filter(Boolean))],
-          paises
+          dificultades: [...new Set(facets.map((row) => row.dificultad).filter(Boolean))]
         },
         { headers: rankingHeaders }
       );
@@ -124,17 +113,14 @@ export async function GET(request) {
         SELECT 
           ROW_NUMBER() OVER (ORDER BY r.puntos DESC, r.creado_en ASC) AS puesto,
           r.id,
-          COALESCE(u.username, r.username) AS username,
+          COALESCE(u.nombre, r.user_id) AS username,
           r.user_id,
           r.puntos,
           r.modo,
           r.dificultad,
-          r.pais,
-          r.codigo_pais,
-          r.usa_vpn,
           r.creado_en
         FROM ranking r
-        LEFT JOIN usuarios u ON r.user_id = u.user_id
+        LEFT JOIN usuarios u ON r.user_id = u.id_local
         ${whereConditions}
       ),
       top5 AS (
@@ -155,9 +141,6 @@ export async function GET(request) {
         puntos, 
         modo, 
         dificultad,
-        pais, 
-        codigo_pais, 
-        usa_vpn, 
         creado_en, 
         1 AS bloque_orden,
         puesto AS orden
@@ -174,9 +157,6 @@ export async function GET(request) {
         0 AS puntos, 
         '...' AS modo, 
         '...' AS dificultad,
-        '...' AS pais, 
-        '...' AS codigo_pais, 
-        0 AS usa_vpn, 
         NULL AS creado_en, 
         2 AS bloque_orden,
         0 AS orden
@@ -194,9 +174,6 @@ export async function GET(request) {
         puntos, 
         modo, 
         dificultad,
-        pais, 
-        codigo_pais, 
-        usa_vpn, 
         creado_en, 
         3 AS bloque_orden,
         puesto AS orden
@@ -235,84 +212,56 @@ export async function POST(request) {
     );
   }
 
-  // Normalizar dificultad: si viene vacía o desconocida, queda en 'Normal'
-  const rawDificultad = typeof body.dificultad === 'string' ? body.dificultad.trim() : 'Normal';
-  const dificultadValida = ['Normal', 'Difícil', 'Pesadilla'].includes(rawDificultad) 
-    ? rawDificultad 
-    : 'Normal';
-
+  const rawModo = typeof body.modo === 'string' && body.modo.trim()
+    ? normalizeGameValue(body.modo.trim())
+    : 'singleplayer';
+  const modo = ['singleplayer', 'multiplayer'].includes(rawModo) ? rawModo : '';
+  const rawDificultad = typeof body.dificultad === 'string' && body.dificultad.trim()
+    ? normalizeGameValue(body.dificultad.trim())
+    : 'normal';
+  const dificultad = ['normal', 'dificil', 'pesadilla'].includes(rawDificultad)
+    ? rawDificultad
+    : '';
   const username = typeof body.username === 'string' ? body.username.trim().slice(0, 50) : '';
   const puntos = typeof body.puntos === 'number' ||
     (typeof body.puntos === 'string' && body.puntos.trim() !== '')
     ? Number(body.puntos)
     : Number.NaN;
-  const userId = body.user_id === undefined || body.user_id === null
-    ? null
-    : typeof body.user_id === 'string'
-      ? body.user_id.trim()
-      : '';
+  const userId = typeof body.user_id === 'string' ? body.user_id.trim() : '';
 
   if (
     !username ||
+    !userId ||
+    !modo ||
+    !dificultad ||
     body.puntos === undefined ||
     body.puntos === null ||
     body.puntos === '' ||
     !Number.isFinite(puntos) ||
     puntos < 0 ||
-    userId === '' ||
-    (userId !== null && userId.length > 255)
+    userId.length > 255
   ) {
     return Response.json(
-      { error: 'username y puntos válidos son obligatorios' },
+      { error: 'user_id, username, modo, dificultad y puntos válidos son obligatorios' },
       { status: 400, headers: corsHeaders }
     );
   }
 
-  const forwardedIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim();
-  const rawIp = request.headers.get('cf-connecting-ip') ||
-    request.headers.get('x-real-ip') ||
-    forwardedIp ||
-    body.ip ||
-    '127.0.0.1';
-  const ip = typeof rawIp === 'string' ? rawIp.slice(0, 45) : '127.0.0.1';
-
-  const rawCodigoPais = request.headers.get('cf-ipcountry') || body.codigo_pais;
-  const codigoPais = typeof rawCodigoPais === 'string' && rawCodigoPais.trim()
-    ? rawCodigoPais.trim().slice(0, 5)
-    : null;
-
-  const pais = typeof body.pais === 'string' && body.pais.trim()
-    ? body.pais.trim().slice(0, 100)
-    : codigoPais || 'Desconocido';
-  const modo = typeof body.modo === 'string' && body.modo.trim() ? body.modo.trim().slice(0, 50) : 'Singleplayer';
-  
-  const usaVpn = body.usa_vpn === true || body.usa_vpn === 1 ||
-    body.usa_vpn === '1' || body.usa_vpn === 'true'
-    ? 1
-    : body.usa_vpn === false || body.usa_vpn === 0 ||
-      body.usa_vpn === '0' || body.usa_vpn === 'false'
-      ? 0
-      : null;
-
   try {
     const pool = getPool();
 
-    // Sincronizar en tabla usuarios enviando id Y user_id para evitar "Field 'id' doesn't have a default value"
-    if (userId) {
-      await pool.query(
-        `INSERT INTO usuarios (id, user_id, username, creado_en, actualizado_en)
-         VALUES (?, ?, ?, NOW(), NOW())
-         ON DUPLICATE KEY UPDATE username = VALUES(username), actualizado_en = NOW()`,
-        [userId, userId, username]
-      );
-    }
+    await pool.query(
+      `INSERT INTO usuarios (id_local, nombre, creado_en)
+       VALUES (?, ?, NOW())
+       ON DUPLICATE KEY UPDATE nombre = VALUES(nombre)`,
+      [userId, username]
+    );
 
-    // Insertar la fila de ranking
     const [resultado] = await pool.query(
       `INSERT INTO ranking
-        (user_id, username, puntos, modo, dificultad, ip, pais, codigo_pais, usa_vpn, creado_en)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [userId, username, puntos, modo, dificultadValida, ip, pais, codigoPais, usaVpn]
+        (puntos, modo, dificultad, creado_en, user_id)
+       VALUES (?, ?, ?, NOW(), ?)`,
+      [puntos, modo, dificultad, userId]
     );
 
     return Response.json(

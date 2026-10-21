@@ -37,7 +37,6 @@ describe('static page HTML and CSS', () => {
       'vista-ranking',
       'vista-logros',
       'rank-search',
-      'rank-country',
       'rank-mode',
       'podium-container',
       'ranking-tbody',
@@ -63,7 +62,7 @@ describe('static page HTML and CSS', () => {
     const { document } = dom.window;
 
     expect(document.getElementById('filter-search')?.type).toBe('text');
-    expect(document.getElementById('filter-country')?.tagName).toBe('SELECT');
+    expect(document.getElementById('filter-country')).toBeNull();
     expect(document.getElementById('filter-difficulty')?.tagName).toBe('SELECT');
     expect(document.getElementById('filter-vpn')).toBeNull();
     expect(document.getElementById('reset-filters')?.tagName).toBe('BUTTON');
@@ -88,27 +87,21 @@ describe('static page HTML and CSS', () => {
           puesto: 1,
           username: 'Jugador DB',
           puntos: 900,
-          modo: 'Horda',
-          dificultad: 'Pesadilla',
-          pais: 'Argentina',
-          codigo_pais: 'AR',
-          usa_vpn: 0,
+          modo: 'multiplayer',
+          dificultad: 'pesadilla',
           creado_en: '2026-10-17T10:00:00.000Z'
         }],
         top: [{
           username: 'Jugador DB',
           puntos: 900,
-          modo: 'Horda',
-          dificultad: 'Pesadilla',
-          pais: 'Argentina',
-          codigo_pais: 'AR'
+          modo: 'multiplayer',
+          dificultad: 'pesadilla'
         }],
         total: 1,
         page: 1,
         limit: 10,
-        modos: ['Horda'],
-        dificultades: ['Pesadilla'],
-        paises: [{ codigo_pais: 'AR', pais: 'Argentina' }]
+        modos: ['multiplayer'],
+        dificultades: ['pesadilla']
       })
     });
     executeInlineScript(dom, (script) => script.includes("url.searchParams.set('view', 'table')"));
@@ -118,12 +111,12 @@ describe('static page HTML and CSS', () => {
     expect(requestUrl.pathname).toBe('/api/ranking');
     expect(requestUrl.searchParams.get('view')).toBe('table');
     expect(window.document.querySelector('#ranking-table-body').textContent).toContain('Jugador DB');
-    expect(window.document.querySelector('#ranking-table-body').textContent).toContain('Pesadilla');
+    expect(window.document.querySelector('#ranking-table-body').textContent).toContain('pesadilla');
     expect(window.document.querySelector('#ranking-table-body').textContent).not.toMatch(/VPN|TELEMETRÍA IP/i);
-    expect(window.document.querySelector('#ranking-podium').textContent).toContain('Horda');
+    expect(window.document.querySelector('#ranking-podium').textContent).toContain('multiplayer');
     expect(window.document.querySelector('#ranking-podium').textContent).not.toMatch(/VPN|TELEMETRÍA IP/i);
-    expect(window.document.querySelector('#filter-mode').textContent).toContain('Horda');
-    expect(window.document.querySelector('#filter-difficulty').textContent).toContain('Pesadilla');
+    expect(window.document.querySelector('#filter-mode').textContent).toContain('multiplayer');
+    expect(window.document.querySelector('#filter-difficulty').textContent).toContain('pesadilla');
     expect(window.document.querySelector('#ranking-summary').textContent).toContain('DE 1 REGISTROS');
 
     dom.window.close();
@@ -279,7 +272,6 @@ describe('dashboard inline JavaScript', () => {
     const dom = await loadDashboard();
     const { window } = dom;
     window.document.getElementById('rank-search').value = 'Alice';
-    window.document.getElementById('rank-country').value = 'AR';
     window.document.getElementById('rank-mode').value = 'Multiplayer';
 
     await window.cargarRanking();
@@ -288,7 +280,7 @@ describe('dashboard inline JavaScript', () => {
     expect(window.fetch.mock.calls[0][1]).toEqual({ cache: 'no-store' });
     expect(requestUrl.pathname).toBe('/api/ranking');
     expect(requestUrl.searchParams.get('search')).toBe('Alice');
-    expect(requestUrl.searchParams.get('country')).toBe('AR');
+    expect(requestUrl.searchParams.has('country')).toBe(false);
     expect(requestUrl.searchParams.get('mode')).toBe('Multiplayer');
     expect(requestUrl.searchParams.get('view')).toBe('table');
     expect(requestUrl.searchParams.get('page')).toBe('1');
@@ -380,20 +372,16 @@ describe('static ranking inline JavaScript', () => {
           puesto: 1,
           username: 'Luna',
           puntos: 100,
-          modo: 'Horda',
-          dificultad: 'Pesadilla',
-          pais: 'Argentina',
-          codigo_pais: 'AR',
-          usa_vpn: 0,
+          modo: 'multiplayer',
+          dificultad: 'pesadilla',
           creado_en: '2026-10-17T10:00:00.000Z'
         }],
         top: [],
         total: 1,
         page: 1,
         limit: 10,
-        modos: ['Horda'],
-        dificultades: ['Pesadilla'],
-        paises: [{ codigo_pais: 'AR', pais: 'Argentina' }]
+        modos: ['multiplayer'],
+        dificultades: ['pesadilla']
       })
     };
   }
@@ -406,27 +394,24 @@ describe('static ranking inline JavaScript', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const search = window.document.getElementById('filter-search');
-    const country = window.document.getElementById('filter-country');
     const mode = window.document.getElementById('filter-mode');
     const difficulty = window.document.getElementById('filter-difficulty');
     const reset = window.document.getElementById('reset-filters');
 
-    country.value = 'AR';
-    mode.value = 'Horda';
-    difficulty.value = 'Pesadilla';
-    country.dispatchEvent(new window.Event('change'));
+    mode.value = 'multiplayer';
+    difficulty.value = 'pesadilla';
+    mode.dispatchEvent(new window.Event('change'));
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const requestUrl = new URL(window.fetch.mock.calls.at(-1)[0]);
-    expect(requestUrl.searchParams.get('country')).toBe('AR');
-    expect(requestUrl.searchParams.get('mode')).toBe('Horda');
-    expect(requestUrl.searchParams.get('dificultad')).toBe('Pesadilla');
+    expect(requestUrl.searchParams.has('country')).toBe(false);
+    expect(requestUrl.searchParams.get('mode')).toBe('multiplayer');
+    expect(requestUrl.searchParams.get('dificultad')).toBe('pesadilla');
     expect(requestUrl.searchParams.has('vpnOnly')).toBe(false);
     expect(window.document.querySelector('#ranking-table-body').textContent).toContain('Luna');
 
     reset.click();
     expect(search.value).toBe('');
-    expect(country.value).toBe('ALL');
     expect(mode.value).toBe('ALL');
     expect(difficulty.value).toBe('ALL');
     await new Promise((resolve) => setTimeout(resolve, 0));

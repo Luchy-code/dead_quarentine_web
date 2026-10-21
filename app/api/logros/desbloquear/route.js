@@ -11,22 +11,28 @@ export async function POST(request) {
     return Response.json({ error: 'El cuerpo de la solicitud no es JSON válido' }, { status: 400 });
   }
 
+  const idLocal = typeof body?.id_local === 'string' ? body.id_local.trim() : '';
   const username = typeof body?.username === 'string' ? body.username.trim() : '';
   const sublogroClave = typeof body?.sublogro_clave === 'string'
     ? body.sublogro_clave.trim()
     : '';
 
-  if (!username || !sublogroClave) {
+  if (!idLocal || idLocal.length > 255 || !username || !sublogroClave) {
     return Response.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
   }
 
   try {
     const pool = getPool();
 
-    await pool.query('INSERT IGNORE INTO usuarios (username) VALUES (?)', [username]);
+    await pool.query(
+      `INSERT INTO usuarios (id_local, nombre, creado_en)
+       VALUES (?, ?, NOW())
+       ON DUPLICATE KEY UPDATE nombre = VALUES(nombre)`,
+      [idLocal, username]
+    );
     const [[usuario]] = await pool.query(
-      'SELECT id FROM usuarios WHERE username = ?',
-      [username]
+      'SELECT id FROM usuarios WHERE id_local = ?',
+      [idLocal]
     );
 
     if (!usuario) {

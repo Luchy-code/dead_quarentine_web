@@ -35,29 +35,28 @@ describe('GET /api/ranking', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(query).toHaveBeenCalledWith(expect.stringContaining('WITH ranking_general'), ['']);
-    expect(query.mock.calls[0][0]).toContain('COALESCE(u.username, r.username) AS username');
-    expect(query.mock.calls[0][0]).toContain('LEFT JOIN usuarios u ON r.user_id = u.user_id');
+    expect(query.mock.calls[0][0]).toContain('COALESCE(u.nombre, r.user_id) AS username');
+    expect(query.mock.calls[0][0]).toContain('LEFT JOIN usuarios u ON r.user_id = u.id_local');
     expect(query.mock.calls[0][0]).toContain('r.user_id');
     expect(query.mock.calls[0][0]).toContain('r.dificultad');
+    expect(query.mock.calls[0][0]).not.toMatch(/r\.(username|ip|pais|codigo_pais|usa_vpn)\b/);
   });
 
-  it('applies country, mode, difficulty, VPN, and search using parameters', async () => {
+  it('applies mode, difficulty, and search using parameters', async () => {
     query.mockResolvedValueOnce([[]]);
 
     await GET(new Request(
-      'http://localhost/api/ranking?country=AR&mode=Multiplayer&dificultad=Pesadilla&vpnOnly=true&search=Ana'
+      'http://localhost/api/ranking?mode=Multiplayer&dificultad=Pesadilla&search=Ana'
     ));
 
     const [sql, params] = query.mock.calls[0];
-    expect(sql).toContain('AND r.codigo_pais = ?');
     expect(sql).toContain('AND r.modo = ?');
     expect(sql).toContain('AND r.dificultad = ?');
-    expect(sql).toContain('AND r.usa_vpn = 0');
-    expect(sql).toContain('COALESCE(u.username, r.username) LIKE ? OR r.user_id LIKE ?');
-    expect(params).toEqual(['AR', 'Multiplayer', 'Pesadilla', '%Ana%', '%Ana%', '']);
+    expect(sql).toContain('COALESCE(u.nombre, r.user_id) LIKE ? OR r.user_id LIKE ?');
+    expect(params).toEqual(['multiplayer', 'pesadilla', '%Ana%', '%Ana%', '']);
   });
 
-  it('ignores ALL filters and limits the regular ranking to five rows', async () => {
+  it('ignores legacy metadata filters and limits the regular ranking to five rows', async () => {
     query.mockResolvedValueOnce([[]]);
 
     await GET(new Request(
@@ -65,9 +64,9 @@ describe('GET /api/ranking', () => {
     ));
 
     const [sql, params] = query.mock.calls[0];
-    expect(sql).not.toContain('r.codigo_pais = ?');
+    expect(sql).not.toContain('r.codigo_pais');
     expect(sql).not.toContain('r.modo = ?');
-    expect(sql).not.toContain('r.usa_vpn = 0');
+    expect(sql).not.toContain('r.usa_vpn');
     expect(sql).toContain('LIMIT 5');
     expect(params).toEqual(['']);
   });
@@ -76,8 +75,8 @@ describe('GET /api/ranking', () => {
     const rows = [{ id: 12, username: 'Luna', puntos: 12000, dificultad: 'Pesadilla' }];
     const top = [{ username: 'Luna', puntos: 12000, dificultad: 'Pesadilla' }];
     const facets = [
-      { modo: 'Horda', dificultad: 'Pesadilla', codigo_pais: 'AR', pais: 'Argentina' },
-      { modo: 'Rondas', dificultad: 'Normal', codigo_pais: 'AR', pais: 'Argentina' }
+      { modo: 'singleplayer', dificultad: 'pesadilla' },
+      { modo: 'multiplayer', dificultad: 'normal' }
     ];
     query
       .mockResolvedValueOnce([rows])
@@ -86,7 +85,7 @@ describe('GET /api/ranking', () => {
       .mockResolvedValueOnce([facets]);
 
     const response = await GET(new Request(
-      'http://localhost/api/ranking?view=table&page=3&limit=25&country=AR&mode=Horda&dificultad=Pesadilla&vpnOnly=true&search=Luna'
+      'http://localhost/api/ranking?view=table&page=3&limit=25&mode=Singleplayer&dificultad=Pesadilla&search=Luna'
     ));
 
     expect(response.status).toBe(200);
@@ -96,17 +95,16 @@ describe('GET /api/ranking', () => {
       total: 51,
       page: 3,
       limit: 25,
-      modos: ['Horda', 'Rondas'],
-      dificultades: ['Pesadilla', 'Normal'],
-      paises: [{ codigo_pais: 'AR', pais: 'Argentina' }]
+      modos: ['singleplayer', 'multiplayer'],
+      dificultades: ['pesadilla', 'normal']
     });
     expect(query).toHaveBeenNthCalledWith(
       1,
       expect.stringContaining('r.puntos DESC, r.creado_en ASC, r.id ASC'),
-      ['AR', 'Horda', 'Pesadilla', '%Luna%', '%Luna%', 25, 50]
+      ['singleplayer', 'pesadilla', '%Luna%', '%Luna%', 25, 50]
     );
     expect(query).toHaveBeenNthCalledWith(2, expect.stringContaining('COUNT(*) AS total'), [
-      'AR', 'Horda', 'Pesadilla', '%Luna%', '%Luna%'
+      'singleplayer', 'pesadilla', '%Luna%', '%Luna%'
     ]);
     expect(query.mock.calls[0][0]).toContain('r.dificultad');
     expect(query.mock.calls[0][0]).toContain('LIMIT ? OFFSET ?');
@@ -148,40 +146,34 @@ describe('POST /api/ranking', () => {
   });
 
   it.each([
-    [{ puntos: 10 }, 'missing username'],
-    [{ username: ' ', puntos: 10 }, 'blank username'],
-    [{ username: 'user' }, 'missing points'],
-    [{ username: 'user', puntos: null }, 'null points'],
-    [{ username: 'user', puntos: '' }, 'empty points'],
-    [{ username: 'user', puntos: -1 }, 'negative points'],
-    [{ username: 'user', puntos: 'not a number' }, 'non-numeric points'],
-    [{ username: 'user', puntos: Infinity }, 'infinite points']
+    [{ user_id: 'local-1', puntos: 10 }, 'missing username'],
+    [{ user_id: 'local-1', username: ' ', puntos: 10 }, 'blank username'],
+    [{ user_id: 'local-1', username: 'user' }, 'missing points'],
+    [{ user_id: 'local-1', username: 'user', puntos: null }, 'null points'],
+    [{ user_id: 'local-1', username: 'user', puntos: '' }, 'empty points'],
+    [{ user_id: 'local-1', username: 'user', puntos: -1 }, 'negative points'],
+    [{ user_id: 'local-1', username: 'user', puntos: 'not a number' }, 'non-numeric points'],
+    [{ user_id: 'local-1', username: 'user', puntos: Infinity }, 'infinite points'],
+    [{ username: 'user', puntos: 10 }, 'missing user id']
   ])('rejects invalid score input (%s)', async (body) => {
     const response = await POST(jsonRequest(body));
 
     expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({ error: 'username y puntos válidos son obligatorios' });
+    expect(await response.json()).toEqual({
+      error: 'user_id, username, modo, dificultad y puntos válidos son obligatorios'
+    });
     expect(query).not.toHaveBeenCalled();
   });
 
-  it('stores normalized score data and prefers proxy headers for client metadata', async () => {
-    query.mockResolvedValueOnce([{ insertId: 42 }]);
+  it('stores only normalized ranking data and synchronizes the user name separately', async () => {
+    query.mockResolvedValueOnce([{}]).mockResolvedValueOnce([{ insertId: 42 }]);
 
     const response = await POST(jsonRequest({
+      user_id: ' local-1 ',
       username: '  Player  ',
       puntos: '0',
       modo: '  Multiplayer ',
-      dificultad: '  Pesadilla ',
-      pais: ' ',
-      ip: 'body-ip',
-      codigo_pais: 'BR',
-      usa_vpn: 'true'
-    }, {
-      'cf-connecting-ip': 'cloudflare-ip',
-      'x-real-ip': 'real-ip',
-      'x-forwarded-for': 'forwarded-ip, proxy-ip',
-      'cf-ipcountry': 'AR',
-      'x-vercel-ip-country': 'CL'
+      dificultad: '  Pesadilla '
     }));
 
     expect(response.status).toBe(201);
@@ -189,45 +181,31 @@ describe('POST /api/ranking', () => {
       message: 'Puntuación guardada exitosamente',
       id: 42
     });
-    expect(query.mock.calls[0][1]).toEqual([
-      null, 'Player', 0, 'Multiplayer', 'Pesadilla', 'cloudflare-ip', 'AR', 'AR', 1
-    ]);
+    expect(query).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('INSERT INTO usuarios (id_local, nombre'),
+      ['local-1', 'Player']
+    );
+    expect(query.mock.calls[1][0]).toContain(
+      '(puntos, modo, dificultad, creado_en, user_id)'
+    );
+    expect(query.mock.calls[1][0]).not.toMatch(/username|ip|pais|usa_vpn/);
+    expect(query.mock.calls[1][1]).toEqual([0, 'multiplayer', 'pesadilla', 'local-1']);
   });
 
-  it('uses fallback metadata and the default mode when no proxy metadata is present', async () => {
-    query.mockResolvedValueOnce([{ insertId: 7 }]);
+  it('defaults missing mode and difficulty to singleplayer and normal', async () => {
+    query.mockResolvedValueOnce([{}]).mockResolvedValueOnce([{ insertId: 7 }]);
 
     await POST(jsonRequest({
+      user_id: 'local-1',
       username: 'Player',
-      puntos: 25,
-      ip: 'body-ip',
-      usa_vpn: 'unknown'
+      puntos: 25
     }));
 
-    expect(query.mock.calls[0][1]).toEqual([
-      null, 'Player', 25, 'Singleplayer', null, 'body-ip', 'Desconocido', null, null
-    ]);
+    expect(query.mock.calls[1][1]).toEqual([25, 'singleplayer', 'normal', 'local-1']);
   });
 
-  it.each([
-    [true, 1],
-    [1, 1],
-    ['1', 1],
-    ['true', 1],
-    [false, 0],
-    [0, 0],
-    ['0', 0],
-    ['false', 0],
-    ['unknown', null]
-  ])('normalizes VPN value %j to %j', async (vpnValue, expected) => {
-    query.mockResolvedValueOnce([{ insertId: 1 }]);
-
-    await POST(jsonRequest({ username: 'Player', puntos: 1, usa_vpn: vpnValue }));
-
-    expect(query.mock.calls[0][1][8]).toBe(expected);
-  });
-
-  it('stores an optional external user id with the score', async () => {
+  it('requires and stores the local user id without storing the username in ranking', async () => {
     query.mockResolvedValueOnce([{}]).mockResolvedValueOnce([{ insertId: 5 }]);
 
     await POST(jsonRequest({
@@ -236,10 +214,10 @@ describe('POST /api/ranking', () => {
       puntos: 10
     }));
 
-    expect(query.mock.calls[0][0]).toContain('INSERT INTO usuarios (user_id, username');
-    expect(query.mock.calls[1][0]).toContain('(user_id, username, puntos');
-    expect(query.mock.calls[1][0]).toContain('dificultad');
-    expect(query.mock.calls[1][1][0]).toBe('external-123');
+    expect(query.mock.calls[0][0]).toContain('INSERT INTO usuarios (id_local, nombre');
+    expect(query.mock.calls[1][0]).toContain('(puntos, modo, dificultad, creado_en, user_id)');
+    expect(query.mock.calls[1][0]).not.toContain('username');
+    expect(query.mock.calls[1][1]).toEqual([10, 'singleplayer', 'normal', 'external-123']);
   });
 
   it('rejects invalid external user ids', async () => {
@@ -253,11 +231,27 @@ describe('POST /api/ranking', () => {
     expect(query).not.toHaveBeenCalled();
   });
 
+  it('rejects unsupported mode and difficulty values', async () => {
+    for (const body of [
+      { user_id: 'local-1', username: 'Player', puntos: 1, modo: 'horda' },
+      { user_id: 'local-1', username: 'Player', puntos: 1, dificultad: 'facil' }
+    ]) {
+      const response = await POST(jsonRequest(body));
+
+      expect(response.status).toBe(400);
+    }
+    expect(query).not.toHaveBeenCalled();
+  });
+
   it('returns a server error if inserting the score fails', async () => {
-    query.mockRejectedValueOnce(new Error('database unavailable'));
+    query.mockResolvedValueOnce([{}]).mockRejectedValueOnce(new Error('database unavailable'));
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const response = await POST(jsonRequest({ username: 'Player', puntos: 1 }));
+    const response = await POST(jsonRequest({
+      user_id: 'local-1',
+      username: 'Player',
+      puntos: 1
+    }));
 
     expect(response.status).toBe(500);
     expect(await response.json()).toMatchObject({ error: 'Error al insertar en la base de datos' });

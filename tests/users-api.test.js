@@ -6,12 +6,27 @@ vi.mock('../lib/mysql', () => ({
   getPool: () => ({ query })
 }));
 
-import { OPTIONS, POST } from '../app/api/usuarios/route.js';
+import { GET, OPTIONS, POST } from '../app/api/usuarios/route.js';
 import { jsonRequest } from './helpers.js';
 
 beforeEach(() => {
   query.mockReset();
   vi.restoreAllMocks();
+});
+
+describe('GET /api/usuarios', () => {
+  it('returns users with the current database columns', async () => {
+    const users = [{ id: 1, id_local: 'local-1', nombre: 'Player', creado_en: '2026-10-20T00:00:00.000Z' }];
+    query.mockResolvedValueOnce([users]);
+
+    const response = await GET();
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(users);
+    expect(query).toHaveBeenCalledWith(
+      'SELECT id, id_local, nombre, creado_en FROM usuarios ORDER BY creado_en DESC'
+    );
+  });
 });
 
 describe('POST /api/usuarios', () => {
@@ -35,8 +50,8 @@ describe('POST /api/usuarios', () => {
     expect(query).not.toHaveBeenCalled();
   });
 
-  it('upserts a user and synchronizes historical ranking usernames', async () => {
-    query.mockResolvedValueOnce([{}]).mockResolvedValueOnce([{}]);
+  it('upserts a user without writing the name to ranking rows', async () => {
+    query.mockResolvedValueOnce([{}]);
 
     const response = await POST(jsonRequest({
       user_id: ' external-123 ',
@@ -52,14 +67,10 @@ describe('POST /api/usuarios', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
     expect(query).toHaveBeenNthCalledWith(
       1,
-      expect.stringContaining('INSERT INTO usuarios (user_id, username'),
+      expect.stringContaining('INSERT INTO usuarios (id_local, nombre'),
       ['external-123', 'A'.repeat(50)]
     );
-    expect(query).toHaveBeenNthCalledWith(
-      2,
-      'UPDATE ranking SET username = ? WHERE user_id = ?',
-      ['A'.repeat(50), 'external-123']
-    );
+    expect(query).toHaveBeenCalledOnce();
   });
 
   it('returns a server error and logs database failures', async () => {

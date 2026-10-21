@@ -14,31 +14,42 @@ conexión MySQL configurada por variables de entorno.
 
 ## Sincronización de usuarios del juego
 
-Antes de desplegar las rutas actualizadas, ejecuta una vez
-`database/add_external_user_id.sql` en la base MySQL. La migración agrega el
-identificador externo `user_id` a `usuarios` y `ranking` sin cambiar los IDs
-internos existentes.
-
-Para guardar dificultad por partida, ejecuta también una vez
-`database/add_ranking_difficulty.sql`. El ranking mostrará modo y dificultad
-desde cada registro guardado en la base.
+La tabla `usuarios` debe tener únicamente las columnas `id` (AUTO_INCREMENT),
+`id_local` (identificador del jugador creado en el juego), `nombre` y
+`creado_en` (timestamp). No ejecutes la antigua migración
+`database/add_external_user_id.sql` para esta tabla: agrega columnas del esquema
+anterior. `id_local` debe tener un índice `UNIQUE` para que cada jugador tenga
+una sola fila; si todavía no lo tiene, ejecuta una vez
+`database/add_local_user_id.sql`. La tabla `ranking` debe tener únicamente
+`id` (AUTO_INCREMENT), `puntos`, `modo`, `dificultad`, `creado_en` y `user_id`.
+`user_id` guarda el mismo
+identificador local que `usuarios.id_local` y es obligatorio al registrar un
+puntaje. El nombre no se duplica en `ranking`: las APIs lo leen de `usuarios`.
+Modo y dificultad se guardan normalizados como `singleplayer` o `multiplayer`,
+y `normal`, `dificil` o `pesadilla`, respectivamente. El país, la IP y el
+estado de VPN no se guardan ni se ofrecen como filtros del ranking.
 
 El juego puede registrar o actualizar el nombre de un usuario con un `POST` a
-`/api/usuarios`, enviando `{ "user_id": "id-externo", "username": "Jugador" }`.
-Las nuevas puntuaciones pueden enviar `user_id`, `modo` y `dificultad` a
-`/api/ranking`; así las actualizaciones de nombre se reflejan en sus registros
-históricos. Por ejemplo, al terminar una partida:
+`/api/usuarios`, enviando `{ "user_id": "id-local", "username": "Jugador" }`.
+La API mantiene esos nombres de campos por compatibilidad y los guarda en
+`usuarios.id_local` y `usuarios.nombre`. Para desbloquear un logro, envía
+también `id_local` junto con `username` y `sublogro_clave` a
+`/api/logros/desbloquear`; así el progreso queda asociado al usuario correcto
+aunque su nombre cambie. Para guardar una puntuación, envía `user_id`,
+`username`, `puntos`, `modo` y `dificultad` a `/api/ranking`; el nombre se
+sincroniza con `usuarios` y no se duplica en la tabla `ranking`. Por ejemplo,
+al terminar una partida:
 
 ```js
 await fetch('/api/ranking', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    user_id: 'id-externo',
+    user_id: 'id-local',
     username: 'Jugador',
     puntos: 1200,
-    modo: 'Horda',
-    dificultad: 'Pesadilla'
+    modo: 'multiplayer',
+    dificultad: 'pesadilla'
   })
 });
 ```

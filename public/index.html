@@ -96,16 +96,6 @@
         <!-- Filtros interactivos -->
         <div class="flex flex-wrap gap-2 text-xs font-label-sm">
           <input id="rank-search" type="text" placeholder="BUSCAR SUPERVIVIENTE..." class="bg-surface-container px-3 py-1.5 rounded uppercase focus:outline-none border border-surface-variant text-on-surface w-48"/>
-          <select id="rank-country" class="bg-surface-container px-3 py-1.5 rounded uppercase focus:outline-none border border-surface-variant">
-            <option value="ALL">🌍 TODOS LOS PAÍSES</option>
-            <option value="AR">🇦🇷 ARGENTINA</option>
-            <option value="ES">🇪🇸 ESPAÑA</option>
-            <option value="US">🇺🇸 USA</option>
-            <option value="MX">🇲🇽 MÉXICO</option>
-            <option value="CL">🇨🇱 CHILE</option>
-            <option value="NL">🇳🇱 PAÍSES BAJOS</option>
-            <option value="UY">🇺🇾 URUGUAY</option>
-          </select>
           <select id="rank-mode" class="bg-surface-container px-3 py-1.5 rounded uppercase focus:outline-none border border-surface-variant">
             <option value="ALL">TODOS LOS MODOS</option>
             <option value="Singleplayer">SINGLEPLAYER</option>
@@ -129,7 +119,6 @@
               <th class="p-3">MODO</th>
               <th class="p-3">DIFICULTAD</th>
               <th class="p-3 text-right">PUNTOS</th>
-              <th class="p-3">ORIGEN / PAÍS</th>
               <th class="p-3">FECHA</th>
             </tr>
           </thead>
@@ -220,7 +209,6 @@
     // --- CARGAR DATOS DE RANKING ---
     async function cargarRanking() {
       const search = document.getElementById('rank-search').value;
-      const country = document.getElementById('rank-country').value;
       const mode = document.getElementById('rank-mode').value;
 
       const url = new URL('/api/ranking', window.location.origin);
@@ -228,7 +216,6 @@
       url.searchParams.set('page', String(rankingPage));
       url.searchParams.set('limit', document.getElementById('ranking-page-size').value);
       if (search) url.searchParams.append('search', search);
-      if (country !== 'ALL') url.searchParams.append('country', country);
       if (mode !== 'ALL') url.searchParams.append('mode', mode);
 
       try {
@@ -257,7 +244,7 @@
         renderPaginacionRanking(Number(data.total), Number(data.page), Number(data.limit));
 
         if (data.rows.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-outline">Todavía no hay puntuaciones registradas.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-outline">Todavía no hay puntuaciones registradas.</td></tr>';
         }
 
         if (data.top.length === 0) {
@@ -274,7 +261,6 @@
             <div class="p-4 rounded-lg border ${colores[index]} flex flex-col justify-between shadow-lg">
               <div class="flex justify-between items-center text-xs font-label-sm">
                 <span class="font-bold uppercase text-primary">#${index + 1} // PODIO</span>
-                <span>${item.codigo_pais || 'N/A'}</span>
               </div>
               <div class="my-3">
                 <div class="font-headline-sm text-xl font-bold uppercase">${item.username}</div>
@@ -297,7 +283,6 @@
               <td class="p-3 text-outline">${row.modo}</td>
               <td class="p-3 text-outline">${row.dificultad || '--'}</td>
               <td class="p-3 text-right font-bold text-secondary-fixed-dim">${Number(row.puntos).toLocaleString()}</td>
-              <td class="p-3">${row.pais} (${row.codigo_pais})</td>
               <td class="p-3 text-outline">${new Date(row.creado_en).toLocaleDateString()}</td>
             </tr>
           `;
@@ -399,7 +384,6 @@
     }
 
     document.getElementById('rank-search').addEventListener('input', cargarPrimeraPaginaRanking);
-    document.getElementById('rank-country').addEventListener('change', cargarPrimeraPaginaRanking);
     document.getElementById('rank-mode').addEventListener('change', cargarPrimeraPaginaRanking);
     document.getElementById('ranking-page-size').addEventListener('change', cargarPrimeraPaginaRanking);
     document.getElementById('ranking-page-prev').addEventListener('click', () => {
