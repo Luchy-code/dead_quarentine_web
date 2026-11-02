@@ -9,8 +9,15 @@
    credenciales reales en `.env.example` ni las subas al repositorio.
 4. Ejecuta `npm run dev` y abre `http://localhost:3000`.
 
-La página está en `public/index.html`; las APIs se ejecutan en Next.js y usan la
-conexión MySQL configurada por variables de entorno.
+La portada está en `public/index.html`; el dashboard anterior de ranking y
+logros se conserva en `public/telemetria.html` y se abre desde los accesos de
+ranking y logros. Las APIs se ejecutan en Next.js y usan la conexión MySQL
+configurada por variables de entorno.
+La portada consulta `/api/telemetria` para mostrar el total de usuarios
+registrados, la cantidad/porcentaje de usuarios con al menos un récord, logro o
+sublogro, y los usuarios sin actividad registrada. Se consideran activos los
+usuarios cuyo `id_local` tiene un récord en `ranking` o cuyo id interno tiene
+una fila en `usuario_logros` o `usuario_sublogros`.
 
 ## Sincronización de usuarios del juego
 

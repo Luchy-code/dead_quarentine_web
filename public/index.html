@@ -1,409 +1,932 @@
 <!DOCTYPE html>
-<html class="dark" lang="es">
-<head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>Dead Quarantine II - Telemetría Central</title>
-  <link rel="icon" type="image/png" href="/img/logo.png"/>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
-  <link href="https://fonts.googleapis.com/css2?family=Chivo:wght@300..900&family=JetBrains+Mono:wght@100..800&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet"/>
-  <style>
-    @layer base { html, body { margin: 0; padding: 0; } }
-    ::-webkit-scrollbar { display: none; }
-  </style>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "surface-variant": "#313539",
-            "secondary-fixed-dim": "#ffba38",
-            "tertiary-fixed-dim": "#00e2a0",
-            "surface-bright": "#363a3d",
-            "tertiary-container": "#00a574",
-            "primary": "#ffb4a9",
-            "surface-container-low": "#181c1f",
-            "surface-container-lowest": "#0b0f12",
-            "surface-container-highest": "#313539",
-            "surface": "#101417",
-            "surface-container": "#1c2023",
-            "surface-container-high": "#262a2e",
-            "primary-container": "#ff5545",
-            "tertiary": "#00e2a0",
-            "outline": "#ac8883",
-            "outline-variant": "#5c403c",
-            "on-surface": "#e0e3e7",
-            "on-surface-variant": "#e6bdb7",
-            "error": "#ffb4ab"
-          },
-          fontFamily: {
-            "label-sm": ["JetBrains Mono"],
-            "label-md": ["JetBrains Mono"],
-            "headline-md": ["Space Grotesk"],
-            "headline-lg": ["Space Grotesk"],
-            "headline-sm": ["Space Grotesk"],
-            "body-md": ["Chivo"]
-          }
+
+<html class="dark" lang="es"><head><link rel="icon" type="image/jpeg" href="/img/logo2.0.jpeg"/><title>Dead Quarantine II - Sector 09</title><meta name="description" content="Explora el Sector 09, conoce a sus supervivientes y consulta la telemetría de Dead Quarantine II."/><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,300..900;1,300..900&amp;family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;family=Space+Grotesk:wght@300..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+<style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "surface-variant": "#313539",
+          "secondary-fixed-dim": "#ffba38",
+          "tertiary-fixed-dim": "#00e2a0",
+          "surface-bright": "#363a3d",
+          "tertiary-container": "#00a574",
+          "on-tertiary": "#003825",
+          "on-secondary-container": "#6a4800",
+          "inverse-surface": "#e0e3e7",
+          "on-secondary": "#432c00",
+          "surface-container-low": "#181c1f",
+          "primary": "#ffb4a9",
+          "inverse-on-surface": "#2d3134",
+          "on-secondary-fixed": "#281900",
+          "on-tertiary-fixed-variant": "#005138",
+          "primary-fixed": "#ffdad5",
+          "on-surface": "#e0e3e7",
+          "surface-container-lowest": "#0b0f12",
+          "surface-container-highest": "#313539",
+          "surface": "#101417",
+          "on-error": "#690005",
+          "background": "#101417",
+          "surface-dim": "#101417",
+          "on-primary-fixed-variant": "#930005",
+          "on-primary-fixed": "#410001",
+          "tertiary": "#00e2a0",
+          "primary-container": "#ff5545",
+          "on-error-container": "#ffdad6",
+          "error": "#ffb4ab",
+          "tertiary-fixed": "#43ffbb",
+          "on-secondary-fixed-variant": "#604100",
+          "on-surface-variant": "#e6bdb7",
+          "surface-tint": "#ffb4a9",
+          "on-tertiary-container": "#003120",
+          "surface-container": "#1c2023",
+          "surface-container-high": "#262a2e",
+          "secondary-fixed": "#ffdeac",
+          "secondary-container": "#feb300",
+          "error-container": "#93000a",
+          "secondary": "#ffd799",
+          "on-tertiary-fixed": "#002114",
+          "outline": "#ac8883",
+          "on-background": "#e0e3e7",
+          "on-primary-container": "#5c0002",
+          "primary-fixed-dim": "#ffb4a9",
+          "on-primary": "#690002",
+          "inverse-primary": "#be0b0e",
+          "outline-variant": "#5c403c"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "gutter": "1rem",
+          "space-xs": "0.25rem",
+          "space-xl": "2.5rem",
+          "margin-lg": "3rem",
+          "margin-md": "2rem",
+          "space-sm": "0.5rem",
+          "space-md": "1rem",
+          "space-lg": "1.5rem",
+          "gutter-lg": "1.5rem",
+          "margin": "1rem"
+        },
+        "fontFamily": {
+          "label-sm": [
+            "JetBrains Mono"
+          ],
+          "label-lg": [
+            "JetBrains Mono"
+          ],
+          "headline-md": [
+            "Space Grotesk"
+          ],
+          "headline-lg": [
+            "Space Grotesk"
+          ],
+          "body-sm": [
+            "Chivo"
+          ],
+          "display-lg": [
+            "Space Grotesk"
+          ],
+          "display-lg-mobile": [
+            "Space Grotesk"
+          ],
+          "headline-lg-mobile": [
+            "Space Grotesk"
+          ],
+          "body-lg": [
+            "Chivo"
+          ],
+          "body-md": [
+            "Chivo"
+          ],
+          "headline-sm": [
+            "Space Grotesk"
+          ],
+          "label-md": [
+            "JetBrains Mono"
+          ]
+        },
+        "fontSize": {
+          "label-sm": [
+            "10px",
+            {
+              "lineHeight": "14px",
+              "letterSpacing": "0.1em",
+              "fontWeight": "500"
+            }
+          ],
+          "label-lg": [
+            "14px",
+            {
+              "lineHeight": "18px",
+              "letterSpacing": "0.08em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-md": [
+            "24px",
+            {
+              "lineHeight": "32px",
+              "letterSpacing": "0em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-lg": [
+            "32px",
+            {
+              "lineHeight": "40px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "body-sm": [
+            "12px",
+            {
+              "lineHeight": "18px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "400"
+            }
+          ],
+          "display-lg": [
+            "48px",
+            {
+              "lineHeight": "56px",
+              "letterSpacing": "-0.02em",
+              "fontWeight": "700"
+            }
+          ],
+          "display-lg-mobile": [
+            "32px",
+            {
+              "lineHeight": "40px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-lg-mobile": [
+            "24px",
+            {
+              "lineHeight": "32px",
+              "letterSpacing": "0em",
+              "fontWeight": "600"
+            }
+          ],
+          "body-lg": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "letterSpacing": "0em",
+              "fontWeight": "400"
+            }
+          ],
+          "body-md": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-sm": [
+            "18px",
+            {
+              "lineHeight": "26px",
+              "letterSpacing": "0.02em",
+              "fontWeight": "600"
+            }
+          ],
+          "label-md": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0.06em",
+              "fontWeight": "500"
+            }
+          ]
         }
-      }
+      },
+    },
+  }</script></head>
+  <body class="bg-surface-container-lowest font-body-md text-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_2px_16px_rgba(0,0,0,0.85)]"><div class="h-20 w-full px-gutter flex items-center justify-between gap-space-md"><a href="/index.html" aria-label="Ir al inicio" class="flex items-center gap-space-md flex-shrink-0"><img alt="Dead Quarantine Emblem" class="h-9 w-auto object-contain" src="/img/logo2.0.jpeg"/><span class="flex flex-col"><span class="font-headline-sm text-headline-sm uppercase tracking-widest text-on-surface font-bold">DEAD QUARANTINE</span><span class="font-label-sm text-outline tracking-widest">CO-OP ZOMBIE SURVIVAL FPS</span></span></a><nav class="hidden xl:flex items-center justify-center gap-space-sm font-label-md text-label-md uppercase" aria-label="Navegación principal"><a aria-current="page" class="whitespace-nowrap text-center px-space-md py-space-md rounded transition-all bg-primary-container text-on-primary-container font-bold shadow-[0_0_12px_rgba(255,85,69,0.35)]" data-path="historia-y-supervivientes" href="/index.html#historia-y-supervivientes">HISTORIA &amp; SUPERVIVIENTES</a><a class="whitespace-nowrap text-center px-space-md py-space-md rounded transition-all text-on-surface-variant hover:bg-surface-container hover:text-on-surface" data-path="top-global-ranking" href="/ranking.html">TOP GLOBAL RANKING</a><a class="whitespace-nowrap text-center px-space-md py-space-md rounded transition-all text-on-surface-variant hover:bg-surface-container hover:text-on-surface" data-path="matriz-de-logros" href="/logros_globales.html">MATRIZ DE LOGROS</a></nav></div><nav class="flex xl:hidden items-center justify-center gap-space-xs px-space-sm pb-space-sm font-label-sm text-label-sm uppercase" aria-label="Navegación principal móvil"><a aria-current="page" class="flex-1 whitespace-nowrap text-center px-space-sm py-space-md rounded transition-colors bg-primary-container text-on-primary-container font-bold shadow-[0_0_12px_rgba(255,85,69,0.35)]" data-path="historia-y-supervivientes" href="/index.html#historia-y-supervivientes">HISTORIA</a><a class="flex-1 whitespace-nowrap text-center px-space-sm py-space-md rounded transition-colors text-on-surface-variant hover:text-on-surface" data-path="top-global-ranking" href="/ranking.html">RANKING</a><a class="flex-1 whitespace-nowrap text-center px-space-sm py-space-md rounded transition-colors text-on-surface-variant hover:text-on-surface" data-path="matriz-de-logros" href="/logros_globales.html">LOGROS</a></nav></header><main class="w-full pt-32 xl:pt-20 bg-surface-container-lowest min-h-screen"><div class="flex flex-col w-full">
+<!-- ==================== HERO TÁCTICO // PROTOCOLO SECTOR 07 ==================== -->
+<section class="relative w-full bg-surface-container-lowest px-gutter py-space-xl overflow-hidden shadow-2xl">
+<!-- Atmospheric Ambient Glows & Tonal Scan Grid -->
+<div class="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary-container/10 blur-3xl pointer-events-none"></div>
+<div class="absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-secondary-container/10 blur-3xl pointer-events-none"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-64 bg-tertiary-container/5 blur-3xl pointer-events-none"></div>
+<div class="relative z-10 max-w-7xl mx-auto flex flex-col gap-space-lg">
+<!-- Main Headline & Narrative Synopsis -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-center">
+<div class="lg:col-span-8 flex flex-col gap-space-md">
+<div class="inline-flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container w-fit rounded">
+<span class="material-symbols-outlined text-primary text-[16px]">warning</span>
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-primary font-bold">
+              CÓDIGO BIO-PELIGRO: EXCLUSIÓN TOTAL
+            </span>
+</div>
+<h1 class="font-display-lg text-display-lg font-bold uppercase tracking-tight text-on-surface text-balance">
+            DEAD QUARANTINE: PROTOCOLO DE AISLAMIENTO BIOLÓGICO SECTOR 07
+          </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl leading-relaxed text-pretty">
+          En lo profundo del Sector - 07, la contención biológica falló. Con el área bajo nivel de amenaza Bio-Hazard Lv.4 y las salidas blindadas, la única esperanza es avanzar en equipo. Consigan las tarjetas de acceso en el laboratorio, atraviesen la ciudad hasta la antena de emergencia y enfréntense al titán mutante que comanda las hordas antes de que el tiempo se agote. La salida solo es viable por aire… si logran resistir el asedio.</p>
+</div>
+<!-- Telemetry HUD Core Visual Widget -->
+<div class="lg:col-span-4 flex flex-col gap-space-sm bg-surface-container p-space-md rounded shadow-xl">
+<div class="flex items-center justify-between pb-space-xs bg-surface-container-high px-space-sm py-space-xs rounded">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-bold">TELEMETRÍA EN DIRECTO</span>
+<span class="inline-flex items-center gap-space-xs font-label-sm text-label-sm text-tertiary">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>FEED ACTIVO
+            </span>
+</div>
+<!-- Circular Metric Visualization SVG & Key Stats -->
+<div class="flex items-center gap-space-md bg-surface-container-low p-space-sm rounded">
+<div class="relative w-24 h-24 flex-shrink-0 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.5"></path>
+<path id="active-users-ring" class="text-primary-container" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="0, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+<span id="active-users-percent" class="font-label-lg text-label-lg font-bold text-on-surface">--%</span>
+<span class="font-label-sm text-[8px] text-outline uppercase">ACTIVOS</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs w-full">
+<div class="flex justify-between items-center text-on-surface">
+<span class="font-label-sm text-label-sm text-outline uppercase">OPERADORES ACTIVOS</span>
+<span id="active-users-count" class="font-label-md text-label-md font-bold text-secondary">CARGANDO</span>
+</div>
+<div class="flex justify-between items-center text-on-surface">
+<span class="font-label-sm text-label-sm text-outline uppercase">USUARIOS TOTALES</span>
+<span id="total-users-count" class="font-label-md text-label-md font-bold text-primary">CARGANDO</span>
+</div>
+<div class="flex justify-between items-center text-on-surface">
+<span class="font-label-sm text-label-sm text-outline uppercase">SIN RÉCORD NI LOGRO</span>
+<span id="inactive-users-count" class="font-label-md text-label-md font-bold text-tertiary">CARGANDO</span>
+</div>
+</div>
+</div>
+<!-- Secondary Grid Mini Diagnostics -->
+<div class="grid grid-cols-2 gap-space-xs">
+<div class="bg-surface-container-high p-space-sm rounded flex flex-col">
+<span class="font-label-sm text-[10px] text-outline uppercase">MOTOR GRÁFICO</span>
+<span class="font-label-md text-label-md text-on-surface font-bold">VULKAN // DX12</span>
+</div>
+<div class="bg-surface-container-high p-space-sm rounded flex flex-col">
+<span class="font-label-sm text-[10px] text-outline uppercase">SERVIDOR DE RED</span>
+<span class="font-label-md text-label-md text-tertiary font-bold">AIVEN MYSQL 09</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ==================== CRONOLOGÍA // EXPEDIENTE DEL BROTE ==================== -->
+<section id="historia-y-supervivientes" class="w-full bg-surface-container-low px-gutter py-space-xl scroll-mt-24">
+  <div class="max-w-7xl mx-auto flex flex-col gap-space-lg">
+    <!-- Section Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md pb-space-sm">
+      <div>
+        <span class="font-label-sm text-label-sm text-secondary-fixed-dim uppercase tracking-widest font-bold">
+          REGISTRO DE INCURSIÓN // EXPEDIENTE DEAD QUARANTINE
+        </span>
+        <h2 class="font-headline-lg text-headline-lg uppercase text-on-surface font-bold tracking-tight">
+          CRONOLOGÍA DE LA MISIÓN: RUTA DE SUPERVIVENCIA
+        </h2>
+      </div>
+      <div class="flex items-center gap-space-xs font-label-sm text-label-sm text-outline">
+        <span class="material-symbols-outlined text-[16px] text-primary">lock_open</span>
+        <span>ESTADO: INFORMES DE CHECKPOINT DESCLASIFICADOS</span>
+      </div>
+    </div>
+
+    <!-- Timeline 3-Phase Grid (Fase 1: Laboratorio, Fase 2: Ciudad / Antena, Fase 3: Bosque / Mutante) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+      <!-- Fase 1: Punto de Partida - El Laboratorio -->
+      <div class="bg-surface-container p-space-md rounded shadow-lg flex flex-col justify-between gap-space-md relative overflow-hidden group hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center justify-between">
+          <span class="px-space-sm py-space-xs bg-surface-container-highest font-label-sm text-label-sm text-primary font-bold rounded">
+            PUNTO DE PARTIDA
+          </span>
+          <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">EL LABORATORIO</span>
+        </div>
+        <div>
+          <h3 class="font-headline-sm text-headline-sm text-on-surface uppercase font-bold mb-space-xs">
+            ¿CÓMO EMPEZÓ TODO?
+          </h3>
+          <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+            Un virus fuera de control desató el caos, transformando de inmediato a todo aquel que lo inhala. Atrapados en el epicentro del brote, el avance debe ser en estricto sigilo para no alertar a los infectados. Con la salida de emergencia bloqueada, la única forma de franquear la puerta principal es asegurar la tarjeta magnética de acceso.
+          </p>
+        </div>
+        <div class="flex items-center justify-between text-outline font-label-sm text-label-sm pt-space-sm bg-surface-container-lowest/50 px-space-sm py-space-xs rounded">
+          <span>PRIORIDAD: SIGILO</span>
+          <span class="text-primary font-bold">OBJETIVO: ENCONTRAR TARJETA Y ESCAPAR</span>
+        </div>
+      </div>
+
+      <!-- Fase 2: Checkpoint 1 - La Ciudad Infestada -->
+      <div class="bg-surface-container p-space-md rounded shadow-lg flex flex-col justify-between gap-space-md relative overflow-hidden group hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center justify-between">
+          <span class="px-space-sm py-space-xs bg-surface-container-highest font-label-sm text-label-sm text-secondary font-bold rounded">
+            CHECKPOINT // NIVEL 2
+          </span>
+          <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">CIUDAD INFESTADA</span>
+        </div>
+        <div>
+          <h3 class="font-headline-sm text-headline-sm text-on-surface uppercase font-bold mb-space-xs">
+            ¿CÓMO TERMINAMOS AQUÍ?
+          </h3>
+          <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+            Tras el escape del complejo subterráneo hacia la superficie, la urbe se encuentra totalmente colapsada por las hordas. La única vía viable de extracción es por aire. Abriéndose paso entre las calles hasta la estación de radio, el equipo debe reunirse con otros refugiados y resistir hasta la evacuación militar.
+          </p>
+        </div>
+        <div class="flex items-center justify-between text-outline font-label-sm text-label-sm pt-space-sm bg-surface-container-lowest/50 px-space-sm py-space-xs rounded">
+          <span>EXTRACCIÓN: AÉREA</span>
+          <span class="text-secondary font-bold">OBJETIVO: CONTACTAR SUPERVIVIENTES</span>
+        </div>
+      </div>
+
+      <!-- Fase 3: Checkpoint 2 - El Bosque y Cabaña -->
+      <div class="bg-surface-container p-space-md rounded shadow-lg flex flex-col justify-between gap-space-md relative overflow-hidden group hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center justify-between">
+          <span class="px-space-sm py-space-xs bg-surface-container-highest font-label-sm text-label-sm text-tertiary font-bold rounded">
+            CHECKPOINT // AMENAZA FINAL
+          </span>
+          <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">EL BOSQUE PROFUNDO</span>
+        </div>
+        <div>
+          <h3 class="font-headline-sm text-headline-sm text-on-surface uppercase font-bold mb-space-xs">
+            EL COLOSO Y LA RESISTENCIA
+          </h3>
+          <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+            Dispersos entre puntos defensivos en la espesura del bosque, los supervivientes enfrentan la peor amenaza: un infectado mutante colosal que comanda y coordina embestidas masivas contra las bases. No habrá rescate definitivo mientras siga en pie; neutralizarlo es la máxima prioridad táctica.
+          </p>
+        </div>
+        <div class="flex items-center justify-between text-outline font-label-sm text-label-sm pt-space-sm bg-surface-container-lowest/50 px-space-sm py-space-xs rounded">
+          <span>ALERTA: TITÁN MUTANTE</span>
+          <span class="text-tertiary font-bold">OBJETIVO: ELIMINAR AL MUTANTE</span>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+</section>
+<!-- ==================== LOS SUPERVIVIENTES // SURVIVORS 3D PREFABS ==================== -->
+<section class="w-full bg-surface-container-lowest px-gutter py-space-xl">
+<div class="max-w-7xl mx-auto flex flex-col gap-space-lg">
+<!-- Section Title & Prefab Inspector Intro -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div>
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest font-bold">
+            ESCUADRÓN DE INFILTRACIÓN SECTOR 07 // MODELOS Y PREFABS DE PERSONAJE
+          </span>
+<h2 class="font-headline-lg text-headline-lg uppercase text-on-surface font-bold tracking-tight">
+            LOS SUPERVIVIENTES: FICHA TÁCTICA Y PERFILES 3D
+          </h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mt-space-xs">
+            Cada operador posee calibración biométrica única, especialización de armamento de dotación y ventajas pasivas diseñadas para complementarse en combate cooperativo de 4 jugadores.
+          </p>
+</div>
+<div class="flex items-center gap-space-sm bg-surface-container px-space-md py-space-xs rounded">
+<span class="material-symbols-outlined text-secondary text-[18px]">view_in_ar</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold uppercase tracking-wider">SISTEMA UNITY PREFABS ENGINE</span>
+</div>
+</div>
+<!-- 5 Operators Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+<!-- OPERADOR 1: KNOX (TANQUE) -->
+<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform">
+<!-- Card Header & Badge -->
+<div class="p-space-md bg-surface-container-high flex items-center justify-between">
+<div>
+<span class="font-label-sm text-[10px] text-primary font-bold uppercase tracking-wider">ROL: TANQUE / ASALTO PESADO</span>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface uppercase">KNOX</h3>
+</div>
+<span class="px-space-xs py-1 bg-primary-container text-on-primary-container font-label-sm text-[10px] font-bold rounded uppercase">
+              TIER S
+            </span>
+</div>
+<div class="p-space-sm bg-surface-container-lowest">
+<div class="relative" data-model-viewer-container aria-busy="true">
+<model-viewer
+id="knox-model"
+data-model-loader
+class="w-full h-64 bg-surface-container-low rounded"
+src="/gib3/SM_Chr_Bombsuit_Male_01.glb"
+alt="Modelo 3D de Knox con traje EOD pesado"
+camera-controls
+disable-zoom
+interaction-prompt="none"
+rotation-per-second="60deg"
+onmouseenter="this.autoRotate = true"
+onmouseleave="this.autoRotate = false">
+</model-viewer>
+<div class="absolute inset-0 flex flex-col items-center justify-center gap-space-sm bg-surface-container-low/90 text-primary font-label-sm text-label-sm font-bold uppercase tracking-widest" data-model-loading role="status" aria-live="polite">
+<span class="w-8 h-8 rounded-full border-2 border-primary-container border-t-transparent animate-spin" aria-hidden="true"></span>
+<span>CARGANDO MODELO 3D...</span>
+</div>
+</div>
+<p class="font-label-sm text-[9px] text-outline text-center uppercase tracking-wider mt-space-xs">MODELO 3D // ARRASTRA PARA GIRAR</p>
+</div>
+<!-- Tactical Attributes & Stats -->
+<div class="p-space-md flex flex-col gap-space-sm flex-grow justify-between">
+<div class="space-y-space-xs">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+<span class="font-bold text-primary">HABILIDAD:</span> Aguanta el doble de daño, pero se mueve más lento.
+              </p>
+<div class="space-y-1 pt-space-xs">
+<div class="flex justify-between font-label-sm text-[11px]">
+<span class="text-outline uppercase">BLINDAJE CORPORAL</span>
+<span class="text-primary font-bold">99.8%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 99.8%;"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between font-label-sm text-[11px]">
+<span class="text-outline uppercase">POTENCIA DE FUEGO</span>
+<span class="text-secondary font-bold">88.5%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary-container h-full rounded-full" style="width: 88.5%;"></div>
+</div>
+</div>
+<div class="pt-space-xs flex items-center justify-between text-on-surface-variant font-label-sm text-[11px]">
+<span>ARMA PRINCIPAL:</span>
+<span class="text-on-surface font-bold">ESCOPETA 12G BULLPUP</span>
+</div>
+</div>
+<button class="w-full mt-space-sm py-space-xs bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold uppercase rounded hover:bg-surface-bright transition-colors flex items-center justify-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+              INSPECCIONAR PREFAB
+            </button>
+</div>
+</div>
+<!-- OPERADOR 2: RYDER (EXPLORADOR / SOPORTE) -->
+<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform">
+<!-- Card Header & Badge -->
+<div class="p-space-md bg-surface-container-high flex items-center justify-between">
+<div>
+<span class="font-label-sm text-[10px] text-secondary font-bold uppercase tracking-wider">ROL: EXPLORADOR / SUMINISTROS</span>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface uppercase">RYDER</h3>
+</div>
+<span class="px-space-xs py-1 bg-secondary-container text-on-secondary-container font-label-sm text-[10px] font-bold rounded uppercase">
+              TIER A
+            </span>
+</div>
+<div class="p-space-sm bg-surface-container-lowest">
+<div class="relative" data-model-viewer-container aria-busy="true">
+<model-viewer
+id="ryder-model"
+data-model-loader
+class="w-full h-64 bg-surface-container-low rounded"
+src="/gib3/SM_Chr_Contractor_Male_01.glb"
+alt="Modelo 3D de Ryder, explorador"
+camera-controls
+disable-zoom
+interaction-prompt="none"
+rotation-per-second="60deg"
+onmouseenter="this.autoRotate = true"
+onmouseleave="this.autoRotate = false">
+</model-viewer>
+<div class="absolute inset-0 flex flex-col items-center justify-center gap-space-sm bg-surface-container-low/90 text-primary font-label-sm text-label-sm font-bold uppercase tracking-widest" data-model-loading role="status" aria-live="polite">
+<span class="w-8 h-8 rounded-full border-2 border-primary-container border-t-transparent animate-spin" aria-hidden="true"></span>
+<span>CARGANDO MODELO 3D...</span>
+</div>
+</div>
+<p class="font-label-sm text-[9px] text-outline text-center uppercase tracking-wider mt-space-xs">MODELO 3D // ARRASTRA PARA GIRAR</p>
+</div>
+<!-- Tactical Attributes & Stats -->
+<div class="p-space-md flex flex-col gap-space-sm flex-grow justify-between">
+<div class="space-y-space-xs">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+<span class="font-bold text-secondary">HABILIDAD:</span> Rápido y ágil, pero frágil. Un error sale caro.
+              </p>
+<div class="space-y-1 pt-space-xs">
+<div class="flex justify-between font-label-sm text-[11px]">
+<span class="text-outline uppercase">AGILIDAD Y VELOCIDAD</span>
+<span class="text-secondary font-bold">94.2%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary-container h-full rounded-full" style="width: 94.2%;"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between font-label-sm text-[11px]">
+<span class="text-outline uppercase">CAPACIDAD SUMINISTROS</span>
+<span class="text-tertiary font-bold">96.0%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-tertiary-container h-full rounded-full" style="width: 96.0%;"></div>
+</div>
+</div>
+<div class="pt-space-xs flex items-center justify-between text-on-surface-variant font-label-sm text-[11px]">
+<span>ARMA PRINCIPAL:</span>
+<span class="text-on-surface font-bold">CARABINA TAC-9 / MACHETE</span>
+</div>
+</div>
+<button class="w-full mt-space-sm py-space-xs bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold uppercase rounded hover:bg-surface-bright transition-colors flex items-center justify-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+              INSPECCIONAR PREFAB
+            </button>
+</div>
+</div>
+<!-- OPERADOR 3: OSCAR (SOLDADO MIL-SPEC) -->
+<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform">
+<!-- Card Header & Badge -->
+<div class="p-space-md bg-surface-container-high flex items-center justify-between">
+<div>
+<span class="font-label-sm text-[10px] text-primary font-bold uppercase tracking-wider">ROL: ASALTO MILITAR / FRANCOTIRADOR</span>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface uppercase">OSCAR</h3>
+</div>
+<span class="px-space-xs py-1 bg-primary-container text-on-primary-container font-label-sm text-[10px] font-bold rounded uppercase">
+              TIER S
+            </span>
+</div>
+<div class="p-space-sm bg-surface-container-lowest">
+<div class="relative" data-model-viewer-container aria-busy="true">
+<model-viewer
+id="oscar-model"
+data-model-loader
+class="w-full h-64 bg-surface-container-low rounded"
+src="/gib3/SM_Chr_Soldier_Male_01.glb"
+alt="Modelo 3D de Oscar, soldado"
+camera-controls
+disable-zoom
+interaction-prompt="none"
+rotation-per-second="60deg"
+onmouseenter="this.autoRotate = true"
+onmouseleave="this.autoRotate = false">
+</model-viewer>
+<div class="absolute inset-0 flex flex-col items-center justify-center gap-space-sm bg-surface-container-low/90 text-primary font-label-sm text-label-sm font-bold uppercase tracking-widest" data-model-loading role="status" aria-live="polite">
+<span class="w-8 h-8 rounded-full border-2 border-primary-container border-t-transparent animate-spin" aria-hidden="true"></span>
+<span>CARGANDO MODELO 3D...</span>
+</div>
+</div>
+<p class="font-label-sm text-[9px] text-outline text-center uppercase tracking-wider mt-space-xs">MODELO 3D // ARRASTRA PARA GIRAR</p>
+</div>
+<!-- Tactical Attributes & Stats -->
+<div class="p-space-md flex flex-col gap-space-sm flex-grow justify-between">
+<div class="space-y-space-xs">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+<span class="font-bold text-primary">HABILIDAD:</span> Perfil equilibrado, con buena vida y velocidad para cualquier situación.
+              </p>
+<div class="space-y-1 pt-space-xs">
+<div class="flex justify-between font-label-sm text-[11px]">
+<span class="text-outline uppercase">PRECISIÓN Y PUNTERÍA</span>
+<span class="text-primary font-bold">97.5%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 97.5%;"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between font-label-sm text-[11px]">
+<span class="text-outline uppercase">CONTROL DE RETROCESO</span>
+<span class="text-secondary font-bold">91.0%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary-container h-full rounded-full" style="width: 91.0%;"></div>
+</div>
+</div>
+<div class="pt-space-xs flex items-center justify-between text-on-surface-variant font-label-sm text-[11px]">
+<span>ARMA PRINCIPAL:</span>
+<span class="text-on-surface font-bold">RIFLE DE ASALTO M4-MOD BIO</span>
+</div>
+</div>
+<button class="w-full mt-space-sm py-space-xs bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold uppercase rounded hover:bg-surface-bright transition-colors flex items-center justify-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+              INSPECCIONAR PREFAB
+            </button>
+</div>
+</div>
+<!-- OPERADOR 4: VEGA (RECON / ESPECIALISTA BIOMASA) -->
+<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform">
+<!-- Card Header & Badge -->
+<div class="p-space-md bg-surface-container-high flex items-center justify-between">
+<div>
+<span class="font-label-sm text-[10px] text-tertiary font-bold uppercase tracking-wider">ROL: RECON // RASTREO BIOMASA</span>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface uppercase">VEGA</h3>
+</div>
+<span class="px-space-xs py-1 bg-tertiary-container text-on-tertiary-container font-label-sm text-[10px] font-bold rounded uppercase">
+              TIER A+
+            </span>
+</div>
+<div class="p-space-sm bg-surface-container-lowest">
+<div class="relative" data-model-viewer-container aria-busy="true">
+<model-viewer
+id="vega-model"
+data-model-loader
+class="w-full h-64 bg-surface-container-low rounded"
+src="/gib3/SM_Chr_Contractor_Female_01.glb"
+alt="Modelo 3D de Vega, exploradora"
+camera-controls
+disable-zoom
+interaction-prompt="none"
+rotation-per-second="60deg"
+onmouseenter="this.autoRotate = true"
+onmouseleave="this.autoRotate = false">
+</model-viewer>
+<div class="absolute inset-0 flex flex-col items-center justify-center gap-space-sm bg-surface-container-low/90 text-primary font-label-sm text-label-sm font-bold uppercase tracking-widest" data-model-loading role="status" aria-live="polite">
+<span class="w-8 h-8 rounded-full border-2 border-primary-container border-t-transparent animate-spin" aria-hidden="true"></span>
+<span>CARGANDO MODELO 3D...</span>
+</div>
+</div>
+<p class="font-label-sm text-[9px] text-outline text-center uppercase tracking-wider mt-space-xs">MODELO 3D // ARRASTRA PARA GIRAR</p>
+</div>
+<!-- Tactical Attributes & Stats -->
+<div class="p-space-md flex flex-col gap-space-sm flex-grow justify-between">
+<div class="space-y-space-xs">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+<span class="font-bold text-tertiary">HABILIDAD:</span> Rápida y ágil, pero frágil. Un error sale caro.
+              </p>
+<div class="space-y-1 pt-space-xs">
+<div class="flex justify-between font-label-sm text-[11px]">
+<span class="text-outline uppercase">DETECCIÓN DE AMENAZAS</span>
+<span class="text-tertiary font-bold">98.2%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-tertiary-container h-full rounded-full" style="width: 98.2%;"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between font-label-sm text-[11px]">
+<span class="text-outline uppercase">VELOCIDAD DE REVIVIR</span>
+<span class="text-secondary font-bold">92.0%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary-container h-full rounded-full" style="width: 92.0%;"></div>
+</div>
+</div>
+<div class="pt-space-xs flex items-center justify-between text-on-surface-variant font-label-sm text-[11px]">
+<span>ARMA PRINCIPAL:</span>
+<span class="text-on-surface font-bold">SUBFUSIL MP-SILENT // STUN</span>
+</div>
+</div>
+<button class="w-full mt-space-sm py-space-xs bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold uppercase rounded hover:bg-surface-bright transition-colors flex items-center justify-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+              INSPECCIONAR PREFAB
+            </button>
+</div>
+</div>
+<!-- OPERADOR 5: JANET (SOLDADO) -->
+<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform">
+<div class="p-space-md bg-surface-container-high flex items-center justify-between">
+<div>
+<span class="font-label-sm text-[10px] text-primary font-bold uppercase tracking-wider">ROL: SOLDADO / APOYO TÁCTICO</span>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface uppercase">JANET</h3>
+</div>
+<span class="px-space-xs py-1 bg-primary-container text-on-primary-container font-label-sm text-[10px] font-bold rounded uppercase">TIER A</span>
+</div>
+<div class="p-space-sm bg-surface-container-lowest">
+<div class="relative" data-model-viewer-container aria-busy="true">
+<model-viewer
+id="janet-model"
+data-model-loader
+class="w-full h-64 bg-surface-container-low rounded"
+src="/gib3/SM_Chr_Soldier_Female_01.glb"
+alt="Modelo 3D de Janet, soldado"
+camera-controls
+disable-zoom
+interaction-prompt="none"
+rotation-per-second="60deg"
+onmouseenter="this.autoRotate = true"
+onmouseleave="this.autoRotate = false">
+</model-viewer>
+<div class="absolute inset-0 flex flex-col items-center justify-center gap-space-sm bg-surface-container-low/90 text-primary font-label-sm text-label-sm font-bold uppercase tracking-widest" data-model-loading role="status" aria-live="polite">
+<span class="w-8 h-8 rounded-full border-2 border-primary-container border-t-transparent animate-spin" aria-hidden="true"></span>
+<span>CARGANDO MODELO 3D...</span>
+</div>
+</div>
+<p class="font-label-sm text-[9px] text-outline text-center uppercase tracking-wider mt-space-xs">MODELO 3D // ARRASTRA PARA GIRAR</p>
+</div>
+<div class="p-space-md flex flex-col gap-space-sm flex-grow justify-between">
+<div class="space-y-space-xs">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+<span class="font-bold text-primary">HABILIDAD:</span> Perfil equilibrado con buena vida y velocidad para adaptarse a cualquier situación.
+</p>
+<div class="pt-space-xs flex items-center justify-between text-on-surface-variant font-label-sm text-[11px]">
+<span>ESPECIALIDAD:</span>
+<span class="text-on-surface font-bold">ASALTO Y APOYO</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ==================== BESTIARIO // INFECTADOS ESPECIALES ==================== -->
+<section class="w-full bg-surface-container-low px-gutter py-space-xl">
+  <div class="max-w-7xl mx-auto flex flex-col gap-space-lg">
+    <!-- Section Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+      <div>
+        <span class="font-label-sm text-label-sm text-primary uppercase tracking-widest font-bold flex items-center gap-space-xs">
+          <span class="material-symbols-outlined text-[16px] text-primary">coronavirus</span>
+          BESTIARIO MUTAGÉNICO CLASIFICADO // SECTOR 07
+        </span>
+        <h2 class="font-headline-lg text-headline-lg uppercase text-on-surface font-bold tracking-tight">
+          EXPEDIENTE DE CONTENCIÓN: COMANDO MUTANTE
+        </h2>
+        <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mt-space-xs">
+          Registro visual y forense de las aberraciones biológicas de alto impacto lideradas por la neurotoxina aerosolizada. Formación de asalto coordinada detectada en las ruinas del sector exterior.
+        </p>
+      </div>
+      <div class="flex items-center gap-space-xs font-label-sm text-label-sm text-outline">
+        <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+        <span class="text-error font-bold">ALERTA: ENCUENTRO DE JEFE ACTIVO</span>
+      </div>
+    </div>
+
+    <!-- Boss Showcase Container -->
+    <div class="bg-surface-container rounded shadow-2xl flex flex-col overflow-hidden border border-outline-variant/30">
+      <!-- Card Top Bar -->
+      <div class="bg-surface-container-high p-space-sm flex items-center justify-between">
+        <div class="flex items-center gap-space-xs">
+          <span class="px-space-xs py-0.5 bg-error-container text-on-error-container font-label-sm text-[10px] font-bold rounded uppercase tracking-wider">AMENAZA: APOCALÍPTICA</span>
+          <span class="font-label-sm text-label-sm text-outline">ALPHA-SQUAD // BOSS</span>
+        </div>
+        <span class="font-label-sm text-label-sm text-error font-bold uppercase tracking-wider">PROTOCOLO DE EXTERMINIO OBLIGATORIO</span>
+      </div>
+
+      <!-- Main Boss Image -->
+      <div class="p-space-sm bg-surface-container-lowest flex justify-center items-center">
+        <div class="w-full bg-surface-container-low p-space-xs rounded flex flex-col items-center">
+          <span class="font-label-sm text-[9px] text-outline uppercase tracking-widest self-start mb-1">REGISTRO FOTOGRÁFICO DE CONTENCIÓN // CÁMARA TÁCTICA</span>
+          <img
+            alt="Comando de Jefes Mutantes"
+            class="w-full h-auto max-h-[580px] object-contain rounded shadow-inner"
+            src="img\jefes.jpg">
+        </div>
+      </div>
+
+      <!-- Details & Lore Description -->
+      <div class="p-space-md flex flex-col gap-space-md">
+        <div class="flex flex-col gap-space-xs">
+          <h3 class="font-headline-sm text-headline-lg text-on-surface uppercase font-bold tracking-tight">
+            COMANDO DE JEFES MUTANTES
+          </h3>
+          <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+            Concentración terminal de mutaciones de élite coordinadas bajo el mismo foco infeccioso. En el frente, un cánido viral hiperreactivo actúa como rastreador primario de objetivos; en el núcleo de choque, el Bruto Militar y Miss Amazing combinan devastación cinética contundente con disrupción sónica aturdidora; flanqueando el despliegue, la Mutación Gestante satura el perímetro con vectores nido y esporas altamente corrosivas.
+          </p>
+        </div>
+
+        <!-- Combat Intel Footer -->
+        <div class="pt-space-sm bg-surface-container-low p-space-sm rounded text-outline font-label-sm text-[11px] flex flex-wrap gap-space-sm justify-between items-center border border-outline-variant/20">
+          <span class="flex items-center gap-1">
+            <span class="text-error font-bold">ESTRATEGIA:</span> FOCALIZAR EL FLANCO RÁPIDO // DISTANCIA DE DISPERSIÓN DE EXPLOSIVOS // SUPRESIÓN CONTINUA
+          </span>
+          <span class="text-error font-bold tracking-wider">
+            CLASIFICACIÓN: HOSTIL CO-OP NIVEL 4
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ==================== ACCESOS DIRECTOS A BASES DE DATOS Y TELEMETRÍA ==================== -->
+<section class="w-full bg-surface-container-lowest px-gutter py-space-xl">
+<div class="max-w-7xl mx-auto flex flex-col gap-space-lg">
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-tertiary uppercase tracking-widest font-bold">
+          CONEXIÓN DIRECTA A LOS PROTOCOLOS DE JUEGO // AIVEN MYSQL LIVE ENGINE
+        </span>
+<h2 class="font-headline-lg text-headline-lg uppercase text-on-surface font-bold">
+          TERMINALES DE RED Y SISTEMAS DEL SERVIDOR
+        </h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- CARD 1: TOP GLOBAL RANKING -->
+<a class="bg-surface-container p-space-lg rounded shadow-xl flex flex-col justify-between gap-space-md group hover:bg-surface-container-high transition-all" href="/ranking.html">
+<div class="flex items-center justify-between">
+<span class="w-12 h-12 rounded bg-primary-container/20 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]">military_tech</span>
+</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">TABLAS EN VIVO</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface uppercase font-bold group-hover:text-primary transition-colors">
+              TOP GLOBAL RANKING
+            </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-space-xs">
+              Monitorea los récords mundiales de tiempo sobrevivido, oleadas de extracción y muertes por minuto en Sector 09.
+            </p>
+</div>
+<div class="flex items-center gap-space-xs text-primary font-label-sm text-label-sm font-bold uppercase pt-space-sm">
+<span>CONSULTAR CLASIFICACIÓN</span>
+<span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</div>
+</a>
+<!-- CARD 3: MATRIZ DE LOGROS -->
+<a class="bg-surface-container p-space-lg rounded shadow-xl flex flex-col justify-between gap-space-md group hover:bg-surface-container-high transition-all" href="/logros_globales.html">
+<div class="flex items-center justify-between">
+<span class="w-12 h-12 rounded bg-tertiary-container/20 text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]">trophy</span>
+</span>
+<span class="font-label-sm text-label-sm text-tertiary font-bold">100% DESAFÍOS</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface uppercase font-bold group-hover:text-tertiary transition-colors">
+              MATRIZ DE LOGROS
+            </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-space-xs">
+              Desbloquea insignias militares, skins de armas exclusivas y cosméticos desclasificados superando retos de pesadilla.
+            </p>
+</div>
+<div class="flex items-center gap-space-xs text-tertiary font-label-sm text-label-sm font-bold uppercase pt-space-sm">
+<span>EXPLORAR LOGROS</span>
+<span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</div>
+</a>
+</div>
+</div>
+</section>
+</div></main>
+<footer class="w-full bg-surface-container-lowest py-space-xl shadow-[0_-2px_12px_rgba(0,0,0,0.8)]">
+  <div class="w-full px-gutter flex items-center justify-center text-on-surface-variant font-label-sm text-label-sm">
+    <div class="text-center text-outline">
+      © 2025 DEAD QUARANTINE SURVEILLANCE CORPS. TODOS LOS DERECHOS RESERVADOS. ACCESO BAJO PROTOCOLO MILITAR CLASIFICADO.
+    </div>
+  </div>
+</footer><script>
+  document.querySelectorAll('model-viewer[data-model-loader]').forEach((viewer) => {
+    const container = viewer.closest('[data-model-viewer-container]');
+    const loadingStatus = container?.querySelector('[data-model-loading]');
+    if (!container || !loadingStatus) return;
+
+    const showLoading = () => {
+      loadingStatus.classList.remove('hidden');
+      loadingStatus.lastElementChild.textContent = 'CARGANDO MODELO 3D...';
+      container.setAttribute('aria-busy', 'true');
     };
-  </script>
-</head>
-<body class="bg-surface-container-lowest font-body-md text-on-surface antialiased">
-  
-  <!-- BARRA DE NAVEGACIÓN GLOBAL -->
-  <header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl shadow-lg">
-    <div class="w-full px-6 bg-surface-container-low py-1 flex items-center justify-between text-on-surface-variant font-label-sm text-xs uppercase tracking-wider">
-      <div class="flex items-center gap-4">
-        <span class="text-secondary-fixed-dim">DATABASE LIVE SYNC</span>
-      </div>
-      <div class="flex items-center gap-4 text-tertiary">
-        <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
-        <span>AIVEN MYSQL: ONLINE</span>
-      </div>
-    </div>
-    <div class="h-16 w-full px-6 flex items-center justify-between">
-      <div class="flex flex-col">
-        <span class="font-headline-sm uppercase tracking-widest text-on-surface font-bold text-sm">DEAD QUARANTINE</span>
-        <span class="font-label-sm text-[10px] text-outline tracking-widest">CENTRAL TELEMETRY DATABASE</span>
-      </div>
-      <nav class="flex items-center gap-2 font-label-md text-xs uppercase">
-        <button id="nav-ranking" onclick="mostrarPestaña('ranking')" class="px-4 py-2 rounded font-bold transition-all bg-primary-container text-black shadow-[0_0_12px_rgba(255,85,69,0.35)]">
-          TOP GLOBAL RANKING
-        </button>
-        <button id="nav-logros" onclick="mostrarPestaña('logros')" class="px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">
-          MATRIZ DE LOGROS
-        </button>
-      </nav>
-      <div class="font-label-sm text-xs text-secondary-fixed-dim">MODO TELEMETRÍA // AGENTE</div>
-    </div>
-  </header>
+    const hideLoading = () => {
+      loadingStatus.classList.add('hidden');
+      container.setAttribute('aria-busy', 'false');
+    };
 
-  <main class="w-full pt-24 min-h-screen px-6 max-w-7xl mx-auto pb-16">
-    
-    <!-- ==================== PESTAÑA 1: RANKING ==================== -->
-    <section id="vista-ranking" class="flex flex-col gap-6">
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-surface-container-high pb-4">
-        <div>
-          <div class="flex items-center gap-2 font-label-sm text-xs text-primary uppercase">
-            <span class="w-2 h-2 rounded-full bg-primary-container animate-ping"></span> TABLA `ranking` ACTIVA
-          </div>
-          <h1 class="font-headline-lg text-3xl font-bold uppercase">TOP GLOBAL RANKING</h1>
-        </div>
-        <!-- Filtros interactivos -->
-        <div class="flex flex-wrap gap-2 text-xs font-label-sm">
-          <input id="rank-search" type="text" placeholder="BUSCAR SUPERVIVIENTE..." class="bg-surface-container px-3 py-1.5 rounded uppercase focus:outline-none border border-surface-variant text-on-surface w-48"/>
-          <select id="rank-mode" class="bg-surface-container px-3 py-1.5 rounded uppercase focus:outline-none border border-surface-variant">
-            <option value="ALL">TODOS LOS MODOS</option>
-            <option value="Singleplayer">SINGLEPLAYER</option>
-            <option value="Multiplayer">MULTIPLAYER</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Podio Superior (Top 3) -->
-      <div id="podium-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Rellenado dinámicamente -->
-      </div>
-
-      <!-- Tabla Completa -->
-      <div class="bg-surface-container-lowest rounded-lg border border-surface-container-high overflow-x-auto shadow-md">
-        <table class="w-full text-left font-label-sm text-xs">
-          <thead class="bg-surface-container-low text-outline uppercase border-b border-surface-container-high">
-            <tr>
-              <th class="p-3 text-center">POS</th>
-              <th class="p-3">SUPERVIVIENTE</th>
-              <th class="p-3">MODO</th>
-              <th class="p-3">DIFICULTAD</th>
-              <th class="p-3 text-right">PUNTOS</th>
-              <th class="p-3">FECHA</th>
-            </tr>
-          </thead>
-          <tbody id="ranking-tbody" class="divide-y divide-surface-container">
-            <!-- Filas dinámicas -->
-          </tbody>
-        </table>
-      </div>
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-label-sm text-outline"
-           id="ranking-pagination">
-        <label class="flex items-center gap-2" for="ranking-page-size">
-          REGISTROS POR PÁGINA
-          <select id="ranking-page-size" class="bg-surface-container px-2 py-1.5 rounded text-on-surface">
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100" selected>100</option>
-          </select>
-        </label>
-        <span id="ranking-page-summary">CARGANDO REGISTROS...</span>
-        <div class="flex items-center gap-2">
-          <button id="ranking-page-prev" class="bg-surface-container px-3 py-1.5 rounded text-on-surface disabled:opacity-40" disabled>ANTERIOR</button>
-          <span id="ranking-page-number">PÁGINA 1</span>
-          <button id="ranking-page-next" class="bg-surface-container px-3 py-1.5 rounded text-on-surface disabled:opacity-40" disabled>SIGUIENTE</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== PESTAÑA 2: MATRIZ DE LOGROS ==================== -->
-    <section id="vista-logros" class="hidden flex flex-col gap-6">
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-surface-container-high pb-4">
-        <div>
-          <div class="flex items-center gap-2 font-label-sm text-xs text-secondary-fixed-dim uppercase">
-            <span>DIRECTORIO TÁCTICO // DB_QUARANTINE</span>
-          </div>
-          <h1 class="font-headline-lg text-3xl font-bold uppercase">MATRIZ DE LOGROS GLOBALES</h1>
-          <p class="text-outline text-sm">Hitos y sublogros verificados en tiempo real contra los registros de jugadores en MySQL.</p>
-        </div>
-        <div class="flex gap-2">
-          <button onclick="alternarTodos(true)" class="px-3 py-1.5 bg-surface-container hover:bg-surface-variant rounded text-xs font-label-sm uppercase">Desplegar Todos</button>
-          <button onclick="alternarTodos(false)" class="px-3 py-1.5 bg-surface-container hover:bg-surface-variant rounded text-xs font-label-sm uppercase">Colapsar</button>
-        </div>
-      </div>
-
-      <!-- Grid de Logros Principales y Sublogros -->
-      <div id="logros-container" class="flex flex-col gap-4">
-        <!-- Rellenado dinámicamente con sub-acordeones -->
-      </div>
-    </section>
-
-  </main>
-
-  <script>
-    // --- NAVEGACIÓN ENTRE PESTAÑAS ---
-    function mostrarPestaña(pestaña) {
-      const vistaRanking = document.getElementById('vista-ranking');
-      const vistaLogros = document.getElementById('vista-logros');
-      const btnRanking = document.getElementById('nav-ranking');
-      const btnLogros = document.getElementById('nav-logros');
-
-      if (pestaña === 'ranking') {
-        vistaRanking.classList.remove('hidden');
-        vistaLogros.classList.add('hidden');
-        btnRanking.className = 'px-4 py-2 rounded font-bold transition-all bg-primary-container text-black shadow-[0_0_12px_rgba(255,85,69,0.35)]';
-        btnLogros.className = 'px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all';
-      } else {
-        vistaRanking.classList.add('hidden');
-        vistaLogros.classList.remove('hidden');
-        btnLogros.className = 'px-4 py-2 rounded font-bold transition-all bg-primary-container text-black shadow-[0_0_12px_rgba(255,85,69,0.35)]';
-        btnRanking.className = 'px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all';
-      }
-    }
-
-    let rankingPage = 1;
-
-    function renderPaginacionRanking(total, page, limit) {
-      const pageCount = Math.max(1, Math.ceil(total / limit));
-      const first = total === 0 ? 0 : (page - 1) * limit + 1;
-      const last = Math.min(page * limit, total);
-
-      document.getElementById('ranking-page-summary').textContent =
-        `MOSTRANDO ${first}-${last} DE ${total} REGISTROS`;
-      document.getElementById('ranking-page-number').textContent =
-        `PÁGINA ${page} / ${pageCount}`;
-      document.getElementById('ranking-page-prev').disabled = page <= 1;
-      document.getElementById('ranking-page-next').disabled = page >= pageCount;
-    }
-
-    // --- CARGAR DATOS DE RANKING ---
-    async function cargarRanking() {
-      const search = document.getElementById('rank-search').value;
-      const mode = document.getElementById('rank-mode').value;
-
-      const url = new URL('/api/ranking', window.location.origin);
-      url.searchParams.set('view', 'table');
-      url.searchParams.set('page', String(rankingPage));
-      url.searchParams.set('limit', document.getElementById('ranking-page-size').value);
-      if (search) url.searchParams.append('search', search);
-      if (mode !== 'ALL') url.searchParams.append('mode', mode);
-
-      try {
-        const res = await fetch(url, { cache: 'no-store' });
-        if (res.ok === false) {
-          throw new Error(`La API respondió con estado ${res.status}`);
-        }
-        const data = await res.json();
-        if (!data || !Array.isArray(data.rows) || !Array.isArray(data.top) ||
-          !Number.isFinite(Number(data.total)) || !Number.isFinite(Number(data.page)) ||
-          !Number.isFinite(Number(data.limit)) || data.rows.some((row) =>
-          !row ||
-          typeof row.username !== 'string' ||
-          row.puntos === null ||
-          row.puntos === '' ||
-          !Number.isFinite(Number(row.puntos))
-        )) {
-          throw new Error('La API no devolvió registros de puntajes válidos');
-        }
-
-        // Render Podio (Top 3)
-        const podiumContainer = document.getElementById('podium-container');
-        podiumContainer.innerHTML = '';
-        const tbody = document.getElementById('ranking-tbody');
-        tbody.innerHTML = '';
-        renderPaginacionRanking(Number(data.total), Number(data.page), Number(data.limit));
-
-        if (data.rows.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-outline">Todavía no hay puntuaciones registradas.</td></tr>';
-        }
-
-        if (data.top.length === 0) {
-          podiumContainer.innerHTML = '<p class="col-span-full p-4 text-center text-outline">Todavía no hay puntuaciones registradas.</p>';
-        }
-
-        data.top.slice(0, 3).forEach((item, index) => {
-          const colores = [
-            'border-primary-container bg-surface-container-high',
-            'border-secondary-fixed-dim bg-surface-container',
-            'border-tertiary bg-surface-container'
-          ];
-          podiumContainer.innerHTML += `
-            <div class="p-4 rounded-lg border ${colores[index]} flex flex-col justify-between shadow-lg">
-              <div class="flex justify-between items-center text-xs font-label-sm">
-                <span class="font-bold uppercase text-primary">#${index + 1} // PODIO</span>
-              </div>
-              <div class="my-3">
-                <div class="font-headline-sm text-xl font-bold uppercase">${item.username}</div>
-                <div class="text-2xl font-bold text-secondary-fixed-dim font-label-md">${Number(item.puntos).toLocaleString()} PTS</div>
-              </div>
-              <div class="text-[11px] text-outline font-label-sm flex justify-between">
-                <span>MODO: ${item.modo}</span>
-                <span>DIFICULTAD: ${item.dificultad || '--'}</span>
-              </div>
-            </div>
-          `;
-        });
-
-        // Render Tabla
-        data.rows.forEach((row, idx) => {
-          tbody.innerHTML += `
-            <tr class="hover:bg-surface-container-high transition-colors">
-              <td class="p-3 text-center font-bold text-primary">#${row.puesto || ((Number(data.page) - 1) * Number(data.limit) + idx + 1)}</td>
-              <td class="p-3 font-bold uppercase text-on-surface">${row.username}</td>
-              <td class="p-3 text-outline">${row.modo}</td>
-              <td class="p-3 text-outline">${row.dificultad || '--'}</td>
-              <td class="p-3 text-right font-bold text-secondary-fixed-dim">${Number(row.puntos).toLocaleString()}</td>
-              <td class="p-3 text-outline">${new Date(row.creado_en).toLocaleDateString()}</td>
-            </tr>
-          `;
-        });
-      } catch (err) {
-        console.error('Error cargando ranking:', err);
-        document.getElementById('podium-container').innerHTML = '';
-        document.getElementById('ranking-tbody').innerHTML =
-          '<tr><td colspan="7" class="p-4 text-center text-error">No se pudo cargar el ranking. Verifica que la API devuelva puntajes y vuelve a desplegar la versión más reciente.</td></tr>';
-        document.getElementById('ranking-page-summary').textContent = 'ERROR AL CARGAR EL RANKING';
-      }
-    }
-
-    // --- CARGAR MATRIZ DE LOGROS ---
-    async function cargarLogros() {
-      try {
-        const res = await fetch('/api/logros/globales');
-        const { logros, total_usuarios } = await res.json();
-        const container = document.getElementById('logros-container');
-        container.innerHTML = '';
-
-        logros.forEach(logro => {
-          let sublogrosHtml = '';
-          logro.sublogros.forEach(sub => {
-            sublogrosHtml += `
-              <div class="p-3 bg-surface-container rounded flex justify-between items-center text-xs font-label-sm border border-surface-variant/30">
-                <div class="flex items-center gap-3">
-                  <span class="text-tertiary font-bold">0${sub.orden}</span>
-                  <span class="text-on-surface font-semibold">${sub.titulo}</span>
-                  <code class="text-outline text-[10px] hidden sm:inline">${sub.clave}</code>
-                </div>
-                <div class="flex items-center gap-3">
-                  <span class="text-secondary-fixed-dim font-bold">${sub.porcentaje_global || 0}% GLOBAL</span>
-                  <span class="text-outline text-[11px]">(${sub.completados_global}/${total_usuarios} jug.)</span>
-                </div>
-              </div>
-            `;
-          });
-
-          container.innerHTML += `
-            <div class="achievement-card bg-surface-container rounded-lg border border-surface-container-high overflow-hidden shadow">
-              <div onclick="alternarTarjeta(this)" class="p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 cursor-pointer hover:bg-surface-container-high transition-colors">
-                <div>
-                  <div class="flex items-center gap-2 mb-1 text-xs font-label-sm">
-                    <span class="px-2 py-0.5 bg-error/20 text-primary rounded uppercase font-bold">${logro.categoria}</span>
-                    <span class="text-outline uppercase">${logro.modo}</span>
-                    <span class="text-outline-variant">// ${logro.clave}</span>
-                  </div>
-                  <h3 class="font-headline-sm text-lg font-bold text-on-surface uppercase">${logro.titulo}</h3>
-                  <p class="text-outline text-xs mt-0.5">${logro.descripcion}</p>
-                </div>
-                <div class="flex items-center gap-6 self-end md:self-auto">
-                  <div class="text-right font-label-sm">
-                    <div class="text-xs text-outline">REQUERIDOS: ${logro.sublogros_requeridos}</div>
-                    <div class="text-sm font-bold text-tertiary">${logro.porcentaje_global || 0}% JUGADORES</div>
-                    <div class="text-[10px] text-outline">(${logro.completados_global} personas en el mundo)</div>
-                  </div>
-                  <span class="material-symbols-outlined text-outline transition-transform chevron">expand_more</span>
-                </div>
-              </div>
-              <div class="sub-matrix hidden p-4 bg-surface-container-low border-t border-surface-container-high flex flex-col gap-2">
-                ${sublogrosHtml}
-              </div>
-            </div>
-          `;
-        });
-      } catch (err) {
-        console.error('Error cargando logros:', err);
-      }
-    }
-
-    // Acordeones de logros
-    function alternarTarjeta(el) {
-      const card = el.closest('.achievement-card');
-      const body = card.querySelector('.sub-matrix');
-      const chevron = card.querySelector('.chevron');
-      body.classList.toggle('hidden');
-      chevron.classList.toggle('rotate-180');
-    }
-
-    function alternarTodos(desplegar) {
-      document.querySelectorAll('.achievement-card').forEach(card => {
-        const body = card.querySelector('.sub-matrix');
-        const chevron = card.querySelector('.chevron');
-        if (desplegar) {
-          body.classList.remove('hidden');
-          chevron.classList.add('rotate-180');
-        } else {
-          body.classList.add('hidden');
-          chevron.classList.remove('rotate-180');
-        }
-      });
-    }
-
-    // Event listeners para filtros de ranking
-    function cargarPrimeraPaginaRanking() {
-      rankingPage = 1;
-      cargarRanking();
-    }
-
-    document.getElementById('rank-search').addEventListener('input', cargarPrimeraPaginaRanking);
-    document.getElementById('rank-mode').addEventListener('change', cargarPrimeraPaginaRanking);
-    document.getElementById('ranking-page-size').addEventListener('change', cargarPrimeraPaginaRanking);
-    document.getElementById('ranking-page-prev').addEventListener('click', () => {
-      if (rankingPage > 1) {
-        rankingPage -= 1;
-        cargarRanking();
-      }
-    });
-    document.getElementById('ranking-page-next').addEventListener('click', () => {
-      rankingPage += 1;
-      cargarRanking();
+    viewer.addEventListener('load', hideLoading);
+    viewer.addEventListener('error', () => {
+      loadingStatus.classList.remove('hidden');
+      loadingStatus.querySelector('[aria-hidden="true"]')?.classList.add('hidden');
+      loadingStatus.lastElementChild.textContent = 'NO SE PUDO CARGAR EL MODELO';
+      container.setAttribute('aria-busy', 'false');
     });
 
-    // Carga inicial
-    document.addEventListener('DOMContentLoaded', () => {
-      const vistaInicial = new URLSearchParams(window.location.search).get('view');
-      mostrarPestaña(vistaInicial === 'logros' ? 'logros' : 'ranking');
-      cargarRanking();
-      cargarLogros();
-    });
-  </script>
-</body>
-</html>
+    if (viewer.loaded) hideLoading();
+    else showLoading();
+  });
+</script><script>
+  async function loadUserTelemetry() {
+    const activeUsers = document.getElementById('active-users-count');
+    const totalUsers = document.getElementById('total-users-count');
+    const activePercent = document.getElementById('active-users-percent');
+    const inactiveUsers = document.getElementById('inactive-users-count');
+    const activeRing = document.getElementById('active-users-ring');
+
+    try {
+      const response = await fetch('/api/telemetria', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`Error HTTP ${response.status} al cargar la telemetría`);
+      }
+
+      const counts = await response.json();
+      const activeCount = Number(counts.usuarios_activos);
+      const totalCount = Number(counts.usuarios_totales);
+      const percentage = Number(counts.porcentaje_activos);
+      if (!Number.isSafeInteger(activeCount) || activeCount < 0 ||
+          !Number.isSafeInteger(totalCount) || totalCount < 0 ||
+          activeCount > totalCount || !Number.isFinite(percentage) ||
+          percentage < 0 || percentage > 100) {
+        throw new Error('La API devolvió conteos de telemetría inválidos');
+      }
+
+      const formattedActive = activeCount.toLocaleString('es-AR');
+      const formattedTotal = totalCount.toLocaleString('es-AR');
+
+      activeUsers.textContent = formattedActive;
+      totalUsers.textContent = formattedTotal;
+      activePercent.textContent = `${percentage.toLocaleString('es-AR')}%`;
+      inactiveUsers.textContent = (totalCount - activeCount).toLocaleString('es-AR');
+      activeRing.setAttribute('stroke-dasharray', `${percentage}, 100`);
+    } catch (error) {
+      console.error('Error al actualizar la telemetría de usuarios:', error);
+      activeUsers.textContent = 'ERROR';
+      totalUsers.textContent = 'ERROR';
+      activePercent.textContent = '--%';
+      inactiveUsers.textContent = 'ERROR';
+      activeRing.setAttribute('stroke-dasharray', '0, 100');
+    }
+  }
+
+  loadUserTelemetry();
+  window.setInterval(loadUserTelemetry, 60_000);
+</script>
+</body></html>

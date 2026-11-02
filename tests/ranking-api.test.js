@@ -52,8 +52,23 @@ describe('GET /api/ranking', () => {
     const [sql, params] = query.mock.calls[0];
     expect(sql).toContain('AND r.modo = ?');
     expect(sql).toContain('AND r.dificultad = ?');
-    expect(sql).toContain('COALESCE(u.nombre, r.user_id) LIKE ? OR r.user_id LIKE ?');
+    expect(sql).toContain('WHERE (username LIKE ? OR user_id LIKE ?)');
+    expect(sql.indexOf('ROW_NUMBER()')).toBeLessThan(sql.indexOf('filtered_ranking AS'));
+    expect(sql.indexOf('filtered_ranking AS'))
+      .toBeLessThan(sql.indexOf('WHERE (username LIKE ?'));
     expect(params).toEqual(['multiplayer', 'pesadilla', '%Ana%', '%Ana%', '']);
+  });
+
+  it('keeps global positions in the regular view when searching', async () => {
+    query.mockResolvedValueOnce([[]]);
+
+    await GET(new Request('http://localhost/api/ranking?search=FRAN'));
+
+    const [sql, params] = query.mock.calls[0];
+    expect(sql.indexOf('ROW_NUMBER()')).toBeLessThan(sql.indexOf('filtered_ranking AS'));
+    expect(sql.indexOf('filtered_ranking AS'))
+      .toBeLessThan(sql.indexOf('WHERE (username LIKE ?'));
+    expect(params).toEqual(['%FRAN%', '%FRAN%', '']);
   });
 
   it('ignores legacy metadata filters and limits the regular ranking to five rows', async () => {
@@ -82,7 +97,8 @@ describe('GET /api/ranking', () => {
       .mockResolvedValueOnce([rows])
       .mockResolvedValueOnce([[{ total: 51 }]])
       .mockResolvedValueOnce([top])
-      .mockResolvedValueOnce([facets]);
+      .mockResolvedValueOnce([facets])
+      .mockResolvedValueOnce([[{ puntajes_totales: 14, mejor_puntaje: 71950 }]]);
 
     const response = await GET(new Request(
       'http://localhost/api/ranking?view=table&page=3&limit=25&mode=Singleplayer&dificultad=Pesadilla&search=Luna'
@@ -93,6 +109,10 @@ describe('GET /api/ranking', () => {
       rows,
       top,
       total: 51,
+      statistics: {
+        puntajes_totales: 14,
+        mejor_puntaje: 71950
+      },
       page: 3,
       limit: 25,
       modos: ['singleplayer', 'multiplayer'],
@@ -108,6 +128,43 @@ describe('GET /api/ranking', () => {
     ]);
     expect(query.mock.calls[0][0]).toContain('r.dificultad');
     expect(query.mock.calls[0][0]).toContain('LIMIT ? OFFSET ?');
+    const rowsSql = query.mock.calls[0][0];
+    expect(rowsSql.indexOf('ROW_NUMBER()')).toBeLessThan(rowsSql.indexOf('filtered_ranking AS'));
+    expect(rowsSql.indexOf('filtered_ranking AS')).toBeLessThan(rowsSql.indexOf('WHERE (username LIKE ?'));
+    expect(rowsSql).toContain('ORDER BY puntos DESC, creado_en ASC, id ASC');
+    expect(query).toHaveBeenNthCalledWith(
+      5,
+      expect.stringContaining('COUNT(*) AS puntajes_totales'),
+      []
+    );
+    expect(query.mock.calls[4][0]).toContain('MAX(puntos) AS mejor_puntaje');
+    expect(query.mock.calls[4][0]).toContain('FROM ranking');
+  });
+
+  it('keeps global positions when the table is searched by username', async () => {
+    const rows = [{ puesto: 10, id: 8, username: 'FRAN', puntos: 1650 }];
+    query
+      .mockResolvedValueOnce([rows])
+      .mockResolvedValueOnce([[{ total: 1 }]])
+      .mockResolvedValueOnce([rows])
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[{ puntajes_totales: 14, mejor_puntaje: 71950 }]]);
+
+    const response = await GET(new Request(
+      'http://localhost/api/ranking?view=table&page=1&limit=10&search=FRAN'
+    ));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.rows[0].puesto).toBe(10);
+    expect(body.top[0].puesto).toBe(10);
+    expect(query).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('SELECT * FROM filtered_ranking'),
+      ['%FRAN%', '%FRAN%', 10, 0]
+    );
+    expect(query.mock.calls[0][0].indexOf('ROW_NUMBER()'))
+      .toBeLessThan(query.mock.calls[0][0].indexOf('WHERE (username LIKE ?'));
   });
 
   it('returns a server error if the database query fails', async () => {
