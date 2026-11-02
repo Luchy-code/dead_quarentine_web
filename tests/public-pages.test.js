@@ -135,16 +135,39 @@ describe('static page HTML and CSS', () => {
     const survivorSection = document.querySelectorAll('main section')[2];
     expect([...survivorSection.querySelectorAll('h3')].map((heading) => heading.textContent.trim()))
       .toEqual(['KNOX', 'RYDER', 'OSCAR', 'VEGA', 'JANET']);
-    const abilities = [...survivorSection.querySelectorAll('p')]
-      .filter((paragraph) => paragraph.querySelector('span')?.textContent.trim() === 'HABILIDAD:');
-    expect(abilities).toHaveLength(5);
-    for (const ability of [
-      'Aguanta el doble de daño, pero se mueve más lento.',
-      'Rápido y ágil, pero frágil. Un error sale caro.',
-      'Perfil equilibrado, con buena vida y velocidad para cualquier situación.'
-    ]) {
-      expect(survivorSection.textContent).toContain(ability);
-    }
+    const profiles = [...survivorSection.querySelectorAll('[data-character-profile]')];
+    expect(profiles).toHaveLength(5);
+    expect(profiles.map((profile) => profile.textContent.trim())).toEqual([
+      expect.stringContaining('traje EOD'),
+      expect.stringContaining('localizar suministros'),
+      expect.stringContaining('control estable del rifle'),
+      expect.stringContaining('rastrea biomasa'),
+      expect.stringContaining('escuadrón coordinado')
+    ]);
+    const characters = [...survivorSection.querySelectorAll('[data-game-character]')];
+    expect(characters.map((card) =>
+      card.querySelector('.bg-surface-container-high span')?.textContent.trim()
+    )).toEqual([
+      'ROL: TANQUE',
+      'ROL: EXPLORADOR',
+      'ROL: SOLDADO',
+      'ROL: EXPLORADOR',
+      'ROL: SOLDADO'
+    ]);
+    expect(characters.map((card) =>
+      [...card.querySelector('[data-game-stats]').querySelectorAll('span')]
+        .map((stat) => stat.textContent.trim())
+    )).toEqual([
+      ['VIDA', '200', 'VELOCIDAD (%)', '-30%', 'ESTAMINA', '80', 'REGEN. ESTAMINA (%)', '-10%', 'VELOCIDAD RECARGA (%)', '+20%'],
+      ['VIDA', '80', 'VELOCIDAD (%)', '+15%', 'ESTAMINA', '120', 'REGEN. ESTAMINA (%)', '+25%', 'VELOCIDAD RECARGA (%)', '-10%'],
+      ['VIDA', '100', 'VELOCIDAD (%)', '0%', 'ESTAMINA', '100', 'REGEN. ESTAMINA (%)', '0%', 'VELOCIDAD RECARGA (%)', '0%'],
+      ['VIDA', '80', 'VELOCIDAD (%)', '+15%', 'ESTAMINA', '120', 'REGEN. ESTAMINA (%)', '+25%', 'VELOCIDAD RECARGA (%)', '-10%'],
+      ['VIDA', '100', 'VELOCIDAD (%)', '0%', 'ESTAMINA', '100', 'REGEN. ESTAMINA (%)', '0%', 'VELOCIDAD RECARGA (%)', '0%']
+    ]);
+    expect(survivorSection.textContent).not.toMatch(/TIER|BLINDAJE CORPORAL|POTENCIA DE FUEGO|EFICIENCIA DE SUMINISTROS|PRECISIÓN Y PUNTERÍA|CONTROL DE RETROCESO|DETECCIÓN DE AMENAZAS|SIGILO OPERATIVO|COORDINACIÓN DE ESCUADRÓN/);
+    expect(survivorSection.querySelectorAll('[data-inspect-character]')).toHaveLength(5);
+    expect(document.querySelector('[role="dialog"][aria-modal="true"]#character-inspection'))
+      .toBeTruthy();
     expect(document.querySelector('img[alt^="Knox Pose"]')).toBeNull();
     expect(document.querySelector('[data-path="top-global-ranking"]')?.getAttribute('href'))
       .toBe('/ranking.html');
@@ -152,6 +175,24 @@ describe('static page HTML and CSS', () => {
       .toBe('/logros_globales.html');
     expect(document.querySelector('[data-path="historia-y-supervivientes"]')?.getAttribute('href'))
       .toBe('/index.html#historia-y-supervivientes');
+    const mutantSection = [...document.querySelectorAll('main section')]
+      .find((section) => section.textContent.includes('EXPEDIENTE: COMANDO MUTANTE'));
+    expect(mutantSection.querySelector('h2')?.textContent.trim())
+      .toBe('EXPEDIENTE: COMANDO MUTANTE');
+    expect(mutantSection.querySelector('h3')).toBeNull();
+    expect(mutantSection.textContent).not.toContain('REGISTRO FOTOGRÁFICO');
+    expect(mutantSection.querySelectorAll('ul[aria-label="Puntos tácticos del comando mutante"] strong'))
+      .toHaveLength(4);
+    for (const threat of ['Cánido', 'Bruto Militar', 'Miss Amazing', 'Mutación Gestante']) {
+      expect(mutantSection.querySelector('ul').textContent).toContain(threat);
+    }
+    expect(mutantSection.textContent).toContain('AMENAZA: APOCALÍPTICA');
+    expect(mutantSection.textContent).toContain('JEFE ACTIVO');
+    expect(mutantSection.querySelector('.bg-surface-container-low > div span')?.textContent.trim())
+      .toBe('Estrategia');
+    expect(mutantSection.textContent).toContain('Clasificación');
+    expect(mutantSection.querySelector('img[alt="Comando de Jefes Mutantes"]')?.getAttribute('src'))
+      .toBe('/img/jefes.jpg');
     expect(document.querySelector('[data-path="expediente-y-jugadores"]')).toBeNull();
     expect(document.querySelectorAll('a[href="/ranking.html"]')).toHaveLength(4);
     expect(document.querySelectorAll('a[href="/logros_globales.html"]')).toHaveLength(4);
@@ -200,6 +241,51 @@ describe('static page HTML and CSS', () => {
     expect(failedStatus.textContent).toContain('NO SE PUDO CARGAR EL MODELO');
     expect(failedStatus.querySelector('[aria-hidden="true"]')?.classList.contains('hidden'))
       .toBe(true);
+
+    dom.window.close();
+  });
+
+  it('opens a large interactive character viewer and restores it when inspection closes', async () => {
+    const dom = await createPage('index.html');
+    const { window } = dom;
+    const { document, Event, KeyboardEvent } = window;
+    executeInlineScript(dom, (script) => script.includes('const inspectionDialog'));
+
+    const button = document.querySelector('[data-inspect-character]');
+    const viewer = button.closest('.group').querySelector('model-viewer');
+    const originalContainer = viewer.parentElement;
+    const dialog = document.getElementById('character-inspection');
+    const closeButton = document.getElementById('character-inspection-close');
+
+    button.click();
+    expect(dialog.classList.contains('hidden')).toBe(false);
+    expect(dialog.getAttribute('aria-hidden')).toBe('false');
+    expect(document.getElementById('character-inspection-name').textContent).toBe('KNOX');
+    expect(document.getElementById('character-inspection-role').textContent)
+      .toContain('CONTENCIÓN');
+    expect(dialog.textContent).not.toContain('PERFIL OPERATIVO');
+    expect(dialog.textContent).not.toContain('EQUIPO PRINCIPAL');
+    expect(dialog.textContent).not.toContain('ESCOPETA 12G BULLPUP');
+    expect(viewer.parentElement).toBe(dialog.querySelector('[data-inspection-viewer-container]'));
+    expect(viewer.hasAttribute('disable-zoom')).toBe(false);
+    expect(viewer.hasAttribute('camera-controls')).toBe(true);
+
+    viewer.dispatchEvent(new Event('load'));
+    expect(dialog.querySelector('[data-inspection-loading]').classList.contains('hidden'))
+      .toBe(true);
+    expect(dialog.querySelector('[data-inspection-viewer-container]').getAttribute('aria-busy'))
+      .toBe('false');
+
+    closeButton.click();
+    expect(dialog.classList.contains('hidden')).toBe(true);
+    expect(viewer.parentElement).toBe(originalContainer);
+    expect(viewer.hasAttribute('disable-zoom')).toBe(true);
+    expect(document.activeElement).toBe(button);
+
+    button.click();
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', cancelable: true }));
+    expect(dialog.classList.contains('hidden')).toBe(true);
+    expect(viewer.parentElement).toBe(originalContainer);
 
     dom.window.close();
   });

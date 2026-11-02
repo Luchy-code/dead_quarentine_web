@@ -273,15 +273,9 @@
 </div>
 </div>
 <!-- Secondary Grid Mini Diagnostics -->
-<div class="grid grid-cols-2 gap-space-xs">
-<div class="bg-surface-container-high p-space-sm rounded flex flex-col">
-<span class="font-label-sm text-[10px] text-outline uppercase">MOTOR GRÁFICO</span>
-<span class="font-label-md text-label-md text-on-surface font-bold">VULKAN // DX12</span>
-</div>
-<div class="bg-surface-container-high p-space-sm rounded flex flex-col">
-<span class="font-label-sm text-[10px] text-outline uppercase">SERVIDOR DE RED</span>
-<span class="font-label-md text-label-md text-tertiary font-bold">AIVEN MYSQL 09</span>
-</div>
+<div class="bg-surface-container-high p-space-sm rounded flex flex-col flex-1">
+  <span class="font-label-sm text-[10px] text-outline uppercase">SERVIDOR DE RED</span>
+  <span class="font-label-md text-label-md text-tertiary font-bold">AIVEN MYSQL</span>
 </div>
 </div>
 </div>
@@ -325,7 +319,7 @@
           </p>
         </div>
         <div class="flex items-center justify-between text-outline font-label-sm text-label-sm pt-space-sm bg-surface-container-lowest/50 px-space-sm py-space-xs rounded">
-          <span>PRIORIDAD: SIGILO</span>
+          
           <span class="text-primary font-bold">OBJETIVO: ENCONTRAR TARJETA Y ESCAPAR</span>
         </div>
       </div>
@@ -347,7 +341,7 @@
           </p>
         </div>
         <div class="flex items-center justify-between text-outline font-label-sm text-label-sm pt-space-sm bg-surface-container-lowest/50 px-space-sm py-space-xs rounded">
-          <span>EXTRACCIÓN: AÉREA</span>
+          
           <span class="text-secondary font-bold">OBJETIVO: CONTACTAR SUPERVIVIENTES</span>
         </div>
       </div>
@@ -362,14 +356,14 @@
         </div>
         <div>
           <h3 class="font-headline-sm text-headline-sm text-on-surface uppercase font-bold mb-space-xs">
-            EL COLOSO Y LA RESISTENCIA
+            LA RESISTENCIA
           </h3>
           <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
             Dispersos entre puntos defensivos en la espesura del bosque, los supervivientes enfrentan la peor amenaza: un infectado mutante colosal que comanda y coordina embestidas masivas contra las bases. No habrá rescate definitivo mientras siga en pie; neutralizarlo es la máxima prioridad táctica.
           </p>
         </div>
         <div class="flex items-center justify-between text-outline font-label-sm text-label-sm pt-space-sm bg-surface-container-lowest/50 px-space-sm py-space-xs rounded">
-          <span>ALERTA: TITÁN MUTANTE</span>
+         
           <span class="text-tertiary font-bold">OBJETIVO: ELIMINAR AL MUTANTE</span>
         </div>
       </div>
@@ -402,16 +396,13 @@
 <!-- 5 Operators Grid -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
 <!-- OPERADOR 1: KNOX (TANQUE) -->
-<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform">
+<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform" data-game-character="knox">
 <!-- Card Header & Badge -->
 <div class="p-space-md bg-surface-container-high flex items-center justify-between">
 <div>
-<span class="font-label-sm text-[10px] text-primary font-bold uppercase tracking-wider">ROL: TANQUE / ASALTO PESADO</span>
+<span class="font-label-sm text-[10px] text-primary font-bold uppercase tracking-wider">ROL: TANQUE</span>
 <h3 class="font-headline-md text-headline-md font-bold text-on-surface uppercase">KNOX</h3>
 </div>
-<span class="px-space-xs py-1 bg-primary-container text-on-primary-container font-label-sm text-[10px] font-bold rounded uppercase">
-              TIER S
-            </span>
 </div>
 <div class="p-space-sm bg-surface-container-lowest">
 <div class="relative" data-model-viewer-container aria-busy="true">
@@ -438,49 +429,31 @@ onmouseleave="this.autoRotate = false">
 <!-- Tactical Attributes & Stats -->
 <div class="p-space-md flex flex-col gap-space-sm flex-grow justify-between">
 <div class="space-y-space-xs">
-<p class="font-body-sm text-body-sm text-on-surface-variant">
-<span class="font-bold text-primary">HABILIDAD:</span> Aguanta el doble de daño, pero se mueve más lento.
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-character-profile>
+<span class="font-bold text-primary">PERFIL:</span> Especialista en brechas y primera línea. El traje EOD absorbe daño, aunque el peso del blindaje reduce su movilidad.
               </p>
-<div class="space-y-1 pt-space-xs">
-<div class="flex justify-between font-label-sm text-[11px]">
-<span class="text-outline uppercase">BLINDAJE CORPORAL</span>
-<span class="text-primary font-bold">99.8%</span>
-</div>
-<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
-<div class="bg-primary-container h-full rounded-full" style="width: 99.8%;"></div>
-</div>
-</div>
-<div class="space-y-1">
-<div class="flex justify-between font-label-sm text-[11px]">
-<span class="text-outline uppercase">POTENCIA DE FUEGO</span>
-<span class="text-secondary font-bold">88.5%</span>
-</div>
-<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
-<div class="bg-secondary-container h-full rounded-full" style="width: 88.5%;"></div>
+<div class="grid grid-cols-[1fr_auto] gap-x-space-md gap-y-space-xs pt-space-xs font-label-sm text-label-sm uppercase" data-game-stats="knox">
+<span class="text-outline">VIDA</span><span class="font-bold text-on-surface">200</span>
+<span class="text-outline">VELOCIDAD (%)</span><span class="font-bold text-secondary">-30%</span>
+<span class="text-outline">ESTAMINA</span><span class="font-bold text-on-surface">80</span>
+<span class="text-outline">REGEN. ESTAMINA (%)</span><span class="font-bold text-secondary">-10%</span>
+<span class="text-outline">VELOCIDAD RECARGA (%)</span><span class="font-bold text-tertiary">+20%</span>
 </div>
 </div>
-<div class="pt-space-xs flex items-center justify-between text-on-surface-variant font-label-sm text-[11px]">
-<span>ARMA PRINCIPAL:</span>
-<span class="text-on-surface font-bold">ESCOPETA 12G BULLPUP</span>
-</div>
-</div>
-<button class="w-full mt-space-sm py-space-xs bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold uppercase rounded hover:bg-surface-bright transition-colors flex items-center justify-center gap-space-xs">
-<span class="material-symbols-outlined text-[16px]">visibility</span>
-              INSPECCIONAR PREFAB
+<button class="w-full mt-space-sm py-space-xs bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold uppercase rounded hover:bg-surface-bright transition-colors flex items-center justify-center gap-space-xs" data-inspect-character type="button">
+<span class="material-symbols-outlined text-[16px]" aria-hidden="true">visibility</span>
+              INSPECCIONAR PERSONAJE
             </button>
 </div>
 </div>
 <!-- OPERADOR 2: RYDER (EXPLORADOR / SOPORTE) -->
-<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform">
+<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform" data-game-character="ryder">
 <!-- Card Header & Badge -->
 <div class="p-space-md bg-surface-container-high flex items-center justify-between">
 <div>
-<span class="font-label-sm text-[10px] text-secondary font-bold uppercase tracking-wider">ROL: EXPLORADOR / SUMINISTROS</span>
+<span class="font-label-sm text-[10px] text-secondary font-bold uppercase tracking-wider">ROL: EXPLORADOR</span>
 <h3 class="font-headline-md text-headline-md font-bold text-on-surface uppercase">RYDER</h3>
 </div>
-<span class="px-space-xs py-1 bg-secondary-container text-on-secondary-container font-label-sm text-[10px] font-bold rounded uppercase">
-              TIER A
-            </span>
 </div>
 <div class="p-space-sm bg-surface-container-lowest">
 <div class="relative" data-model-viewer-container aria-busy="true">
@@ -507,49 +480,31 @@ onmouseleave="this.autoRotate = false">
 <!-- Tactical Attributes & Stats -->
 <div class="p-space-md flex flex-col gap-space-sm flex-grow justify-between">
 <div class="space-y-space-xs">
-<p class="font-body-sm text-body-sm text-on-surface-variant">
-<span class="font-bold text-secondary">HABILIDAD:</span> Rápido y ágil, pero frágil. Un error sale caro.
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-character-profile>
+<span class="font-bold text-secondary">PERFIL:</span> Explorador ligero que prioriza movilidad y recolección. Puede adelantarse para localizar suministros y abrir rutas al equipo.
               </p>
-<div class="space-y-1 pt-space-xs">
-<div class="flex justify-between font-label-sm text-[11px]">
-<span class="text-outline uppercase">AGILIDAD Y VELOCIDAD</span>
-<span class="text-secondary font-bold">94.2%</span>
-</div>
-<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
-<div class="bg-secondary-container h-full rounded-full" style="width: 94.2%;"></div>
-</div>
-</div>
-<div class="space-y-1">
-<div class="flex justify-between font-label-sm text-[11px]">
-<span class="text-outline uppercase">CAPACIDAD SUMINISTROS</span>
-<span class="text-tertiary font-bold">96.0%</span>
-</div>
-<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
-<div class="bg-tertiary-container h-full rounded-full" style="width: 96.0%;"></div>
+<div class="grid grid-cols-[1fr_auto] gap-x-space-md gap-y-space-xs pt-space-xs font-label-sm text-label-sm uppercase" data-game-stats="ryder">
+<span class="text-outline">VIDA</span><span class="font-bold text-on-surface">80</span>
+<span class="text-outline">VELOCIDAD (%)</span><span class="font-bold text-tertiary">+15%</span>
+<span class="text-outline">ESTAMINA</span><span class="font-bold text-on-surface">120</span>
+<span class="text-outline">REGEN. ESTAMINA (%)</span><span class="font-bold text-tertiary">+25%</span>
+<span class="text-outline">VELOCIDAD RECARGA (%)</span><span class="font-bold text-secondary">-10%</span>
 </div>
 </div>
-<div class="pt-space-xs flex items-center justify-between text-on-surface-variant font-label-sm text-[11px]">
-<span>ARMA PRINCIPAL:</span>
-<span class="text-on-surface font-bold">CARABINA TAC-9 / MACHETE</span>
-</div>
-</div>
-<button class="w-full mt-space-sm py-space-xs bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold uppercase rounded hover:bg-surface-bright transition-colors flex items-center justify-center gap-space-xs">
-<span class="material-symbols-outlined text-[16px]">visibility</span>
-              INSPECCIONAR PREFAB
+<button class="w-full mt-space-sm py-space-xs bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold uppercase rounded hover:bg-surface-bright transition-colors flex items-center justify-center gap-space-xs" data-inspect-character type="button">
+<span class="material-symbols-outlined text-[16px]" aria-hidden="true">visibility</span>
+              INSPECCIONAR PERSONAJE
             </button>
 </div>
 </div>
 <!-- OPERADOR 3: OSCAR (SOLDADO MIL-SPEC) -->
-<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform">
+<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform" data-game-character="oscar">
 <!-- Card Header & Badge -->
 <div class="p-space-md bg-surface-container-high flex items-center justify-between">
 <div>
-<span class="font-label-sm text-[10px] text-primary font-bold uppercase tracking-wider">ROL: ASALTO MILITAR / FRANCOTIRADOR</span>
+<span class="font-label-sm text-[10px] text-primary font-bold uppercase tracking-wider">ROL: SOLDADO</span>
 <h3 class="font-headline-md text-headline-md font-bold text-on-surface uppercase">OSCAR</h3>
 </div>
-<span class="px-space-xs py-1 bg-primary-container text-on-primary-container font-label-sm text-[10px] font-bold rounded uppercase">
-              TIER S
-            </span>
 </div>
 <div class="p-space-sm bg-surface-container-lowest">
 <div class="relative" data-model-viewer-container aria-busy="true">
@@ -576,49 +531,31 @@ onmouseleave="this.autoRotate = false">
 <!-- Tactical Attributes & Stats -->
 <div class="p-space-md flex flex-col gap-space-sm flex-grow justify-between">
 <div class="space-y-space-xs">
-<p class="font-body-sm text-body-sm text-on-surface-variant">
-<span class="font-bold text-primary">HABILIDAD:</span> Perfil equilibrado, con buena vida y velocidad para cualquier situación.
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-character-profile>
+<span class="font-bold text-primary">PERFIL:</span> Combatiente versátil para mantener la línea. Combina puntería precisa con control estable del rifle en enfrentamientos prolongados.
               </p>
-<div class="space-y-1 pt-space-xs">
-<div class="flex justify-between font-label-sm text-[11px]">
-<span class="text-outline uppercase">PRECISIÓN Y PUNTERÍA</span>
-<span class="text-primary font-bold">97.5%</span>
-</div>
-<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
-<div class="bg-primary-container h-full rounded-full" style="width: 97.5%;"></div>
-</div>
-</div>
-<div class="space-y-1">
-<div class="flex justify-between font-label-sm text-[11px]">
-<span class="text-outline uppercase">CONTROL DE RETROCESO</span>
-<span class="text-secondary font-bold">91.0%</span>
-</div>
-<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
-<div class="bg-secondary-container h-full rounded-full" style="width: 91.0%;"></div>
+<div class="grid grid-cols-[1fr_auto] gap-x-space-md gap-y-space-xs pt-space-xs font-label-sm text-label-sm uppercase" data-game-stats="oscar">
+<span class="text-outline">VIDA</span><span class="font-bold text-on-surface">100</span>
+<span class="text-outline">VELOCIDAD (%)</span><span class="font-bold text-on-surface">0%</span>
+<span class="text-outline">ESTAMINA</span><span class="font-bold text-on-surface">100</span>
+<span class="text-outline">REGEN. ESTAMINA (%)</span><span class="font-bold text-on-surface">0%</span>
+<span class="text-outline">VELOCIDAD RECARGA (%)</span><span class="font-bold text-on-surface">0%</span>
 </div>
 </div>
-<div class="pt-space-xs flex items-center justify-between text-on-surface-variant font-label-sm text-[11px]">
-<span>ARMA PRINCIPAL:</span>
-<span class="text-on-surface font-bold">RIFLE DE ASALTO M4-MOD BIO</span>
-</div>
-</div>
-<button class="w-full mt-space-sm py-space-xs bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold uppercase rounded hover:bg-surface-bright transition-colors flex items-center justify-center gap-space-xs">
-<span class="material-symbols-outlined text-[16px]">visibility</span>
-              INSPECCIONAR PREFAB
+<button class="w-full mt-space-sm py-space-xs bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold uppercase rounded hover:bg-surface-bright transition-colors flex items-center justify-center gap-space-xs" data-inspect-character type="button">
+<span class="material-symbols-outlined text-[16px]" aria-hidden="true">visibility</span>
+              INSPECCIONAR PERSONAJE
             </button>
 </div>
 </div>
 <!-- OPERADOR 4: VEGA (RECON / ESPECIALISTA BIOMASA) -->
-<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform">
+<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform" data-game-character="vega">
 <!-- Card Header & Badge -->
 <div class="p-space-md bg-surface-container-high flex items-center justify-between">
 <div>
-<span class="font-label-sm text-[10px] text-tertiary font-bold uppercase tracking-wider">ROL: RECON // RASTREO BIOMASA</span>
+<span class="font-label-sm text-[10px] text-tertiary font-bold uppercase tracking-wider">ROL: EXPLORADOR</span>
 <h3 class="font-headline-md text-headline-md font-bold text-on-surface uppercase">VEGA</h3>
 </div>
-<span class="px-space-xs py-1 bg-tertiary-container text-on-tertiary-container font-label-sm text-[10px] font-bold rounded uppercase">
-              TIER A+
-            </span>
 </div>
 <div class="p-space-sm bg-surface-container-lowest">
 <div class="relative" data-model-viewer-container aria-busy="true">
@@ -645,46 +582,30 @@ onmouseleave="this.autoRotate = false">
 <!-- Tactical Attributes & Stats -->
 <div class="p-space-md flex flex-col gap-space-sm flex-grow justify-between">
 <div class="space-y-space-xs">
-<p class="font-body-sm text-body-sm text-on-surface-variant">
-<span class="font-bold text-tertiary">HABILIDAD:</span> Rápida y ágil, pero frágil. Un error sale caro.
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-character-profile>
+<span class="font-bold text-tertiary">PERFIL:</span> Especialista en reconocimiento que rastrea biomasa y detecta amenazas antes del contacto. Su equipo ligero favorece el sigilo y la respuesta rápida.
               </p>
-<div class="space-y-1 pt-space-xs">
-<div class="flex justify-between font-label-sm text-[11px]">
-<span class="text-outline uppercase">DETECCIÓN DE AMENAZAS</span>
-<span class="text-tertiary font-bold">98.2%</span>
-</div>
-<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
-<div class="bg-tertiary-container h-full rounded-full" style="width: 98.2%;"></div>
-</div>
-</div>
-<div class="space-y-1">
-<div class="flex justify-between font-label-sm text-[11px]">
-<span class="text-outline uppercase">VELOCIDAD DE REVIVIR</span>
-<span class="text-secondary font-bold">92.0%</span>
-</div>
-<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
-<div class="bg-secondary-container h-full rounded-full" style="width: 92.0%;"></div>
+<div class="grid grid-cols-[1fr_auto] gap-x-space-md gap-y-space-xs pt-space-xs font-label-sm text-label-sm uppercase" data-game-stats="vega">
+<span class="text-outline">VIDA</span><span class="font-bold text-on-surface">80</span>
+<span class="text-outline">VELOCIDAD (%)</span><span class="font-bold text-tertiary">+15%</span>
+<span class="text-outline">ESTAMINA</span><span class="font-bold text-on-surface">120</span>
+<span class="text-outline">REGEN. ESTAMINA (%)</span><span class="font-bold text-tertiary">+25%</span>
+<span class="text-outline">VELOCIDAD RECARGA (%)</span><span class="font-bold text-secondary">-10%</span>
 </div>
 </div>
-<div class="pt-space-xs flex items-center justify-between text-on-surface-variant font-label-sm text-[11px]">
-<span>ARMA PRINCIPAL:</span>
-<span class="text-on-surface font-bold">SUBFUSIL MP-SILENT // STUN</span>
-</div>
-</div>
-<button class="w-full mt-space-sm py-space-xs bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold uppercase rounded hover:bg-surface-bright transition-colors flex items-center justify-center gap-space-xs">
-<span class="material-symbols-outlined text-[16px]">visibility</span>
-              INSPECCIONAR PREFAB
+<button class="w-full mt-space-sm py-space-xs bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold uppercase rounded hover:bg-surface-bright transition-colors flex items-center justify-center gap-space-xs" data-inspect-character type="button">
+<span class="material-symbols-outlined text-[16px]" aria-hidden="true">visibility</span>
+              INSPECCIONAR PERSONAJE
             </button>
 </div>
 </div>
 <!-- OPERADOR 5: JANET (SOLDADO) -->
-<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform">
+<div class="bg-surface-container rounded shadow-xl flex flex-col overflow-hidden group hover:scale-[1.01] transition-transform" data-game-character="janet">
 <div class="p-space-md bg-surface-container-high flex items-center justify-between">
 <div>
-<span class="font-label-sm text-[10px] text-primary font-bold uppercase tracking-wider">ROL: SOLDADO / APOYO TÁCTICO</span>
+<span class="font-label-sm text-[10px] text-primary font-bold uppercase tracking-wider">ROL: SOLDADO</span>
 <h3 class="font-headline-md text-headline-md font-bold text-on-surface uppercase">JANET</h3>
 </div>
-<span class="px-space-xs py-1 bg-primary-container text-on-primary-container font-label-sm text-[10px] font-bold rounded uppercase">TIER A</span>
 </div>
 <div class="p-space-sm bg-surface-container-lowest">
 <div class="relative" data-model-viewer-container aria-busy="true">
@@ -710,19 +631,51 @@ onmouseleave="this.autoRotate = false">
 </div>
 <div class="p-space-md flex flex-col gap-space-sm flex-grow justify-between">
 <div class="space-y-space-xs">
-<p class="font-body-sm text-body-sm text-on-surface-variant">
-<span class="font-bold text-primary">HABILIDAD:</span> Perfil equilibrado con buena vida y velocidad para adaptarse a cualquier situación.
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-character-profile>
+<span class="font-bold text-primary">PERFIL:</span> Operadora de apoyo que mantiene al escuadrón coordinado y cubre los avances. Su equipamiento equilibrado responde bien en distintas situaciones.
 </p>
-<div class="pt-space-xs flex items-center justify-between text-on-surface-variant font-label-sm text-[11px]">
-<span>ESPECIALIDAD:</span>
-<span class="text-on-surface font-bold">ASALTO Y APOYO</span>
+<div class="grid grid-cols-[1fr_auto] gap-x-space-md gap-y-space-xs pt-space-xs font-label-sm text-label-sm uppercase" data-game-stats="janet">
+<span class="text-outline">VIDA</span><span class="font-bold text-on-surface">100</span>
+<span class="text-outline">VELOCIDAD (%)</span><span class="font-bold text-on-surface">0%</span>
+<span class="text-outline">ESTAMINA</span><span class="font-bold text-on-surface">100</span>
+<span class="text-outline">REGEN. ESTAMINA (%)</span><span class="font-bold text-on-surface">0%</span>
+<span class="text-outline">VELOCIDAD RECARGA (%)</span><span class="font-bold text-on-surface">0%</span>
 </div>
 </div>
+<button class="w-full mt-space-sm py-space-xs bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold uppercase rounded hover:bg-surface-bright transition-colors flex items-center justify-center gap-space-xs" data-inspect-character type="button">
+<span class="material-symbols-outlined text-[16px]" aria-hidden="true">visibility</span>
+INSPECCIONAR PERSONAJE
+</button>
 </div>
 </div>
 </div>
 </div>
 </section>
+<div aria-hidden="true" aria-labelledby="character-inspection-name" aria-modal="true" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 p-space-sm backdrop-blur-sm md:p-space-lg" id="character-inspection" role="dialog">
+  <div class="w-full max-w-6xl max-h-[94vh] overflow-y-auto rounded-lg border border-outline-variant bg-surface-container-low shadow-2xl">
+    <div class="flex items-start justify-between gap-space-md border-b border-outline-variant bg-surface-container-high px-space-md py-space-md md:px-space-lg">
+      <div>
+        <p class="font-label-sm text-label-sm uppercase tracking-widest text-primary">EXPEDIENTE DE SUPERVIVIENTE // VISTA 3D</p>
+        <h2 class="font-headline-md text-headline-md font-bold uppercase text-on-surface" id="character-inspection-name"></h2>
+        <p class="font-label-sm text-label-sm uppercase text-outline" id="character-inspection-role"></p>
+      </div>
+      <button aria-label="Cerrar inspección del personaje" class="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-surface-container-highest text-on-surface transition-colors hover:bg-primary-container hover:text-on-primary-container" id="character-inspection-close" type="button">
+        <span aria-hidden="true" class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="grid grid-cols-1 p-space-md md:p-space-lg">
+      <div class="relative overflow-hidden rounded bg-surface-container-low" data-inspection-viewer-container aria-busy="true">
+        <div class="absolute inset-0 flex flex-col items-center justify-center gap-space-sm bg-surface-container-low/90 text-primary font-label-sm text-label-sm font-bold uppercase tracking-widest" data-inspection-loading role="status" aria-live="polite">
+          <span aria-hidden="true" class="w-8 h-8 rounded-full border-2 border-primary-container border-t-transparent animate-spin"></span>
+          <span>CARGANDO MODELO 3D...</span>
+        </div>
+        <div class="absolute bottom-space-sm left-1/2 z-10 -translate-x-1/2 rounded bg-surface-container-lowest/90 px-space-sm py-space-xs text-center font-label-sm text-label-sm text-on-surface">
+          ARRASTRA PARA GIRAR // USA LA RUEDA PARA ACERCAR
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- ==================== BESTIARIO // INFECTADOS ESPECIALES ==================== -->
 <section class="w-full bg-surface-container-low px-gutter py-space-xl">
   <div class="max-w-7xl mx-auto flex flex-col gap-space-lg">
@@ -734,59 +687,51 @@ onmouseleave="this.autoRotate = false">
           BESTIARIO MUTAGÉNICO CLASIFICADO // SECTOR 07
         </span>
         <h2 class="font-headline-lg text-headline-lg uppercase text-on-surface font-bold tracking-tight">
-          EXPEDIENTE DE CONTENCIÓN: COMANDO MUTANTE
+          EXPEDIENTE: COMANDO MUTANTE
         </h2>
-        <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mt-space-xs">
-          Registro visual y forense de las aberraciones biológicas de alto impacto lideradas por la neurotoxina aerosolizada. Formación de asalto coordinada detectada en las ruinas del sector exterior.
-        </p>
       </div>
-      <div class="flex items-center gap-space-xs font-label-sm text-label-sm text-outline">
-        <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
-        <span class="text-error font-bold">ALERTA: ENCUENTRO DE JEFE ACTIVO</span>
+      <div class="flex flex-wrap items-center gap-space-sm font-label-sm text-label-sm">
+        <span class="rounded border border-error/50 bg-error-container px-space-sm py-space-xs font-bold uppercase tracking-wider text-on-error-container">AMENAZA: APOCALÍPTICA</span>
+        <span class="flex items-center gap-space-xs rounded border border-error/50 bg-surface-container-high px-space-sm py-space-xs font-bold uppercase tracking-wider text-error">
+          <span class="h-2 w-2 rounded-full bg-error animate-pulse" aria-hidden="true"></span>
+          JEFE ACTIVO
+        </span>
       </div>
     </div>
 
     <!-- Boss Showcase Container -->
     <div class="bg-surface-container rounded shadow-2xl flex flex-col overflow-hidden border border-outline-variant/30">
-      <!-- Card Top Bar -->
-      <div class="bg-surface-container-high p-space-sm flex items-center justify-between">
-        <div class="flex items-center gap-space-xs">
-          <span class="px-space-xs py-0.5 bg-error-container text-on-error-container font-label-sm text-[10px] font-bold rounded uppercase tracking-wider">AMENAZA: APOCALÍPTICA</span>
-          <span class="font-label-sm text-label-sm text-outline">ALPHA-SQUAD // BOSS</span>
-        </div>
-        <span class="font-label-sm text-label-sm text-error font-bold uppercase tracking-wider">PROTOCOLO DE EXTERMINIO OBLIGATORIO</span>
-      </div>
+    
 
       <!-- Main Boss Image -->
       <div class="p-space-sm bg-surface-container-lowest flex justify-center items-center">
         <div class="w-full bg-surface-container-low p-space-xs rounded flex flex-col items-center">
-          <span class="font-label-sm text-[9px] text-outline uppercase tracking-widest self-start mb-1">REGISTRO FOTOGRÁFICO DE CONTENCIÓN // CÁMARA TÁCTICA</span>
           <img
             alt="Comando de Jefes Mutantes"
             class="w-full h-auto max-h-[580px] object-contain rounded shadow-inner"
-            src="img\jefes.jpg">
+            src="/img/jefes.jpg">
         </div>
       </div>
 
       <!-- Details & Lore Description -->
       <div class="p-space-md flex flex-col gap-space-md">
-        <div class="flex flex-col gap-space-xs">
-          <h3 class="font-headline-sm text-headline-lg text-on-surface uppercase font-bold tracking-tight">
-            COMANDO DE JEFES MUTANTES
-          </h3>
-          <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-            Concentración terminal de mutaciones de élite coordinadas bajo el mismo foco infeccioso. En el frente, un cánido viral hiperreactivo actúa como rastreador primario de objetivos; en el núcleo de choque, el Bruto Militar y Miss Amazing combinan devastación cinética contundente con disrupción sónica aturdidora; flanqueando el despliegue, la Mutación Gestante satura el perímetro con vectores nido y esporas altamente corrosivas.
-          </p>
-        </div>
+        <ul class="grid gap-space-sm text-body-md leading-relaxed text-on-surface-variant md:grid-cols-2" aria-label="Puntos tácticos del comando mutante">
+          <li class="rounded border border-outline-variant/50 bg-surface-container-high p-space-md"><strong class="text-primary">Cánido:</strong> rastreador de alta movilidad que persigue objetivos y presiona los flancos.</li>
+          <li class="rounded border border-outline-variant/50 bg-surface-container-high p-space-md"><strong class="text-primary">Bruto Militar:</strong> unidad de choque pesada; evitar enfrentarlo de frente y mantener distancia.</li>
+          <li class="rounded border border-outline-variant/50 bg-surface-container-high p-space-md"><strong class="text-secondary">Miss Amazing:</strong> amenaza de gran tamaño con ataques sónicos; interrumpir su avance y dispersar al equipo.</li>
+          <li class="rounded border border-outline-variant/50 bg-surface-container-high p-space-md"><strong class="text-tertiary">Mutación Gestante:</strong> dispersa esporas y criaturas; priorizarla antes de que sature el perímetro.</li>
+        </ul>
 
         <!-- Combat Intel Footer -->
-        <div class="pt-space-sm bg-surface-container-low p-space-sm rounded text-outline font-label-sm text-[11px] flex flex-wrap gap-space-sm justify-between items-center border border-outline-variant/20">
-          <span class="flex items-center gap-1">
-            <span class="text-error font-bold">ESTRATEGIA:</span> FOCALIZAR EL FLANCO RÁPIDO // DISTANCIA DE DISPERSIÓN DE EXPLOSIVOS // SUPRESIÓN CONTINUA
-          </span>
-          <span class="text-error font-bold tracking-wider">
-            CLASIFICACIÓN: HOSTIL CO-OP NIVEL 4
-          </span>
+        <div class="flex flex-wrap gap-space-md rounded border border-outline-variant/50 bg-surface-container-low p-space-md text-body-sm">
+          <div class="flex flex-wrap items-center gap-space-xs">
+            <span class="font-bold uppercase tracking-wide text-on-surface-variant">Estrategia</span>
+            <span class="rounded bg-primary-container/30 px-space-sm py-space-xs font-semibold text-on-surface">Asegurar flancos · mantener distancia · priorizar la Gestante</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-space-xs">
+            <span class="font-bold uppercase tracking-wide text-on-surface-variant">Clasificación</span>
+            <span class="rounded bg-error-container px-space-sm py-space-xs font-semibold text-on-error-container">Hostil · Co-op · Nivel 4</span>
+          </div>
         </div>
       </div>
     </div>
@@ -870,10 +815,12 @@ onmouseleave="this.autoRotate = false">
     const hideLoading = () => {
       loadingStatus.classList.add('hidden');
       container.setAttribute('aria-busy', 'false');
+      viewer.removeAttribute('data-model-load-error');
     };
 
     viewer.addEventListener('load', hideLoading);
     viewer.addEventListener('error', () => {
+      viewer.setAttribute('data-model-load-error', 'true');
       loadingStatus.classList.remove('hidden');
       loadingStatus.querySelector('[aria-hidden="true"]')?.classList.add('hidden');
       loadingStatus.lastElementChild.textContent = 'NO SE PUDO CARGAR EL MODELO';
@@ -883,6 +830,144 @@ onmouseleave="this.autoRotate = false">
     if (viewer.loaded) hideLoading();
     else showLoading();
   });
+</script><script>
+  (() => {
+    const inspectionDialog = document.getElementById('character-inspection');
+    const inspectionViewerContainer = inspectionDialog.querySelector('[data-inspection-viewer-container]');
+    const inspectionLoading = inspectionDialog.querySelector('[data-inspection-loading]');
+    const closeButton = document.getElementById('character-inspection-close');
+    const previousFocus = { element: null };
+    let activeViewer = null;
+    let viewerPlaceholder = null;
+    let originalAttributes = null;
+    let activeLoadListeners = null;
+    let previousBodyOverflow = '';
+
+    const setLoadingState = (message, isLoading) => {
+      inspectionLoading.classList.toggle('hidden', !isLoading);
+      inspectionLoading.lastElementChild.textContent = message;
+      inspectionLoading.firstElementChild.classList.toggle('hidden', !isLoading);
+      inspectionViewerContainer.setAttribute('aria-busy', String(isLoading));
+    };
+
+    const closeInspection = () => {
+      if (!activeViewer || !viewerPlaceholder) return;
+      activeViewer.autoRotate = false;
+      activeViewer.removeEventListener('load', activeLoadListeners.onLoad);
+      activeViewer.removeEventListener('error', activeLoadListeners.onError);
+      viewerPlaceholder.replaceWith(activeViewer);
+      activeViewer.setAttribute('class', originalAttributes.className);
+      activeViewer.setAttribute('style', originalAttributes.style);
+      for (const [name, value] of Object.entries(originalAttributes.attributes)) {
+        if (value === null) activeViewer.removeAttribute(name);
+        else activeViewer.setAttribute(name, value);
+      }
+      inspectionDialog.classList.add('hidden');
+      inspectionDialog.classList.remove('flex');
+      inspectionDialog.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = previousBodyOverflow;
+      activeViewer = null;
+      viewerPlaceholder = null;
+      originalAttributes = null;
+      activeLoadListeners = null;
+      previousFocus.element?.focus();
+    };
+
+    document.querySelectorAll('[data-inspect-character]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const card = button.closest('.group');
+        const viewer = card?.querySelector('model-viewer[data-model-loader]');
+        if (activeViewer) return;
+        if (!card || !viewer) {
+          console.error('No se pudo abrir la inspección: no se encontró el personaje o su modelo.');
+          return;
+        }
+
+        const header = card.querySelector('.bg-surface-container-high');
+        const name = card.querySelector('h3')?.textContent.trim();
+        const role = header?.querySelector('span')?.textContent.trim();
+        if (!name || !role) {
+          console.error('No se pudo abrir la inspección: faltan datos del personaje.');
+          return;
+        }
+
+        document.getElementById('character-inspection-name').textContent = name;
+        document.getElementById('character-inspection-role').textContent = role;
+
+        previousFocus.element = button;
+        previousBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        viewerPlaceholder = document.createComment('character viewer position');
+        viewer.parentNode.insertBefore(viewerPlaceholder, viewer);
+        activeViewer = viewer;
+        originalAttributes = {
+          className: viewer.getAttribute('class') || '',
+          style: viewer.getAttribute('style') || '',
+          attributes: Object.fromEntries(
+            ['disable-zoom', 'onmouseenter', 'onmouseleave', 'rotation-per-second']
+              .map((name) => [name, viewer.getAttribute(name)])
+          )
+        };
+        viewer.setAttribute('class', 'w-full bg-surface-container-low');
+        viewer.style.height = 'min(70vh, 680px)';
+        viewer.removeAttribute('disable-zoom');
+        viewer.removeAttribute('onmouseenter');
+        viewer.removeAttribute('onmouseleave');
+        viewer.autoRotate = false;
+        inspectionViewerContainer.insertBefore(viewer, inspectionLoading);
+        activeLoadListeners = {
+          onLoad: () => {
+            if (activeViewer === viewer) setLoadingState('', false);
+          },
+          onError: () => {
+            if (activeViewer !== viewer) return;
+            setLoadingState('NO SE PUDO CARGAR EL MODELO', false);
+            inspectionLoading.classList.remove('hidden');
+          }
+        };
+        viewer.addEventListener('load', activeLoadListeners.onLoad);
+        viewer.addEventListener('error', activeLoadListeners.onError);
+        if (viewer.loaded) {
+          setLoadingState('', false);
+        } else if (viewer.hasAttribute('data-model-load-error')) {
+          setLoadingState('NO SE PUDO CARGAR EL MODELO', false);
+          inspectionLoading.classList.remove('hidden');
+          inspectionLoading.firstElementChild.classList.add('hidden');
+        } else {
+          setLoadingState('CARGANDO MODELO 3D...', true);
+        }
+
+        inspectionDialog.classList.remove('hidden');
+        inspectionDialog.classList.add('flex');
+        inspectionDialog.setAttribute('aria-hidden', 'false');
+        closeButton.focus();
+      });
+    });
+
+    closeButton.addEventListener('click', closeInspection);
+    inspectionDialog.addEventListener('click', (event) => {
+      if (event.target === inspectionDialog) closeInspection();
+    });
+    window.addEventListener('keydown', (event) => {
+      if (!activeViewer) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeInspection();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = [closeButton, activeViewer];
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+  })();
 </script><script>
   async function loadUserTelemetry() {
     const activeUsers = document.getElementById('active-users-count');
