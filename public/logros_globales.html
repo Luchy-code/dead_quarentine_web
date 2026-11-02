@@ -234,19 +234,23 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
 <!-- Metric 1: Major Achievements -->
 <div class="bg-surface-container p-space-lg rounded flex flex-col justify-between gap-space-md relative overflow-hidden shadow-md">
-<div class="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full pointer-events-none"></div>
-<div class="flex items-center justify-between">
-<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">LOGROS MAYORES</span>
-<span class="material-symbols-outlined text-primary text-[20px]">military_tech</span>
-</div>
-<div class="flex items-baseline gap-space-sm">
-<span class="font-display-lg text-display-lg text-on-surface font-bold tracking-tight" id="achievement-total">--</span>
-<span class="font-label-sm text-label-sm text-outline uppercase">LOGROS EN CATÁLOGO</span>
-</div>
-<div class="flex items-center gap-space-xs text-tertiary font-label-sm text-label-sm">
-<span class="material-symbols-outlined text-[14px]">check_circle</span>
-<span>REGISTROS EN BASE DE DATOS</span>
-</div>
+  <!-- Círculo posicionado en la esquina inferior izquierda -->
+  <div class="absolute -left-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full pointer-events-none"></div>
+
+  <div class="flex items-center justify-between">
+    <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">LOGROS MAYORES</span>
+    <span class="material-symbols-outlined text-primary text-[20px]">military_tech</span>
+  </div>
+
+  <div class="flex items-baseline gap-space-sm">
+    <span class="font-display-lg text-display-lg text-on-surface font-bold tracking-tight" id="achievement-total">--</span>
+    <span class="font-label-sm text-label-sm text-outline uppercase">LOGROS EN CATÁLOGO</span>
+  </div>
+
+  <div class="flex items-center gap-space-xs text-tertiary font-label-sm text-label-sm">
+    <span class="material-symbols-outlined text-[14px]">check_circle</span>
+    <span>REGISTROS EN BASE DE DATOS</span>
+  </div>
 </div>
 <!-- Metric 2: Sub-achievements Total -->
 <div class="bg-surface-container p-space-lg rounded flex flex-col justify-between gap-space-md relative overflow-hidden shadow-md">
@@ -263,6 +267,7 @@
 </div>
 <!-- Metric 3: Global Unlock Rate -->
 <div class="bg-surface-container p-space-lg rounded flex flex-col justify-between gap-space-md relative overflow-hidden shadow-md">
+  <div class="absolute -left-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full pointer-events-none"></div>
 <div class="flex items-center justify-between">
 <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">TASA DESBLOQUEO GLOBAL</span>
 <span class="material-symbols-outlined text-tertiary text-[20px]">monitoring</span>
@@ -276,21 +281,26 @@
         </div>
 </div>
 <!-- Metric 4: Registered Users -->
-<div class="bg-surface-container p-space-lg rounded flex items-center justify-between gap-space-md relative shadow-md">
-<div class="flex flex-col gap-space-xs">
-<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">USUARIOS EN LA BASE</span>
-<span class="font-headline-md text-headline-md text-on-surface font-bold" id="registered-users">--</span>
-<span class="font-label-sm text-label-sm text-primary uppercase flex items-center gap-1">
-<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-ping"></span>
-            TOTAL REGISTRADO
-          </span>
+<div class="bg-surface-container p-space-lg rounded flex items-center justify-between gap-space-md relative overflow-hidden shadow-md">
+  <!-- Círculo posicionado en la esquina inferior derecha -->
+  <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full pointer-events-none"></div>
+
+  <div class="flex flex-col gap-space-xs relative z-10">
+    <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">USUARIOS EN LA BASE</span>
+    <span class="font-headline-md text-headline-md text-on-surface font-bold" id="registered-users">--</span>
+    <span class="font-label-sm text-label-sm text-primary uppercase flex items-center gap-1">
+      <span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-ping"></span>
+      TOTAL REGISTRADO
+    </span>
+  </div>
+
+  <div class="w-16 h-16 rounded bg-surface-container-lowest flex items-center justify-center text-primary flex-shrink-0 relative z-10">
+    <span class="material-symbols-outlined text-[32px]">group</span>
+  </div>
 </div>
-<div class="w-16 h-16 rounded bg-surface-container-lowest flex items-center justify-center text-primary flex-shrink-0">
-<span class="material-symbols-outlined text-[32px]">group</span>
+
 </div>
-</div>
-</div>
-<!-- Category Filter Controls & Telemetry Search -->
+<!-- Category Filter Controls -->
 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md p-space-md bg-surface-container-low rounded">
 <!-- Filter Chips -->
 <div class="flex items-center gap-space-xs flex-wrap" id="category-filters">
@@ -298,10 +308,6 @@
           Todas las Categorías
         </button>
 <div class="flex items-center gap-space-xs flex-wrap" id="database-categories"></div>
-</div>
-<div class="relative min-w-64 flex-1 lg:max-w-sm">
-<label class="sr-only" for="matrix-search">Buscar logros</label>
-<input class="w-full bg-surface-container-lowest px-space-md py-space-sm rounded text-on-surface font-label-sm focus:outline-none focus:ring-1 focus:ring-primary" id="matrix-search" type="search" placeholder="BUSCAR LOGRO...">
 </div>
 </div>
 <!-- ACHIEVEMENTS LOADED FROM THE DATABASE -->
@@ -325,13 +331,12 @@
 </div>
 </div>
 </div>
-<!-- Inline Script for Accordion & Category Filter & Search -->
+<!-- Inline Script for Accordion & Category Filter -->
 <script>
 (() => {
   const container = document.getElementById('achievements-container');
   const categoryFilters = document.getElementById('category-filters');
   const categoryList = document.getElementById('database-categories');
-  const searchInput = document.getElementById('matrix-search');
   const numberFormat = new Intl.NumberFormat('es');
   const percentFormat = new Intl.NumberFormat('es', {
     minimumFractionDigits: 1,
@@ -374,7 +379,9 @@
     superviviente_infierno: { icon: 'shield_with_heart', color: 'text-secondary-fixed-dim', badge: 'S-2', badgeColor: 'bg-secondary-container text-on-secondary-container' },
     completador_rondas: { icon: 'timer', color: 'text-primary', badge: 'S-3', badgeColor: 'bg-primary text-on-primary' },
     campeon_poligono: { icon: 'adjust', color: 'text-tertiary', badge: 'S-4', badgeColor: 'bg-tertiary-container text-on-tertiary-container' },
-    donde_esta_wally: { icon: 'travel_explore', color: 'text-secondary-fixed-dim', badge: 'S-5', badgeColor: 'bg-secondary-container text-on-secondary-container' }
+    donde_esta_wally: { icon: 'travel_explore', color: 'text-secondary-fixed-dim', badge: 'S-5', badgeColor: 'bg-secondary-container text-on-secondary-container' },
+    historiador: { icon: 'book_ribbon', color: 'text-secondary-fixed-dim', badge: '', badgeColor: '' },
+    me_duele_la_cabeza: { icon: 'cognition_2', color: 'text-primary', badge: '', badgeColor: '' }
   };
   const subAchievementRanks = {
     1: { label: 'BRONCE', className: 'border-orange-500/40 bg-orange-700/40 text-orange-300' },
@@ -407,8 +414,14 @@
     const subAchievements = Array.isArray(achievement.sublogros) ? achievement.sublogros : [];
     const required = Number(achievement.sublogros_requeridos);
     const achievementId = escapeHtml(achievement.id);
-    const identity = Object.hasOwn(achievementIcons, achievement.clave)
-      ? achievementIcons[achievement.clave]
+    const achievementKey = String(achievement.clave ?? '').trim().toLocaleLowerCase('es');
+    const achievementTitle = String(achievement.titulo ?? '').trim().toLocaleLowerCase('es');
+    const identity = achievementTitle === 'me duele la cabeza'
+      ? achievementIcons.me_duele_la_cabeza
+      : achievementTitle === 'historiador'
+        ? achievementIcons.historiador
+        : Object.hasOwn(achievementIcons, achievementKey)
+      ? achievementIcons[achievementKey]
       : {
           icon: 'military_tech',
           color: 'text-primary',
@@ -434,7 +447,7 @@
     return `<article class="achievement-card bg-surface-container rounded overflow-hidden shadow-lg transition-all" data-category="${escapeHtml(category)}" data-clave="${escapeHtml(achievement.clave)}">
       <button id="achievement-toggle-${achievementId}" class="w-full p-space-lg flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg text-left cursor-pointer toggle-panel bg-gradient-to-r from-surface-container via-surface-container to-surface-container-high" type="button" aria-expanded="false" aria-controls="achievement-panel-${achievementId}">
         <div class="flex items-start sm:items-center gap-space-lg">
-          <div class="w-16 h-16 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
+          <div class="w-[60px] h-[60px] rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
             <span class="material-symbols-outlined ${identity.color} text-[36px]">${identity.icon}</span>
             ${identity.badge ? `<span class="absolute bottom-0 right-0 px-1 ${identity.badgeColor} font-label-sm text-[9px] uppercase font-bold">${identity.badge}</span>` : ''}
           </div>
@@ -481,14 +494,10 @@
   function filterCards() {
     const activePill = categoryFilters.querySelector('.cat-pill.bg-primary-container');
     const category = activePill?.dataset.cat || 'all';
-    const query = searchInput.value.trim().toLocaleLowerCase('es');
 
     container.querySelectorAll('.achievement-card').forEach((card) => {
       const matchesCategory = category === 'all' || card.dataset.category === category;
-      const matchesQuery = !query ||
-        card.textContent.toLocaleLowerCase('es').includes(query) ||
-        (card.dataset.clave || '').toLocaleLowerCase('es').includes(query);
-      card.classList.toggle('hidden', !(matchesCategory && matchesQuery));
+      card.classList.toggle('hidden', !matchesCategory);
     });
   }
 
@@ -563,7 +572,6 @@
     pill.classList.add('bg-primary-container', 'text-on-primary-container', 'font-bold');
     filterCards();
   });
-  searchInput.addEventListener('input', filterCards);
   container.addEventListener('click', (event) => {
     const header = event.target.closest('.toggle-panel');
     if (header) toggleAchievement(header.closest('.achievement-card'));

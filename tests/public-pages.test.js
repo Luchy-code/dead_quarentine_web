@@ -439,11 +439,11 @@ describe('static page HTML and CSS', () => {
     dom.window.close();
   });
 
-  it('achievement matrix contains category and search controls with clean labels', async () => {
+  it('achievement matrix contains category filters without a search input', async () => {
     const dom = await createPage('logros_globales.html');
     const { document } = dom.window;
 
-    expect(document.getElementById('matrix-search')?.type).toBe('text');
+    expect(document.getElementById('matrix-search')).toBeNull();
     expect(document.getElementById('expand-all-btn')).toBeNull();
     expect(document.getElementById('collapse-all-btn')).toBeNull();
     expect([...document.querySelectorAll('.cat-pill')].map((pill) => pill.textContent.trim()))
@@ -898,18 +898,18 @@ describe('achievement matrix inline JavaScript', () => {
 
   it('restores the original icon and sector badge for each known achievement key', async () => {
     const identities = [
-      ['derrotador_supremo', 'Bajas', 'skull', 'S-1'],
-      ['superviviente_infierno', 'Historia', 'shield_with_heart', 'S-2'],
-      ['completador_rondas', 'Historia', 'timer', 'S-3'],
-      ['campeon_poligono', 'Minijuego', 'adjust', 'S-4'],
-      ['donde_esta_wally', 'Easter Egg', 'travel_explore', 'S-5']
+      ['derrotador_supremo', 'Bajas', 'skull', 'S-1', 'text-primary-container', 'bg-primary'],
+      ['superviviente_infierno', 'Historia', 'shield_with_heart', 'S-2', 'text-secondary-fixed-dim', 'bg-secondary-container'],
+      ['completador_rondas', 'Historia', 'timer', 'S-3', 'text-primary', 'bg-primary'],
+      ['campeon_poligono', 'Minijuego', 'adjust', 'S-4', 'text-tertiary', 'bg-tertiary-container'],
+      ['donde_esta_wally', 'Easter Egg', 'travel_explore', 'S-5', 'text-secondary-fixed-dim', 'bg-secondary-container']
     ];
     const data = {
       ...achievementData,
       logros: identities.map(([clave, categoria], index) => ({
         ...achievementData.logros[0],
         id: index + 1,
-        clave,
+        clave: index === 0 ? ` ${clave.toUpperCase()} ` : clave,
         categoria,
         sublogros: []
       }))
@@ -917,10 +917,62 @@ describe('achievement matrix inline JavaScript', () => {
     const dom = await loadAchievementMatrix(data);
     const cards = [...dom.window.document.querySelectorAll('.achievement-card')];
 
-    expect(cards.map((card) => [
-      card.querySelector('.material-symbols-outlined')?.textContent,
-      card.textContent.match(/S-[1-5]/)?.[0]
-    ])).toEqual(identities.map(([, , icon, badge]) => [icon, badge]));
+    expect(cards.map((card) => {
+      const icon = card.querySelector('.material-symbols-outlined');
+      const tile = icon.parentElement;
+      const badge = tile.querySelector('.absolute.bottom-0.right-0');
+      return [
+        icon.textContent,
+        card.textContent.match(/S-[1-5]/)?.[0],
+        icon.classList.contains('text-[36px]'),
+        icon.className.match(/text-[\w-]+/)?.[0],
+        tile.classList.contains('w-[60px]') && tile.classList.contains('h-[60px]'),
+        badge.className.match(/bg-[\w-]+/)?.[0]
+      ];
+    })).toEqual(identities.map(([, , icon, badge, color, badgeColor]) => [
+      icon,
+      badge,
+      true,
+      color,
+      true,
+      badgeColor
+    ]));
+
+    dom.window.close();
+  });
+
+  it('uses the cognition 2 icon for the headache achievement', async () => {
+    const dom = await loadAchievementMatrix({
+      ...achievementData,
+      logros: [{
+        ...achievementData.logros[0],
+        clave: 'headache_achievement',
+        titulo: 'Me duele la cabeza'
+      }]
+    });
+    const card = dom.window.document.querySelector('.achievement-card');
+
+    expect(card.querySelector('.material-symbols-outlined')?.textContent).toBe('cognition_2');
+    expect(card.querySelector('.material-symbols-outlined')?.classList.contains('text-primary')).toBe(true);
+
+    dom.window.close();
+  });
+
+  it.each([
+    ['historiador', 'Logro de prueba'],
+    ['achievement_key', 'Historiador']
+  ])('uses the book ribbon icon for Historiador (%s key)', async (clave, titulo) => {
+    const dom = await loadAchievementMatrix({
+      ...achievementData,
+      logros: [{
+        ...achievementData.logros[0],
+        clave,
+        titulo
+      }]
+    });
+    const icon = dom.window.document.querySelector('.achievement-card .material-symbols-outlined');
+
+    expect(icon?.textContent).toBe('book_ribbon');
 
     dom.window.close();
   });
@@ -948,7 +1000,7 @@ describe('achievement matrix inline JavaScript', () => {
     dom.window.close();
   });
 
-  it('filters database achievements by category and text search', async () => {
+  it('filters database achievements by category', async () => {
     const dom = await loadAchievementMatrix();
     const { window } = dom;
     const cards = [...window.document.querySelectorAll('.achievement-card')];
@@ -966,11 +1018,6 @@ describe('achievement matrix inline JavaScript', () => {
 
     window.document.querySelector('[data-cat="all"]').click();
     expect(cards.every((card) => !card.classList.contains('hidden'))).toBe(true);
-
-    const search = window.document.getElementById('matrix-search');
-    search.value = 'term-that-does-not-exist';
-    search.dispatchEvent(new window.Event('input'));
-    expect(cards.every((card) => card.classList.contains('hidden'))).toBe(true);
 
     dom.window.close();
   });
