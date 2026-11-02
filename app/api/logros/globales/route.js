@@ -1,6 +1,7 @@
 import { getPool } from '../../../../lib/mysql';
 
 export const dynamic = 'force-dynamic';
+const responseHeaders = { 'Cache-Control': 'no-store' };
 
 export async function GET() {
   try {
@@ -35,12 +36,15 @@ export async function GET() {
 
     const data = logros.map((logro) => ({
       ...logro,
-      sublogros: sublogros.filter((sublogro) => sublogro.logro_id === logro.id)
+      sublogros: sublogros.filter((sublogro) => Number(sublogro.logro_id) === Number(logro.id))
     }));
 
-    return Response.json({ total_usuarios, logros: data });
+    return Response.json({ total_usuarios, logros: data }, { headers: responseHeaders });
   } catch (error) {
     console.error('Error al obtener logros:', error);
-    return Response.json({ error: 'Error al obtener logros' }, { status: 500 });
+    return Response.json(
+      { error: 'Error al obtener logros' },
+      { status: 500, headers: responseHeaders }
+    );
   }
 }

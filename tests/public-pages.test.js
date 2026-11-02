@@ -80,6 +80,12 @@ describe('static page HTML and CSS', () => {
       expect(mobileNav.querySelector('a[href="/ranking.html"]')).toBeTruthy();
       expect(mobileNav.querySelector('a[href="/logros_globales.html"]')).toBeTruthy();
       expect(mobileNav.querySelectorAll('a.whitespace-nowrap')).toHaveLength(3);
+      if (fileName === 'logros_globales.html') {
+        const mobileActiveLink = mobileNav.querySelector('[aria-current="page"]');
+        expect(activeLink?.dataset.path).toBe('matriz-de-logros');
+        expect(mobileActiveLink?.dataset.path).toBe('matriz-de-logros');
+        expect(mobileActiveLink?.classList.contains('bg-primary-container')).toBe(true);
+      }
 
       dom.window.close();
     }
@@ -106,12 +112,12 @@ describe('static page HTML and CSS', () => {
     }
   );
 
-  it('homepage introduces Sector 09 and links to the ranking and achievements', async () => {
+  it('homepage introduces Sector 07 and links to the ranking and achievements', async () => {
     const dom = await createPage('index.html');
     const { document } = dom.window;
 
     expect(document.documentElement.getAttribute('lang')).toBe('es');
-    expect(document.title).toBe('Dead Quarantine II - Sector 09');
+    expect(document.title).toBe('Dead Quarantine II - Sector 07');
     expect(document.body.textContent).toContain('LOS SUPERVIVIENTES');
     expect(document.querySelector('script[src*="model-viewer/3.4.0/model-viewer.min.js"]'))
       .toBeTruthy();
@@ -433,19 +439,21 @@ describe('static page HTML and CSS', () => {
     dom.window.close();
   });
 
-  it('achievement matrix contains category/search and expand/collapse controls', async () => {
+  it('achievement matrix contains category and search controls with clean labels', async () => {
     const dom = await createPage('logros_globales.html');
     const { document } = dom.window;
 
     expect(document.getElementById('matrix-search')?.type).toBe('text');
-    expect(document.getElementById('expand-all-btn')).toBeTruthy();
-    expect(document.getElementById('collapse-all-btn')).toBeTruthy();
-    expect(document.querySelectorAll('.cat-pill').length).toBeGreaterThan(1);
-    expect(document.querySelectorAll('.achievement-card').length).toBeGreaterThan(0);
-    expect(document.querySelector('.achievement-card').textContent)
-      .not.toMatch(/check_box(?:_outline_blank)?/);
-    expect(document.querySelector('#achievements-container').textContent)
-      .not.toMatch(/CLAVE:|ORDEN:|ID:\s*#LOG-/);
+    expect(document.getElementById('expand-all-btn')).toBeNull();
+    expect(document.getElementById('collapse-all-btn')).toBeNull();
+    expect([...document.querySelectorAll('.cat-pill')].map((pill) => pill.textContent.trim()))
+      .toEqual(['Todas las Categorías']);
+    expect(document.getElementById('category-filters').textContent).not.toMatch(/\[\d+\]/);
+    expect(document.getElementById('achievement-total').textContent).toBe('--');
+    expect(document.getElementById('registered-users').textContent).toBe('--');
+    expect(document.getElementById('achievements-container').textContent)
+      .toContain('CONSULTANDO LOGROS EN LA BASE DE DATOS');
+    expect(document.getElementById('achievement-static-snapshot')).toBeNull();
 
     dom.window.close();
   });
@@ -786,50 +794,204 @@ describe('static ranking inline JavaScript', () => {
 });
 
 describe('achievement matrix inline JavaScript', () => {
-  it('toggles individual cards and expands/collapses all cards', async () => {
+  const achievementData = {
+    total_usuarios: 10,
+    logros: [
+      {
+        id: 1,
+        clave: 'derrotador_supremo',
+        titulo: 'Bajas iniciales',
+        descripcion: 'Descripción desde la base',
+        categoria: 'Bajas',
+        modo: 'Singleplayer',
+        sublogros_requeridos: 1,
+        completados_global: 5,
+        porcentaje_global: 50,
+        sublogros: [{
+          id: 11,
+          logro_id: 1,
+          clave: 'sub_bajas_1',
+          titulo: 'Primera baja',
+          orden: 1,
+          completados_global: 2,
+          porcentaje_global: 20
+        }]
+      },
+      {
+        id: 2,
+        clave: 'completador_rondas',
+        titulo: 'Historia inicial',
+        descripcion: 'Otro logro de prueba',
+        categoria: 'Historia',
+        modo: 'Singleplayer',
+        sublogros_requeridos: 1,
+        completados_global: 3,
+        porcentaje_global: 30,
+        sublogros: []
+      }
+    ]
+  };
+
+  async function loadAchievementMatrix(data = achievementData) {
     const dom = await createPage('logros_globales.html');
     const { window } = dom;
-    executeInlineScript(dom, (script) => script.includes('function initMatrix'));
+    window.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => data
+    });
+    window.console.error = vi.fn();
+    executeInlineScript(dom, (script) => script.includes('async function loadAchievements'));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return dom;
+  }
+
+  it('renders achievement names, counts, and percentages from the database response', async () => {
+    const dom = await loadAchievementMatrix();
+    const { window } = dom;
     const cards = [...window.document.querySelectorAll('.achievement-card')];
-    expect(cards.length).toBeGreaterThan(0);
-
-    const firstCard = cards[0];
-    const firstPanel = firstCard.querySelector('.sub-matrix');
-    firstCard.querySelector('.toggle-panel').click();
-    expect(firstPanel.classList.contains('hidden')).toBe(true);
-
-    window.document.getElementById('expand-all-btn').click();
-    expect(cards.every((card) => !card.querySelector('.sub-matrix').classList.contains('hidden'))).toBe(true);
-    window.document.getElementById('collapse-all-btn').click();
-    expect(cards.every((card) => card.querySelector('.sub-matrix').classList.contains('hidden'))).toBe(true);
+    expect(cards).toHaveLength(2);
+    expect(window.fetch).toHaveBeenCalledWith('/api/logros/globales', { cache: 'no-store' });
+    expect(window.document.getElementById('achievement-total').textContent).toBe('2');
+    expect(window.document.getElementById('subachievement-total').textContent).toBe('1');
+    expect(window.document.getElementById('registered-users').textContent).toBe('10');
+    expect(window.document.getElementById('unlock-average').textContent).toBe('40,0%');
+    expect(cards[0].textContent).toContain('Bajas iniciales');
+    expect(cards[0].textContent).toContain('Primera baja');
+    expect(cards[0].textContent).toContain('50,0%');
+    expect(cards[0].querySelector('.material-symbols-outlined')?.textContent).toBe('skull');
+    expect(cards[0].textContent).toContain('S-1');
+    expect(cards[0].querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('50');
+    expect(cards[0].querySelector('[role="progressbar"] > div')?.getAttribute('style'))
+      .toContain('width: 50%');
+    expect(cards[0].querySelector('[role="progressbar"] > div')?.className)
+      .toContain('bg-primary-container');
+    expect(cards[0].textContent).toContain('REQUERIDOS:');
+    expect(cards[1].querySelector('.material-symbols-outlined')?.textContent).toBe('timer');
+    expect(cards[1].textContent).toContain('S-3');
+    expect(window.document.getElementById('achievement-static-snapshot')).toBeNull();
 
     dom.window.close();
   });
 
-  it('filters achievement cards by category and by text search', async () => {
-    const dom = await createPage('logros_globales.html');
+  it('uses bronze, silver, and gold colors for the first three database sub-achievements', async () => {
+    const data = {
+      ...achievementData,
+      logros: [{
+        ...achievementData.logros[0],
+        sublogros: [
+          { id: 11, titulo: 'Primero', orden: 1, porcentaje_global: 80, completados_global: 8 },
+          { id: 12, titulo: 'Segundo', orden: 2, porcentaje_global: 50, completados_global: 5 },
+          { id: 13, titulo: 'Tercero', orden: 3, porcentaje_global: 20, completados_global: 2 }
+        ]
+      }]
+    };
+    const dom = await loadAchievementMatrix(data);
+    const badges = [...dom.window.document.querySelectorAll('.sub-matrix > div > div:last-child > span:first-child')];
+
+    expect(badges.map((badge) => badge.textContent)).toEqual(['BRONCE', 'PLATA', 'ORO']);
+    expect(badges[0].className).toContain('bg-orange-700/40');
+    expect(badges[1].className).toContain('bg-slate-400/20');
+    expect(badges[2].className).toContain('bg-amber-500/20');
+
+    dom.window.close();
+  });
+
+  it('restores the original icon and sector badge for each known achievement key', async () => {
+    const identities = [
+      ['derrotador_supremo', 'Bajas', 'skull', 'S-1'],
+      ['superviviente_infierno', 'Historia', 'shield_with_heart', 'S-2'],
+      ['completador_rondas', 'Historia', 'timer', 'S-3'],
+      ['campeon_poligono', 'Minijuego', 'adjust', 'S-4'],
+      ['donde_esta_wally', 'Easter Egg', 'travel_explore', 'S-5']
+    ];
+    const data = {
+      ...achievementData,
+      logros: identities.map(([clave, categoria], index) => ({
+        ...achievementData.logros[0],
+        id: index + 1,
+        clave,
+        categoria,
+        sublogros: []
+      }))
+    };
+    const dom = await loadAchievementMatrix(data);
+    const cards = [...dom.window.document.querySelectorAll('.achievement-card')];
+
+    expect(cards.map((card) => [
+      card.querySelector('.material-symbols-outlined')?.textContent,
+      card.textContent.match(/S-[1-5]/)?.[0]
+    ])).toEqual(identities.map(([, , icon, badge]) => [icon, badge]));
+
+    dom.window.close();
+  });
+
+  it('toggles every database achievement card independently', async () => {
+    const dom = await loadAchievementMatrix();
     const { window } = dom;
-    Object.defineProperty(window.HTMLElement.prototype, 'innerText', {
-      configurable: true,
-      get() {
-        return this.textContent;
-      }
-    });
-    executeInlineScript(dom, (script) => script.includes('function initMatrix'));
+    const cards = [...window.document.querySelectorAll('.achievement-card')];
+
+    for (const card of cards) {
+      const toggle = card.querySelector('.toggle-panel');
+      const panel = card.querySelector('.sub-matrix');
+      expect(toggle.tagName).toBe('BUTTON');
+      expect(toggle.getAttribute('aria-controls')).toBe(panel.id);
+      expect(panel.classList.contains('hidden')).toBe(true);
+      toggle.click();
+      expect(panel.classList.contains('hidden')).toBe(false);
+      expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    }
+
+    expect(cards.every((card) =>
+      !card.querySelector('.sub-matrix').classList.contains('hidden')
+    )).toBe(true);
+
+    dom.window.close();
+  });
+
+  it('filters database achievements by category and text search', async () => {
+    const dom = await loadAchievementMatrix();
+    const { window } = dom;
     const cards = [...window.document.querySelectorAll('.achievement-card')];
     const categories = [...new Set(cards.map((card) => card.getAttribute('data-category')))];
     expect(categories.length).toBeGreaterThan(1);
 
-    const categoryPill = [...window.document.querySelectorAll('.cat-pill')]
-      .find((pill) => pill.getAttribute('data-cat') === categories[0]);
-    categoryPill.click();
-    expect(cards.filter((card) => !card.classList.contains('hidden'))
-      .every((card) => card.getAttribute('data-category') === categories[0])).toBe(true);
+    for (const category of categories) {
+      const categoryPill = [...window.document.querySelectorAll('.cat-pill')]
+        .find((pill) => pill.getAttribute('data-cat') === category);
+      categoryPill.click();
+      const visibleCards = cards.filter((card) => !card.classList.contains('hidden'));
+      expect(visibleCards.length).toBeGreaterThan(0);
+      expect(visibleCards.every((card) => card.getAttribute('data-category') === category)).toBe(true);
+    }
+
+    window.document.querySelector('[data-cat="all"]').click();
+    expect(cards.every((card) => !card.classList.contains('hidden'))).toBe(true);
 
     const search = window.document.getElementById('matrix-search');
     search.value = 'term-that-does-not-exist';
     search.dispatchEvent(new window.Event('input'));
     expect(cards.every((card) => card.classList.contains('hidden'))).toBe(true);
+
+    dom.window.close();
+  });
+
+  it('shows a visible error instead of displaying sample data when the API fails', async () => {
+    const dom = await createPage('logros_globales.html');
+    const { window } = dom;
+    window.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: 'Error al obtener logros' })
+    });
+    window.console.error = vi.fn();
+    executeInlineScript(dom, (script) => script.includes('async function loadAchievements'));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(window.document.querySelector('#achievements-container').textContent)
+      .toContain('No se pudieron consultar los logros en la base de datos');
+    expect(window.document.querySelectorAll('.achievement-card')).toHaveLength(0);
+    expect(window.document.getElementById('database-connection-status').textContent)
+      .toBe('ERROR DE CONEXIÓN');
 
     dom.window.close();
   });

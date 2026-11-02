@@ -19,7 +19,7 @@ describe('GET /api/logros/globales', () => {
   it('returns each achievement with its matching sub-achievements', async () => {
     const achievement = { id: 4, titulo: 'Superviviente', porcentaje_global: 50 };
     const subAchievements = [
-      { id: 10, logro_id: 4, titulo: 'Primero' },
+      { id: 10, logro_id: '4', titulo: 'Primero' },
       { id: 11, logro_id: 8, titulo: 'Otro logro' }
     ];
     query
@@ -30,6 +30,7 @@ describe('GET /api/logros/globales', () => {
     const response = await GET();
 
     expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('no-store');
     expect(await response.json()).toEqual({
       total_usuarios: 2,
       logros: [{ ...achievement, sublogros: [subAchievements[0]] }]
@@ -56,6 +57,7 @@ describe('GET /api/logros/globales', () => {
     const response = await GET();
 
     expect(response.status).toBe(500);
+    expect(response.headers.get('cache-control')).toBe('no-store');
     expect(await response.json()).toEqual({ error: 'Error al obtener logros' });
   });
 });

@@ -35,21 +35,24 @@ export async function GET(request) {
       return Response.json({ puesto: Number(r[0].puesto) }, { headers: rankingHeaders });
     }
 
-    // Apply mode and difficulty before ranking; search must not renumber rows.
-    let rankingConditions = 'WHERE 1=1';
-    const rankingParams = [];
+    // Apply mode, difficulty, and search filters after ranking to preserve global positions.
+    const filterConditions = [];
+    const filterParams = [];
 
     if (mode && mode !== 'all' && mode !== 'todos') {
-      rankingConditions += ' AND r.modo = ?';
-      rankingParams.push(mode);
+      filterConditions.push('modo = ?');
+      filterParams.push(mode);
     }
     if (difficulty && difficulty !== 'all' && difficulty !== 'todos') {
-      rankingConditions += ' AND r.dificultad = ?';
-      rankingParams.push(difficulty);
+      filterConditions.push('dificultad = ?');
+      filterParams.push(difficulty);
     }
-
-    const searchConditions = search ? 'WHERE (username LIKE ? OR user_id LIKE ?)' : '';
+    if (search) filterConditions.push('(username LIKE ? OR user_id LIKE ?)');
     const searchValues = search ? [`%${search}%`, `%${search}%`] : [];
+    const filteredConditions = filterConditions.length
+      ? `WHERE ${filterConditions.join(' AND ')}`
+      : '';
+    const filteredParams = [...filterParams, ...searchValues];
 
     if (tableView) {
       const requestedPage = Number(searchParams.get('page'));
@@ -68,11 +71,10 @@ export async function GET(request) {
                  r.puntos, r.modo, r.dificultad, r.creado_en
           FROM ranking r
           LEFT JOIN usuarios u ON r.user_id = u.id_local
-          ${rankingConditions}
         ),
         filtered_ranking AS (
           SELECT * FROM ranking_general
-          ${searchConditions}
+          ${filteredConditions}
         )
       `;
       const [rows] = await pool.query(
@@ -80,12 +82,12 @@ export async function GET(request) {
          SELECT * FROM filtered_ranking
          ORDER BY puntos DESC, creado_en ASC, id ASC
          LIMIT ? OFFSET ?`,
-        [...rankingParams, ...searchValues, limit, offset]
+        [...filteredParams, limit, offset]
       );
       const [[{ total }]] = await pool.query(
         `${filteredRanking}
          SELECT COUNT(*) AS total FROM filtered_ranking`,
-        [...rankingParams, ...searchValues]
+        filteredParams
       );
       const [top] = await pool.query(
         `${filteredRanking}
@@ -93,7 +95,7 @@ export async function GET(request) {
          FROM filtered_ranking
          ORDER BY puntos DESC, creado_en ASC, id ASC
          LIMIT 3`,
-        [...rankingParams, ...searchValues]
+        filteredParams
       );
       const [facets] = await pool.query(
         `SELECT DISTINCT modo, dificultad
@@ -129,7 +131,7 @@ export async function GET(request) {
     const sql = `
       WITH ranking_general AS (
         SELECT 
-          ROW_NUMBER() OVER (ORDER BY r.puntos DESC, r.creado_en ASC) AS puesto,
+          ROW_NUMBER() OVER (ORDER BY r.puntos DESC, r.creado_en ASC, r.id ASC) AS puesto,
           r.id,
           COALESCE(u.nombre, r.user_id) AS username,
           r.user_id,
@@ -139,11 +141,10 @@ export async function GET(request) {
           r.creado_en
         FROM ranking r
         LEFT JOIN usuarios u ON r.user_id = u.id_local
-        ${rankingConditions}
       ),
       filtered_ranking AS (
         SELECT * FROM ranking_general
-        ${searchConditions}
+        ${filteredConditions}
       ),
       top5 AS (
         SELECT * FROM filtered_ranking ORDER BY puesto LIMIT 5
@@ -205,7 +206,7 @@ export async function GET(request) {
       ORDER BY bloque_orden ASC, orden ASC;
     `;
 
-    const queryParams = [...rankingParams, ...searchValues, currentUserId];
+    const queryParams = [...filteredParams, currentUserId];
 
     const [rows] = await pool.query(sql, queryParams);
     return Response.json(rows, { headers: rankingHeaders });

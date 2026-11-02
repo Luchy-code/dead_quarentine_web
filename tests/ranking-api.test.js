@@ -50,12 +50,10 @@ describe('GET /api/ranking', () => {
     ));
 
     const [sql, params] = query.mock.calls[0];
-    expect(sql).toContain('AND r.modo = ?');
-    expect(sql).toContain('AND r.dificultad = ?');
-    expect(sql).toContain('WHERE (username LIKE ? OR user_id LIKE ?)');
+    expect(sql).toContain('WHERE modo = ? AND dificultad = ? AND (username LIKE ? OR user_id LIKE ?)');
     expect(sql.indexOf('ROW_NUMBER()')).toBeLessThan(sql.indexOf('filtered_ranking AS'));
     expect(sql.indexOf('filtered_ranking AS'))
-      .toBeLessThan(sql.indexOf('WHERE (username LIKE ?'));
+      .toBeLessThan(sql.indexOf('WHERE modo = ?'));
     expect(params).toEqual(['multiplayer', 'pesadilla', '%Ana%', '%Ana%', '']);
   });
 
@@ -80,7 +78,7 @@ describe('GET /api/ranking', () => {
 
     const [sql, params] = query.mock.calls[0];
     expect(sql).not.toContain('r.codigo_pais');
-    expect(sql).not.toContain('r.modo = ?');
+    expect(sql).not.toContain('modo = ?');
     expect(sql).not.toContain('r.usa_vpn');
     expect(sql).toContain('LIMIT 5');
     expect(params).toEqual(['']);
@@ -130,7 +128,7 @@ describe('GET /api/ranking', () => {
     expect(query.mock.calls[0][0]).toContain('LIMIT ? OFFSET ?');
     const rowsSql = query.mock.calls[0][0];
     expect(rowsSql.indexOf('ROW_NUMBER()')).toBeLessThan(rowsSql.indexOf('filtered_ranking AS'));
-    expect(rowsSql.indexOf('filtered_ranking AS')).toBeLessThan(rowsSql.indexOf('WHERE (username LIKE ?'));
+    expect(rowsSql.indexOf('filtered_ranking AS')).toBeLessThan(rowsSql.indexOf('WHERE modo = ?'));
     expect(rowsSql).toContain('ORDER BY puntos DESC, creado_en ASC, id ASC');
     expect(query).toHaveBeenNthCalledWith(
       5,
@@ -165,6 +163,28 @@ describe('GET /api/ranking', () => {
     );
     expect(query.mock.calls[0][0].indexOf('ROW_NUMBER()'))
       .toBeLessThan(query.mock.calls[0][0].indexOf('WHERE (username LIKE ?'));
+  });
+
+  it('keeps global positions when filtering by mode and difficulty', async () => {
+    const rows = [{ puesto: 10, username: 'FRAN', puntos: 1650, modo: 'singleplayer', dificultad: 'pesadilla' }];
+    query
+      .mockResolvedValueOnce([rows])
+      .mockResolvedValueOnce([[{ total: 1 }]])
+      .mockResolvedValueOnce([rows])
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[{ puntajes_totales: 14, mejor_puntaje: 71950 }]]);
+
+    const response = await GET(new Request(
+      'http://localhost/api/ranking?view=table&page=1&limit=10&mode=Singleplayer&dificultad=Pesadilla'
+    ));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.rows[0].puesto).toBe(10);
+    const [sql, params] = query.mock.calls[0];
+    expect(sql.indexOf('ROW_NUMBER()')).toBeLessThan(sql.indexOf('filtered_ranking AS'));
+    expect(sql.indexOf('filtered_ranking AS')).toBeLessThan(sql.indexOf('WHERE modo = ?'));
+    expect(params).toEqual(['singleplayer', 'pesadilla', 10, 0]);
   });
 
   it('returns a server error if the database query fails', async () => {
