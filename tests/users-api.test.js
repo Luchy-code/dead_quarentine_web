@@ -50,8 +50,30 @@ describe('POST /api/usuarios', () => {
     expect(query).not.toHaveBeenCalled();
   });
 
+  it('rejects a username already used by another user', async () => {
+    query.mockResolvedValueOnce([[{ id: 2 }]]);
+
+    const response = await POST(jsonRequest({
+      user_id: 'external-123',
+      username: '  PLAYER  '
+    }));
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      error: 'Ese nombre ya está en uso. Elegí otro.'
+    });
+    expect(response.headers.get('access-control-allow-origin')).toBe('*');
+    expect(query).toHaveBeenCalledWith(
+      'SELECT id FROM usuarios WHERE LOWER(TRIM(nombre)) = LOWER(?) AND id_local <> ? LIMIT 1',
+      ['PLAYER', 'external-123']
+    );
+    expect(query).toHaveBeenCalledOnce();
+  });
+
   it('upserts a user without writing the name to ranking rows', async () => {
-    query.mockResolvedValueOnce([{}]);
+    query
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([{}]);
 
     const response = await POST(jsonRequest({
       user_id: ' external-123 ',
@@ -67,10 +89,29 @@ describe('POST /api/usuarios', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
     expect(query).toHaveBeenNthCalledWith(
       1,
+      'SELECT id FROM usuarios WHERE LOWER(TRIM(nombre)) = LOWER(?) AND id_local <> ? LIMIT 1',
+      ['A'.repeat(50), 'external-123']
+    );
+    expect(query).toHaveBeenNthCalledWith(
+      2,
       expect.stringContaining('INSERT INTO usuarios (id_local, nombre'),
       ['external-123', 'A'.repeat(50)]
     );
-    expect(query).toHaveBeenCalledOnce();
+    expect(query).toHaveBeenCalledTimes(2);
+  });
+
+  it('allows the same user to keep their current username', async () => {
+    query
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([{}]);
+
+    const response = await POST(jsonRequest({
+      user_id: 'external-123',
+      username: 'Player'
+    }));
+
+    expect(response.status).toBe(200);
+    expect(query).toHaveBeenCalledTimes(2);
   });
 
   it('returns a server error and logs database failures', async () => {

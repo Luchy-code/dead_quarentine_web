@@ -50,6 +50,17 @@ export async function POST(request) {
   try {
     const pool = getPool();
 
+    const [existingUsers] = await pool.query(
+      'SELECT id FROM usuarios WHERE LOWER(TRIM(nombre)) = LOWER(?) AND id_local <> ? LIMIT 1',
+      [username, userId]
+    );
+    if (existingUsers.length > 0) {
+      return Response.json(
+        { error: 'Ese nombre ya está en uso. Elegí otro.' },
+        { status: 409, headers: corsHeaders }
+      );
+    }
+
     // 1. Guardar o actualizar el usuario usando el ID local del juego.
     await pool.query(
       `INSERT INTO usuarios (id_local, nombre, creado_en)

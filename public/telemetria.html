@@ -10,7 +10,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Chivo:wght@300..900&family=JetBrains+Mono:wght@100..800&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet"/>
   <style>
     @layer base { html, body { margin: 0; padding: 0; } }
-    ::-webkit-scrollbar { display: none; }
+    html { scrollbar-color: #ff5545 #101417; scrollbar-width: thin; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: #101417; }
+    ::-webkit-scrollbar-thumb { background: #ff5545; border: 2px solid #101417; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #ffb4a9; }
   </style>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
