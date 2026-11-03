@@ -281,22 +281,21 @@
         </div>
 </div>
 <!-- Metric 4: Registered Users -->
-<div class="bg-surface-container p-space-lg rounded flex items-center justify-between gap-space-md relative overflow-hidden shadow-md">
+<div class="bg-surface-container p-space-lg rounded flex flex-col justify-between gap-space-md relative overflow-hidden shadow-md">
   <!-- Círculo posicionado en la esquina inferior derecha -->
   <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full pointer-events-none"></div>
 
-  <div class="flex flex-col gap-space-xs relative z-10">
+  <div class="flex items-center justify-between relative z-10">
     <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">USUARIOS EN LA BASE</span>
-    <span class="font-headline-md text-headline-md text-on-surface font-bold" id="registered-users">--</span>
-    <span class="font-label-sm text-label-sm text-primary uppercase flex items-center gap-1">
-      <span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-ping"></span>
-      TOTAL REGISTRADO
-    </span>
+    <span class="material-symbols-outlined text-primary text-[20px]" aria-hidden="true">group</span>
   </div>
 
-  <div class="w-16 h-16 rounded bg-surface-container-lowest flex items-center justify-center text-primary flex-shrink-0 relative z-10">
-    <span class="material-symbols-outlined text-[32px]">group</span>
-  </div>
+  <span class="font-display-lg text-[48px] leading-[56px] text-on-surface font-bold tracking-tight" id="registered-users">--</span>
+
+  <span class="font-label-sm text-label-sm text-primary uppercase flex items-center gap-1 relative z-10">
+      <span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-ping"></span>
+      TOTAL REGISTRADO
+  </span>
 </div>
 
 </div>
