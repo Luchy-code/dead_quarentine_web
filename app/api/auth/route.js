@@ -61,28 +61,30 @@ export async function POST(request) {
 
   // Nombre inicial = email. Solo se usa al CREAR la cuenta: si el usuario después se cambia el nombre,
   // un nuevo login no se lo pisa.
-  const nombreInicial = email.slice(0, 50);
+  // Tomamos el email hasta 60 caracteres de longitud
+const nombreInicial = email.slice(0, 60);
 
-  try {
-    const pool = getPool();
-    const [existingUser] = await pool.query(
-      'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
-      [googleId]
+try {
+  const pool = getPool();
+  const [existingUser] = await pool.query(
+    'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
+    [googleId]
+  );
+
+  if (existingUser.length > 0) {
+    // Si ya existe, actualiza email y google_id
+    await pool.query(
+      'UPDATE usuarios SET email = ?, google_id = ? WHERE id_local = ?',
+      [email, googleId, googleId]
     );
-
-    if (existingUser.length > 0) {
-      // Solo actualiza el email; el nombre queda como está.
-      await pool.query(
-        'UPDATE usuarios SET email = ? WHERE id_local = ?',
-        [email, googleId]
-      );
-    } else {
-      await pool.query(
-        `INSERT INTO usuarios (id_local, email, nombre, creado_en)
-         VALUES (?, ?, ?, NOW())`,
-        [googleId, email, nombreInicial]
-      );
-    }
+  } else {
+    // Si es nuevo, inserta id_local, google_id, email y el nombre inicial largo
+    await pool.query(
+      `INSERT INTO usuarios (id_local, google_id, email, nombre, creado_en)
+       VALUES (?, ?, ?, ?, NOW())`,
+      [googleId, googleId, email, nombreInicial]
+    );
+  }
 
     const [usuarios] = await pool.query(
       'SELECT id, id_local, email, nombre, creado_en FROM usuarios WHERE id_local = ? LIMIT 1',
