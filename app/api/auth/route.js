@@ -1,66 +1,103 @@
-import { NextResponse } from 'next/server';
 import { OAuth2Client } from 'google-auth-library';
-// Importá acá tu conexión a la base de datos (ej. pool de mysql2 o prisma)
-import { db } from '@/lib/db'; 
+import { getPool } from '../../../lib/mysql';
 
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID; // Tu Client ID de GCP
-const client = new OAuth2Client(CLIENT_ID);
+export const dynamic = 'force-dynamic';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type'
+};
 
 export async function POST(request) {
+  let body;
   try {
-    const { id_token } = await request.json();
-
-    // 1. Google valida la autenticidad del token
-    const ticket = await client.verifyIdToken({
-      idToken: id_token,
-      audience: CLIENT_ID,
+    body = await request.json();
+  } catch {
+    return Response.json({ success: false, error: 'JSON inválido' }, {
+      status: 400,
+      headers: corsHeaders
     });
-    
-    const payload = ticket.getPayload();
-    const googleId = payload['sub']; // ID permanente de Google
-    const email = payload['email'];
-    const nombre = payload['name'];
+  }
 
-    // 2. Buscar si el usuario ya existe en tu base
-    const [usuarios] = await db.query(
-      'SELECT * FROM usuarios WHERE google_id = ?',
+  const idToken = typeof body?.id_token === 'string' ? body.id_token.trim() : '';
+  if (!idToken) {
+    return Response.json({ success: false, error: 'id_token es requerido' }, {
+      status: 400,
+      headers: corsHeaders
+    });
+  }
+
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    console.error('Falta configurar GOOGLE_CLIENT_ID.');
+    return Response.json({ success: false, error: 'Autenticación no configurada' }, {
+      status: 500,
+      headers: corsHeaders
+    });
+  }
+
+  let payload;
+  try {
+    const client = new OAuth2Client(clientId);
+    const ticket = await client.verifyIdToken({ idToken, audience: clientId });
+    payload = ticket.getPayload();
+  } catch (error) {
+    console.error('Error al verificar token de Google:', error);
+    return Response.json({ success: false, error: 'Token inválido o expirado' }, {
+      status: 401,
+      headers: corsHeaders
+    });
+  }
+
+  const googleId = typeof payload?.sub === 'string' ? payload.sub : '';
+  if (!googleId) {
+    return Response.json({ success: false, error: 'Token inválido o expirado' }, {
+      status: 401,
+      headers: corsHeaders
+    });
+  }
+
+  const nombre = (typeof payload.name === 'string' && payload.name.trim())
+    ? payload.name.trim().slice(0, 50)
+    : 'Jugador';
+
+  try {
+    const pool = getPool();
+    await pool.query(
+      `INSERT INTO usuarios (id_local, nombre, creado_en)
+       VALUES (?, ?, NOW())
+       ON DUPLICATE KEY UPDATE id_local = VALUES(id_local)`,
+      [googleId, nombre]
+    );
+
+    const [usuarios] = await pool.query(
+      'SELECT id, id_local, nombre, creado_en FROM usuarios WHERE id_local = ? LIMIT 1',
       [googleId]
     );
+    const usuario = usuarios[0];
 
-    let usuario = usuarios[0];
-
-    // 3. Si no existe, crearlo como nuevo jugador
     if (!usuario) {
-      const [insertResult] = await db.query(
-        'INSERT INTO usuarios (google_id, email, nombre, nivel, record) VALUES (?, ?, ?, 1, 0)',
-        [googleId, email, nombre]
-      );
-      
-      const [nuevoUsuario] = await db.query(
-        'SELECT * FROM usuarios WHERE id = ?',
-        [insertResult.insertId]
-      );
-      usuario = nuevoUsuario[0];
+      throw new Error('No se pudo recuperar el usuario autenticado.');
     }
 
-    // 4. Devolver los datos del jugador a Unity
-    return NextResponse.json({
+    return Response.json({
       success: true,
       usuario: {
-        id: usuario.id,
-        google_id: usuario.google_id,
-        nombre: usuario.nombre,
-        email: usuario.email,
-        nivel: usuario.nivel,
-        record: usuario.record,
-      },
-    });
-
+        ...usuario,
+        google_id: googleId,
+        email: typeof payload.email === 'string' ? payload.email : null
+      }
+    }, { headers: corsHeaders });
   } catch (error) {
-    console.error('Error al autenticar token:', error);
-    return NextResponse.json(
-      { success: false, error: 'Token inválido o expirado' },
-      { status: 401 }
-    );
+    console.error('Error al autenticar usuario en la base de datos:', error);
+    return Response.json({ success: false, error: 'Error en base de datos' }, {
+      status: 500,
+      headers: corsHeaders
+    });
   }
+}
+
+export function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }
