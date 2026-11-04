@@ -11,7 +11,7 @@ const corsHeaders = {
 export async function GET() {
   try {
     const [usuarios] = await getPool().query(
-      'SELECT id, id_local, nombre, creado_en FROM usuarios ORDER BY creado_en DESC'
+      'SELECT id, id_local, email, nombre, creado_en FROM usuarios ORDER BY creado_en DESC'
     );
     return Response.json(usuarios, { headers: corsHeaders });
   } catch (error) {

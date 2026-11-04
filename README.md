@@ -21,9 +21,10 @@ una fila en `usuario_logros` o `usuario_sublogros`.
 
 ## Sincronización de usuarios del juego
 
-La tabla `usuarios` debe tener únicamente las columnas `id` (AUTO_INCREMENT),
-`id_local` (identificador del jugador creado en el juego), `nombre` y
-`creado_en` (timestamp). No ejecutes la antigua migración
+La tabla `usuarios` debe tener las columnas `id` (AUTO_INCREMENT),
+`id_local` (identificador del jugador), `email` (nullable), `nombre` y
+`creado_en` (timestamp). Ejecuta una vez `database/add_google_email.sql` para
+agregar `email` a una base existente. No ejecutes la antigua migración
 `database/add_external_user_id.sql` para esta tabla: agrega columnas del esquema
 anterior. `id_local` debe tener un índice `UNIQUE` para que cada jugador tenga
 una sola fila; si todavía no lo tiene, ejecuta una vez
@@ -61,6 +62,13 @@ await fetch('/api/ranking', {
 });
 ```
 
+Para registrar o iniciar sesión con Google, configura `GOOGLE_CLIENT_ID` con el
+ID de cliente OAuth y envía el ID token a `POST /api/auth` como
+`{ "id_token": "..." }`. La API verifica el token y su email, usa el `sub` de
+Google como `usuarios.id_local` y guarda el correo en `usuarios.email` y
+`usuarios.nombre`. El nombre se limita a 50 caracteres para coincidir con la
+longitud aceptada por `/api/usuarios`.
+
 La página web consulta `GET /api/ranking?view=table` y pagina los registros de
 la base (hasta 100 filas por petición). Para conservar el comportamiento del
 juego, este debe seguir consultando `GET /api/ranking` sin `view=table`: esa
@@ -81,7 +89,9 @@ el panel de Wasmer.
 En la configuración del servicio web de Wasmer, crea secretos/variables de
 entorno con estos nombres exactos y los valores de conexión del servicio MySQL
 de Aiven: `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD` y
-`MYSQL_DATABASE`. La aplicación los lee directamente de `process.env`; los
+`MYSQL_DATABASE`. Para la autenticación con Google, configura también
+`GOOGLE_CLIENT_ID` con el ID de cliente OAuth. La aplicación los lee
+directamente de `process.env`; los
 secretos de Aiven no se comparten automáticamente con Wasmer. Para verificar el
 certificado TLS de Aiven, configura además `MYSQL_SSL_CA` con el contenido de su
 certificado CA. En `.env.local`, encierra el certificado PEM completo entre

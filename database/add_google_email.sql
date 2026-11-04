@@ -1,0 +1,2 @@
+ALTER TABLE usuarios
+  ADD COLUMN email VARCHAR(320) NULL AFTER id_local;

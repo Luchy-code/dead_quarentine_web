@@ -51,28 +51,27 @@ export async function POST(request) {
   }
 
   const googleId = typeof payload?.sub === 'string' ? payload.sub : '';
-  if (!googleId) {
+  const email = typeof payload?.email === 'string' ? payload.email.trim() : '';
+  if (!googleId || !email || email.length > 320 || payload.email_verified !== true) {
     return Response.json({ success: false, error: 'Token inválido o expirado' }, {
       status: 401,
       headers: corsHeaders
     });
   }
 
-  const nombre = (typeof payload.name === 'string' && payload.name.trim())
-    ? payload.name.trim().slice(0, 50)
-    : 'Jugador';
+  const nombre = email.slice(0, 50);
 
   try {
     const pool = getPool();
     await pool.query(
-      `INSERT INTO usuarios (id_local, nombre, creado_en)
-       VALUES (?, ?, NOW())
-       ON DUPLICATE KEY UPDATE id_local = VALUES(id_local)`,
-      [googleId, nombre]
+      `INSERT INTO usuarios (id_local, email, nombre, creado_en)
+       VALUES (?, ?, ?, NOW())
+       ON DUPLICATE KEY UPDATE email = VALUES(email), nombre = VALUES(nombre)`,
+      [googleId, email, nombre]
     );
 
     const [usuarios] = await pool.query(
-      'SELECT id, id_local, nombre, creado_en FROM usuarios WHERE id_local = ? LIMIT 1',
+      'SELECT id, id_local, email, nombre, creado_en FROM usuarios WHERE id_local = ? LIMIT 1',
       [googleId]
     );
     const usuario = usuarios[0];
@@ -85,8 +84,7 @@ export async function POST(request) {
       success: true,
       usuario: {
         ...usuario,
-        google_id: googleId,
-        email: typeof payload.email === 'string' ? payload.email : null
+        google_id: googleId
       }
     }, { headers: corsHeaders });
   } catch (error) {

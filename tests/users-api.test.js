@@ -16,7 +16,13 @@ beforeEach(() => {
 
 describe('GET /api/usuarios', () => {
   it('returns users with the current database columns', async () => {
-    const users = [{ id: 1, id_local: 'local-1', nombre: 'Player', creado_en: '2026-10-20T00:00:00.000Z' }];
+    const users = [{
+      id: 1,
+      id_local: 'local-1',
+      email: null,
+      nombre: 'Player',
+      creado_en: '2026-10-20T00:00:00.000Z'
+    }];
     query.mockResolvedValueOnce([users]);
 
     const response = await GET();
@@ -24,7 +30,7 @@ describe('GET /api/usuarios', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(users);
     expect(query).toHaveBeenCalledWith(
-      'SELECT id, id_local, nombre, creado_en FROM usuarios ORDER BY creado_en DESC'
+      'SELECT id, id_local, email, nombre, creado_en FROM usuarios ORDER BY creado_en DESC'
     );
   });
 });

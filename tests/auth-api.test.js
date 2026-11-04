@@ -23,7 +23,8 @@ import { jsonRequest } from './helpers.js';
 const tokenPayload = {
   sub: 'google-user-123',
   name: 'Google Player',
-  email: 'player@example.test'
+  email: 'player@example.test',
+  email_verified: true
 };
 
 beforeEach(() => {
@@ -57,7 +58,8 @@ describe('POST /api/auth', () => {
     const user = {
       id: 7,
       id_local: tokenPayload.sub,
-      nombre: tokenPayload.name,
+      email: tokenPayload.email,
+      nombre: tokenPayload.email,
       creado_en: '2026-11-03T00:00:00.000Z'
     };
     query
@@ -71,8 +73,7 @@ describe('POST /api/auth', () => {
       success: true,
       usuario: {
         ...user,
-        google_id: tokenPayload.sub,
-        email: tokenPayload.email
+        google_id: tokenPayload.sub
       }
     });
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
@@ -82,14 +83,25 @@ describe('POST /api/auth', () => {
     });
     expect(query).toHaveBeenNthCalledWith(
       1,
-      expect.stringContaining('INSERT INTO usuarios (id_local, nombre, creado_en)'),
-      [tokenPayload.sub, tokenPayload.name]
+      expect.stringContaining('INSERT INTO usuarios (id_local, email, nombre, creado_en)'),
+      [tokenPayload.sub, tokenPayload.email, tokenPayload.email]
     );
     expect(query).toHaveBeenNthCalledWith(
       2,
-      'SELECT id, id_local, nombre, creado_en FROM usuarios WHERE id_local = ? LIMIT 1',
+      'SELECT id, id_local, email, nombre, creado_en FROM usuarios WHERE id_local = ? LIMIT 1',
       [tokenPayload.sub]
     );
+  });
+
+  it('rejects Google accounts without a verified email', async () => {
+    verifyIdToken.mockResolvedValueOnce({
+      getPayload: () => ({ ...tokenPayload, email_verified: false })
+    });
+
+    const response = await POST(jsonRequest({ id_token: 'unverified-google-token' }));
+
+    expect(response.status).toBe(401);
+    expect(query).not.toHaveBeenCalled();
   });
 
   it('returns unauthorized for an unverifiable Google token', async () => {
