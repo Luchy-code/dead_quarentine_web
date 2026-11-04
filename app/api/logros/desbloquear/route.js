@@ -24,12 +24,21 @@ export async function POST(request) {
   try {
     const pool = getPool();
 
-    await pool.query(
-      `INSERT INTO usuarios (id_local, nombre, creado_en)
-       VALUES (?, ?, NOW())
-       ON DUPLICATE KEY UPDATE nombre = VALUES(nombre)`,
-      [idLocal, username]
+    const [existingUser] = await pool.query(
+      'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
+      [idLocal]
     );
+
+    if (existingUser.length > 0) {
+      await pool.query('UPDATE usuarios SET nombre = ? WHERE id_local = ?', [username, idLocal]);
+    } else {
+      await pool.query(
+        `INSERT INTO usuarios (id_local, nombre, creado_en)
+         VALUES (?, ?, NOW())`,
+        [idLocal, username]
+      );
+    }
+
     const [[usuario]] = await pool.query(
       'SELECT id FROM usuarios WHERE id_local = ?',
       [idLocal]
@@ -48,10 +57,16 @@ export async function POST(request) {
       return Response.json({ error: 'Sublogro no encontrado en la base' }, { status: 404 });
     }
 
-    await pool.query(
-      'INSERT IGNORE INTO usuario_sublogros (usuario_id, sublogro_id) VALUES (?, ?)',
+    const [[sublogroExistente]] = await pool.query(
+      'SELECT id FROM usuario_sublogros WHERE usuario_id = ? AND sublogro_id = ? LIMIT 1',
       [usuario.id, sublogro.id]
     );
+    if (!sublogroExistente) {
+      await pool.query(
+        'INSERT IGNORE INTO usuario_sublogros (usuario_id, sublogro_id) VALUES (?, ?)',
+        [usuario.id, sublogro.id]
+      );
+    }
 
     const [[{ total_completados }]] = await pool.query(
       `SELECT COUNT(*) AS total_completados
@@ -72,10 +87,16 @@ export async function POST(request) {
 
     let logroDesbloqueado = null;
     if (total_completados >= logroInfo.sublogros_requeridos) {
-      await pool.query(
-        'INSERT IGNORE INTO usuario_logros (usuario_id, logro_id) VALUES (?, ?)',
+      const [[logroExistente]] = await pool.query(
+        'SELECT id FROM usuario_logros WHERE usuario_id = ? AND logro_id = ? LIMIT 1',
         [usuario.id, sublogro.logro_id]
       );
+      if (!logroExistente) {
+        await pool.query(
+          'INSERT IGNORE INTO usuario_logros (usuario_id, logro_id) VALUES (?, ?)',
+          [usuario.id, sublogro.logro_id]
+        );
+      }
       logroDesbloqueado = logroInfo.titulo;
     }
 

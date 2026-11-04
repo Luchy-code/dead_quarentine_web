@@ -76,8 +76,9 @@ describe('POST /api/usuarios', () => {
     expect(query).toHaveBeenCalledOnce();
   });
 
-  it('upserts a user without writing the name to ranking rows', async () => {
+  it('inserts a new user without writing the name to ranking rows', async () => {
     query
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([{}]);
 
@@ -100,15 +101,21 @@ describe('POST /api/usuarios', () => {
     );
     expect(query).toHaveBeenNthCalledWith(
       2,
+      'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
+      ['external-123']
+    );
+    expect(query).toHaveBeenNthCalledWith(
+      3,
       expect.stringContaining('INSERT INTO usuarios (id_local, nombre'),
       ['external-123', 'A'.repeat(50)]
     );
-    expect(query).toHaveBeenCalledTimes(2);
+    expect(query).toHaveBeenCalledTimes(3);
   });
 
-  it('allows the same user to keep their current username', async () => {
+  it('updates an existing user without inserting another row', async () => {
     query
       .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[{ id: 8 }]])
       .mockResolvedValueOnce([{}]);
 
     const response = await POST(jsonRequest({
@@ -117,7 +124,12 @@ describe('POST /api/usuarios', () => {
     }));
 
     expect(response.status).toBe(200);
-    expect(query).toHaveBeenCalledTimes(2);
+    expect(query).toHaveBeenNthCalledWith(
+      3,
+      'UPDATE usuarios SET nombre = ? WHERE id_local = ?',
+      ['Player', 'external-123']
+    );
+    expect(query).toHaveBeenCalledTimes(3);
   });
 
   it('returns a server error and logs database failures', async () => {

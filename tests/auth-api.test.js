@@ -53,7 +53,7 @@ describe('POST /api/auth', () => {
     expect(query).not.toHaveBeenCalled();
   });
 
-  it('verifies the Google token and upserts the user with the current schema', async () => {
+  it('verifies the Google token and inserts a new user with the current schema', async () => {
     verifyIdToken.mockResolvedValueOnce({ getPayload: () => tokenPayload });
     const user = {
       id: 7,
@@ -63,6 +63,7 @@ describe('POST /api/auth', () => {
       creado_en: '2026-11-03T00:00:00.000Z'
     };
     query
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([[user]]);
 
@@ -83,13 +84,46 @@ describe('POST /api/auth', () => {
     });
     expect(query).toHaveBeenNthCalledWith(
       1,
+      'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
+      [tokenPayload.sub]
+    );
+    expect(query).toHaveBeenNthCalledWith(
+      2,
       expect.stringContaining('INSERT INTO usuarios (id_local, email, nombre, creado_en)'),
       [tokenPayload.sub, tokenPayload.email, tokenPayload.email]
     );
     expect(query).toHaveBeenNthCalledWith(
-      2,
+      3,
       'SELECT id, id_local, email, nombre, creado_en FROM usuarios WHERE id_local = ? LIMIT 1',
       [tokenPayload.sub]
+    );
+  });
+
+  it('updates an existing Google user without inserting another row', async () => {
+    verifyIdToken.mockResolvedValueOnce({ getPayload: () => tokenPayload });
+    const user = {
+      id: 7,
+      id_local: tokenPayload.sub,
+      email: tokenPayload.email,
+      nombre: tokenPayload.email,
+      creado_en: '2026-11-03T00:00:00.000Z'
+    };
+    query
+      .mockResolvedValueOnce([[{ id: user.id }]])
+      .mockResolvedValueOnce([{}])
+      .mockResolvedValueOnce([[user]]);
+
+    const response = await POST(jsonRequest({ id_token: 'valid-google-token' }));
+
+    expect(response.status).toBe(200);
+    expect(query).toHaveBeenNthCalledWith(
+      2,
+      'UPDATE usuarios SET email = ?, nombre = ? WHERE id_local = ?',
+      [tokenPayload.email, tokenPayload.email, tokenPayload.sub]
+    );
+    expect(query).not.toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO usuarios'),
+      expect.anything()
     );
   });
 

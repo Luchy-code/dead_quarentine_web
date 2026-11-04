@@ -61,13 +61,20 @@ export async function POST(request) {
       );
     }
 
-    // 1. Guardar o actualizar el usuario usando el ID local del juego.
-    await pool.query(
-      `INSERT INTO usuarios (id_local, nombre, creado_en)
-       VALUES (?, ?, NOW())
-       ON DUPLICATE KEY UPDATE nombre = VALUES(nombre)`,
-      [userId, username]
+    const [existingUser] = await pool.query(
+      'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
+      [userId]
     );
+
+    if (existingUser.length > 0) {
+      await pool.query('UPDATE usuarios SET nombre = ? WHERE id_local = ?', [username, userId]);
+    } else {
+      await pool.query(
+        `INSERT INTO usuarios (id_local, nombre, creado_en)
+         VALUES (?, ?, NOW())`,
+        [userId, username]
+      );
+    }
 
     return Response.json({
       message: 'Usuario sincronizado exitosamente',

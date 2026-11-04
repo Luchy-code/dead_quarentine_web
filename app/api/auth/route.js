@@ -63,12 +63,23 @@ export async function POST(request) {
 
   try {
     const pool = getPool();
-    await pool.query(
-      `INSERT INTO usuarios (id_local, email, nombre, creado_en)
-       VALUES (?, ?, ?, NOW())
-       ON DUPLICATE KEY UPDATE email = VALUES(email), nombre = VALUES(nombre)`,
-      [googleId, email, nombre]
+    const [existingUser] = await pool.query(
+      'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
+      [googleId]
     );
+
+    if (existingUser.length > 0) {
+      await pool.query(
+        'UPDATE usuarios SET email = ?, nombre = ? WHERE id_local = ?',
+        [email, nombre, googleId]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO usuarios (id_local, email, nombre, creado_en)
+         VALUES (?, ?, ?, NOW())`,
+        [googleId, email, nombre]
+      );
+    }
 
     const [usuarios] = await pool.query(
       'SELECT id, id_local, email, nombre, creado_en FROM usuarios WHERE id_local = ? LIMIT 1',

@@ -88,6 +88,7 @@ describe('POST /api/logros/desbloquear', () => {
 
   it('returns 404 for unknown sub-achievements after resolving the player', async () => {
     query
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([[{ id: 5 }]])
       .mockResolvedValueOnce([[]]);
@@ -100,19 +101,26 @@ describe('POST /api/logros/desbloquear', () => {
 
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ error: 'Sublogro no encontrado en la base' });
-    expect(query).toHaveBeenNthCalledWith(1, expect.stringContaining('INSERT INTO usuarios (id_local, nombre'), [
-      'local-1',
-      'Player'
-    ]);
-    expect(query).toHaveBeenNthCalledWith(2, 'SELECT id FROM usuarios WHERE id_local = ?', ['local-1']);
-    expect(query).toHaveBeenNthCalledWith(3, expect.stringContaining('FROM sublogros'), ['unknown']);
+    expect(query).toHaveBeenNthCalledWith(
+      1,
+      'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
+      ['local-1']
+    );
+    expect(query).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('INSERT INTO usuarios (id_local, nombre'),
+      ['local-1', 'Player']
+    );
+    expect(query).toHaveBeenNthCalledWith(4, expect.stringContaining('FROM sublogros'), ['unknown']);
   });
 
   it('records progress without unlocking when the requirement is not met', async () => {
     query
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([[{ id: 2 }]])
       .mockResolvedValueOnce([[{ id: 9, logro_id: 4 }]])
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([[{ total_completados: 1 }]])
       .mockResolvedValueOnce([[{ titulo: 'Dominador', sublogros_requeridos: 3 }]]);
@@ -129,18 +137,26 @@ describe('POST /api/logros/desbloquear', () => {
       mensaje: 'Sublogro registrado con éxito',
       logro_padre_desbloqueado: null
     });
-    expect(query).toHaveBeenCalledTimes(6);
-    expect(query).toHaveBeenNthCalledWith(5, expect.stringContaining('COUNT(*) AS total_completados'), [2, 4]);
+    expect(query).toHaveBeenCalledTimes(8);
+    expect(query).toHaveBeenNthCalledWith(
+      5,
+      'SELECT id FROM usuario_sublogros WHERE usuario_id = ? AND sublogro_id = ? LIMIT 1',
+      [2, 9]
+    );
+    expect(query).toHaveBeenNthCalledWith(7, expect.stringContaining('COUNT(*) AS total_completados'), [2, 4]);
   });
 
   it('unlocks the parent achievement after reaching its required count', async () => {
     query
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([[{ id: 2 }]])
       .mockResolvedValueOnce([[{ id: 9, logro_id: 4 }]])
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([[{ total_completados: 3 }]])
       .mockResolvedValueOnce([[{ titulo: 'Dominador', sublogros_requeridos: 3 }]])
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([{}]);
 
     const response = await POST(jsonRequest({
@@ -159,8 +175,43 @@ describe('POST /api/logros/desbloquear', () => {
     );
   });
 
+  it('does not reinsert existing user or achievement records', async () => {
+    query
+      .mockResolvedValueOnce([[{ id: 2 }]])
+      .mockResolvedValueOnce([{}])
+      .mockResolvedValueOnce([[{ id: 2 }]])
+      .mockResolvedValueOnce([[{ id: 9, logro_id: 4 }]])
+      .mockResolvedValueOnce([[{ id: 12 }]])
+      .mockResolvedValueOnce([[{ total_completados: 3 }]])
+      .mockResolvedValueOnce([[{ titulo: 'Dominador', sublogros_requeridos: 3 }]])
+      .mockResolvedValueOnce([[{ id: 20 }]]);
+
+    const response = await POST(jsonRequest({
+      id_local: 'local-1',
+      username: 'Player',
+      sublogro_clave: 'enemigo_derrotado'
+    }));
+
+    expect(response.status).toBe(200);
+    expect(query).toHaveBeenNthCalledWith(
+      5,
+      'SELECT id FROM usuario_sublogros WHERE usuario_id = ? AND sublogro_id = ? LIMIT 1',
+      [2, 9]
+    );
+    expect(query).toHaveBeenNthCalledWith(
+      8,
+      'SELECT id FROM usuario_logros WHERE usuario_id = ? AND logro_id = ? LIMIT 1',
+      [2, 4]
+    );
+    expect(query).not.toHaveBeenCalledWith(
+      expect.stringContaining('INSERT'),
+      expect.anything()
+    );
+  });
+
   it('returns a server error when the user cannot be reloaded', async () => {
     query
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([[]]);
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -177,9 +228,11 @@ describe('POST /api/logros/desbloquear', () => {
 
   it('returns a server error when the parent achievement is missing', async () => {
     query
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([[{ id: 2 }]])
       .mockResolvedValueOnce([[{ id: 9, logro_id: 4 }]])
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([[{ total_completados: 3 }]])
       .mockResolvedValueOnce([[]]);

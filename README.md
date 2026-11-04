@@ -30,6 +30,8 @@ anterior. `id_local` debe tener un índice `UNIQUE` para que cada jugador tenga
 una sola fila; si todavía no lo tiene, ejecuta una vez
 `database/add_local_user_id.sql`. La tabla `ranking` debe tener únicamente
 `id` (AUTO_INCREMENT), `puntos`, `modo`, `dificultad`, `creado_en` y `user_id`.
+Los `id` son contadores internos, no un conteo de filas: MySQL puede dejar
+saltos tras eliminaciones, errores o escrituras duplicadas anteriores.
 `user_id` guarda el mismo
 identificador local que `usuarios.id_local` y es obligatorio al registrar un
 puntaje. El nombre no se duplica en `ranking`: las APIs lo leen de `usuarios`.
