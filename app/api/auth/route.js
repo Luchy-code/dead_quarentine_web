@@ -59,7 +59,9 @@ export async function POST(request) {
     });
   }
 
-  const nombre = email.slice(0, 50);
+  // Nombre inicial = email. Solo se usa al CREAR la cuenta: si el usuario después se cambia el nombre,
+  // un nuevo login no se lo pisa.
+  const nombreInicial = email.slice(0, 50);
 
   try {
     const pool = getPool();
@@ -69,15 +71,16 @@ export async function POST(request) {
     );
 
     if (existingUser.length > 0) {
+      // Solo actualiza el email; el nombre queda como está.
       await pool.query(
-        'UPDATE usuarios SET email = ?, nombre = ? WHERE id_local = ?',
-        [email, nombre, googleId]
+        'UPDATE usuarios SET email = ? WHERE id_local = ?',
+        [email, googleId]
       );
     } else {
       await pool.query(
         `INSERT INTO usuarios (id_local, email, nombre, creado_en)
          VALUES (?, ?, ?, NOW())`,
-        [googleId, email, nombre]
+        [googleId, email, nombreInicial]
       );
     }
 
@@ -100,7 +103,12 @@ export async function POST(request) {
     }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error al autenticar usuario en la base de datos:', error);
-    return Response.json({ success: false, error: 'Error en base de datos' }, {
+    // "detalle" lleva el mensaje real de MySQL (igual que /api/usuarios), así Unity lo muestra en la consola.
+    return Response.json({
+      success: false,
+      error: 'Error en base de datos',
+      detalle: error.sqlMessage || error.message
+    }, {
       status: 500,
       headers: corsHeaders
     });
