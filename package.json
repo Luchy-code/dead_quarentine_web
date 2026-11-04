@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "google-auth-library": "^11.3.3",
     "mysql2": "^3.24.5",
     "next": "^16.4.3",
     "react": "^19.2.0",
