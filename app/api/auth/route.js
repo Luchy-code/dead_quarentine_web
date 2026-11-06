@@ -52,6 +52,10 @@ export async function POST(request) {
 
   const googleId = typeof payload?.sub === 'string' ? payload.sub : '';
   const email = typeof payload?.email === 'string' ? payload.email.trim() : '';
+  const nombreGoogle = typeof payload?.name === 'string' && payload.name.trim() 
+    ? payload.name.trim().slice(0, 50) 
+    : email.split('@')[0].slice(0, 50);
+
   if (!googleId || !email || email.length > 320 || payload.email_verified !== true) {
     return Response.json({ success: false, error: 'Token inválido o expirado' }, {
       status: 401,
@@ -59,49 +63,68 @@ export async function POST(request) {
     });
   }
 
-  const usernameInicial = email.slice(0, 50);
-
   try {
     const pool = getPool();
+
+    // 1. Verificar si ya existe por google_id o por email
     const [existingUsers] = await pool.query(
-      'SELECT id_usuario FROM usuario WHERE email = ? LIMIT 1',
-      [email]
+      'SELECT id_usuario, username, email, google_id, nivel, record FROM usuario WHERE google_id = ? OR email = ? LIMIT 1',
+      [googleId, email]
     );
+
+    let usuarioFinal;
 
     if (existingUsers.length > 0) {
+      usuarioFinal = existingUsers[0];
+      // Si ya existía, actualizar google_id y timestamp
       await pool.query(
-        'UPDATE usuario SET updated_at = NOW() WHERE id_usuario = ?',
-        [existingUsers[0].id_usuario]
+        `UPDATE usuario 
+         SET google_id = ?, 
+             email = ?, 
+             updated_at = NOW() 
+         WHERE id_usuario = ?`,
+        [googleId, email, usuarioFinal.id_usuario]
       );
+      usuarioFinal.google_id = googleId;
+      usuarioFinal.email = email;
     } else {
+      // 2. Si es nuevo, generar ID alfanumérico para id_usuario (PRIMARY KEY)
+      const nuevoIdUsuario = `usr_${googleId.slice(0, 15)}_${Date.now().toString(36)}`;
+      
       await pool.query(
-        `INSERT INTO usuario (email, username, created_at, updated_at)
-         VALUES (?, ?, NOW(), NOW())`,
-        [email, usernameInicial]
+        `INSERT INTO usuario (id_usuario, google_id, username, email, nivel, record, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 1, 0, NOW(), NOW())`,
+        [nuevoIdUsuario, googleId, nombreGoogle, email]
       );
+
+      usuarioFinal = {
+        id_usuario: nuevoIdUsuario,
+        google_id: googleId,
+        username: nombreGoogle,
+        email: email,
+        nivel: 1,
+        record: 0
+      };
     }
 
-    const [usuarios] = await pool.query(
-      'SELECT id_usuario, username, email, created_at, updated_at FROM usuario WHERE email = ? LIMIT 1',
-      [email]
-    );
-    const usuario = usuarios[0];
-
-    if (!usuario) {
-      throw new Error('No se pudo recuperar el usuario autenticado.');
-    }
-
+    // 3. Responder con la estructura exacta que mapea PerfilUsuarioData en Unity
     return Response.json({
       success: true,
       usuario: {
-        ...usuario,
-        google_id: googleId
+        id: 0,
+        id_local: usuarioFinal.id_usuario,
+        google_id: usuarioFinal.google_id,
+        email: usuarioFinal.email,
+        nombre: usuarioFinal.username,
+        nivel: Number(usuarioFinal.nivel) || 1,
+        record: Number(usuarioFinal.record) || 0
       }
     }, { headers: corsHeaders });
+
   } catch (error) {
     console.error('Error al autenticar usuario en la base de datos:', error);
     return Response.json(
-      { success: false, error: 'Error en base de datos' },
+      { success: false, error: 'Error en base de datos', detalle: error.message },
       { status: 500, headers: corsHeaders }
     );
   }

@@ -10,6 +10,7 @@ const corsHeaders = {
 const rankingHeaders = { ...corsHeaders, 'Cache-Control': 'no-store' };
 
 function normalizeGameValue(value) {
+  if (!value || typeof value !== 'string') return '';
   return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
@@ -18,44 +19,49 @@ export async function GET(request) {
   const currentUserId = String(
     searchParams.get('id_usuario') ?? searchParams.get('user_id') ?? ''
   ).trim();
-  const rawMode = searchParams.get('mode');
-  const mode = rawMode ? normalizeGameValue(rawMode.trim()) : '';
-  const rawDifficulty = searchParams.get('dificultad');
-  const difficulty = rawDifficulty ? normalizeGameValue(rawDifficulty.trim()) : '';
-  const search = searchParams.get('search');
-  const tableView = searchParams.get('view') === 'table';
 
   try {
     const pool = getPool();
 
-    const score = searchParams.get('score');
-    if (score !== null && score !== '' && Number.isFinite(Number(score))) {
+    // 1. Cálculo del puesto antes de guardar (Invocado por GuardarScoreCartelUI.cs)
+    const scoreParam = searchParams.get('score');
+    if (scoreParam !== null && scoreParam !== '' && Number.isFinite(Number(scoreParam))) {
       const [r] = await pool.query(
-        'SELECT COUNT(*) + 1 AS puesto FROM ranking WHERE puntos >= ?',
-        [Number(score)]
+        'SELECT COUNT(*) + 1 AS puesto FROM ranking WHERE puntos > ?',
+        [Number(scoreParam)]
       );
       return Response.json({ puesto: Number(r[0].puesto) }, { headers: rankingHeaders });
     }
 
-    // Apply mode, difficulty, and search filters after ranking to preserve global positions.
+    // 2. Parámetros de filtrado
+    const rawMode = searchParams.get('mode') ?? searchParams.get('modo');
+    const mode = rawMode ? normalizeGameValue(rawMode.trim()) : '';
+    const rawDifficulty = searchParams.get('dificultad');
+    const difficulty = rawDifficulty ? normalizeGameValue(rawDifficulty.trim()) : '';
+    const search = searchParams.get('search');
+    const tableView = searchParams.get('view') === 'table';
+
     const filterConditions = [];
     const filterParams = [];
 
     if (mode && mode !== 'all' && mode !== 'todos') {
-      filterConditions.push('modo = ?');
+      filterConditions.push('LOWER(r.modo) = ?');
       filterParams.push(mode);
     }
     if (difficulty && difficulty !== 'all' && difficulty !== 'todos') {
-      filterConditions.push('dificultad = ?');
+      filterConditions.push('LOWER(r.dificultad) = ?');
       filterParams.push(difficulty);
     }
-    if (search) filterConditions.push('(username LIKE ? OR user_id LIKE ?)');
-    const searchValues = search ? [`%${search}%`, `%${search}%`] : [];
+    if (search) {
+      filterConditions.push('(COALESCE(u.username, r.superviviente) LIKE ? OR r.id_usuario LIKE ?)');
+      filterParams.push(`%${search}%`, `%${search}%`);
+    }
+
     const filteredConditions = filterConditions.length
       ? `WHERE ${filterConditions.join(' AND ')}`
       : '';
-    const filteredParams = [...filterParams, ...searchValues];
 
+    // 3. Vista de tabla para la página web (dead-quarentine-web)
     if (tableView) {
       const requestedPage = Number(searchParams.get('page'));
       const requestedLimit = Number(searchParams.get('limit'));
@@ -64,15 +70,20 @@ export async function GET(request) {
         ? Math.min(requestedLimit, 100)
         : 10;
       const offset = (page - 1) * limit;
+
       const filteredRanking = `
         WITH ranking_general AS (
           SELECT ROW_NUMBER() OVER (
                    ORDER BY r.puntos DESC, r.creado_en ASC, r.id_ranking ASC
                  ) AS puesto,
                  r.id_ranking AS id,
-                 COALESCE(u.username, r.id_usuario) AS username,
+                 COALESCE(u.username, r.superviviente) AS username,
+                 COALESCE(r.estado, 'Vivo') AS estado,
                  r.id_usuario AS user_id,
-                 r.puntos, r.modo, r.dificultad, r.creado_en
+                 r.puntos, 
+                 r.modo, 
+                 r.dificultad, 
+                 r.creado_en
           FROM ranking r
           LEFT JOIN usuario u ON r.id_usuario = u.id_usuario
         ),
@@ -81,32 +92,37 @@ export async function GET(request) {
           ${filteredConditions}
         )
       `;
+
       const [rows] = await pool.query(
         `${filteredRanking}
          SELECT * FROM filtered_ranking
          ORDER BY puntos DESC, creado_en ASC, id ASC
          LIMIT ? OFFSET ?`,
-        [...filteredParams, limit, offset]
+        [...filterParams, limit, offset]
       );
+
       const [[{ total }]] = await pool.query(
         `${filteredRanking}
          SELECT COUNT(*) AS total FROM filtered_ranking`,
-        filteredParams
+        filterParams
       );
+
       const [top] = await pool.query(
         `${filteredRanking}
-         SELECT puesto, username, user_id, puntos, modo, dificultad, creado_en
+         SELECT puesto, username, estado, user_id, puntos, modo, dificultad, creado_en
          FROM filtered_ranking
          ORDER BY puntos DESC, creado_en ASC, id ASC
          LIMIT 3`,
-        filteredParams
+        filterParams
       );
+
       const [facets] = await pool.query(
         `SELECT DISTINCT modo, dificultad
          FROM ranking
          WHERE modo IS NOT NULL OR dificultad IS NOT NULL
          ORDER BY modo, dificultad`
       );
+
       const [[statistics]] = await pool.query(
         `SELECT COUNT(*) AS puntajes_totales,
                 COALESCE(MAX(puntos), 0) AS mejor_puntaje
@@ -131,7 +147,7 @@ export async function GET(request) {
       );
     }
 
-    // Query CTE oiporúva UNION ALL: Top 5 + '...' + Ne récord iporãvéva
+    // 4. Vista simplificada para Unity / Menú de Score
     const sql = `
       WITH ranking_general AS (
         SELECT 
@@ -139,7 +155,8 @@ export async function GET(request) {
             ORDER BY r.puntos DESC, r.creado_en ASC, r.id_ranking ASC
           ) AS puesto,
           r.id_ranking AS id,
-          COALESCE(u.username, r.id_usuario) AS username,
+          COALESCE(u.username, r.superviviente) AS username,
+          COALESCE(r.estado, 'Vivo') AS estado,
           r.id_usuario AS user_id,
           r.puntos,
           r.modo,
@@ -161,11 +178,11 @@ export async function GET(request) {
         ORDER BY puntos DESC, creado_en ASC
         LIMIT 1
       )
-      -- Bloque 1: Top 5
       SELECT 
         CAST(puesto AS CHAR) AS puesto, 
         id, 
         username, 
+        estado,
         user_id, 
         puntos, 
         modo, 
@@ -177,11 +194,11 @@ export async function GET(request) {
 
       UNION ALL
 
-      -- Bloque 2: Fila orekóva '...' (oñemoĩnte puesto > 5 jave)
       SELECT 
         '...' AS puesto, 
         NULL AS id, 
         '...' AS username, 
+        '...' AS estado,
         NULL AS user_id, 
         0 AS puntos, 
         '...' AS modo, 
@@ -194,11 +211,11 @@ export async function GET(request) {
 
       UNION ALL
 
-      -- Bloque 3: Nde récord iporãvéva
       SELECT 
         CAST(puesto AS CHAR) AS puesto, 
         id, 
         username, 
+        estado,
         user_id, 
         puntos, 
         modo, 
@@ -212,9 +229,7 @@ export async function GET(request) {
       ORDER BY bloque_orden ASC, orden ASC;
     `;
 
-    const queryParams = [...filteredParams, currentUserId];
-
-    const [rows] = await pool.query(sql, queryParams);
+    const [rows] = await pool.query(sql, [...filterParams, currentUserId]);
     return Response.json(rows, { headers: rankingHeaders });
 
   } catch (error) {
@@ -234,48 +249,22 @@ export async function POST(request) {
     return Response.json({ error: 'El cuerpo debe ser JSON válido' }, { status: 400, headers: corsHeaders });
   }
 
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return Response.json(
-      { error: 'El cuerpo debe ser un objeto JSON' },
-      { status: 400, headers: corsHeaders }
-    );
-  }
+  // Admite 'user_id' o 'id_usuario' de tipo string (UUID persistente) o número
+  const rawUserId = body.user_id ?? body.id_usuario ?? '';
+  const userId = String(rawUserId).trim();
 
-  const rawModo = typeof body.modo === 'string' && body.modo.trim()
-    ? normalizeGameValue(body.modo.trim())
-    : 'singleplayer';
-  const modo = ['singleplayer', 'multiplayer'].includes(rawModo) ? rawModo : '';
-  const rawDificultad = typeof body.dificultad === 'string' && body.dificultad.trim()
-    ? normalizeGameValue(body.dificultad.trim())
-    : 'normal';
-  const dificultad = ['normal', 'dificil', 'pesadilla'].includes(rawDificultad)
-    ? rawDificultad
-    : '';
-  const username = typeof body.username === 'string' ? body.username.trim().slice(0, 50) : '';
-  const puntos = typeof body.puntos === 'number' ||
-    (typeof body.puntos === 'string' && body.puntos.trim() !== '')
-    ? Number(body.puntos)
-    : Number.NaN;
-  const rawUserId = body.id_usuario;
-  const userId = typeof rawUserId === 'number' ||
-    (typeof rawUserId === 'string' && /^\d+$/.test(rawUserId.trim()))
-    ? Number(rawUserId)
-    : Number.NaN;
+  const username = typeof body.username === 'string' && body.username.trim()
+    ? body.username.trim().slice(0, 50)
+    : 'Superviviente';
 
-  if (
-    !username ||
-    !Number.isSafeInteger(userId) ||
-    userId < 1 ||
-    !modo ||
-    !dificultad ||
-    body.puntos === undefined ||
-    body.puntos === null ||
-    body.puntos === '' ||
-    !Number.isFinite(puntos) ||
-    puntos < 0
-  ) {
+  const puntos = Number(body.puntos);
+  const modo = typeof body.modo === 'string' && body.modo.trim() ? body.modo.trim() : 'Singleplayer';
+  const dificultad = typeof body.dificultad === 'string' && body.dificultad.trim() ? body.dificultad.trim() : 'Normal';
+  const estado = typeof body.estado === 'string' && body.estado.trim() ? body.estado.trim() : 'Vivo';
+
+  if (!Number.isFinite(puntos) || puntos < 0) {
     return Response.json(
-      { error: 'id_usuario, username, modo, dificultad y puntos válidos son obligatorios' },
+      { error: 'Puntaje inválido' },
       { status: 400, headers: corsHeaders }
     );
   }
@@ -283,28 +272,22 @@ export async function POST(request) {
   try {
     const pool = getPool();
 
-    const [existingUser] = await pool.query(
-      'SELECT id_usuario FROM usuario WHERE id_usuario = ? LIMIT 1',
-      [userId]
-    );
-
-    if (existingUser.length === 0) {
-      return Response.json(
-        { error: 'Usuario no encontrado' },
-        { status: 404, headers: corsHeaders }
+    // Si viene con ID de dispositivo, asegurar que el usuario exista o actualizar su nombre
+    if (userId) {
+      await pool.query(
+        `INSERT INTO usuario (id_usuario, username, created_at, updated_at)
+         VALUES (?, ?, NOW(), NOW())
+         ON DUPLICATE KEY UPDATE username = VALUES(username), updated_at = NOW()`,
+        [userId, username]
       );
     }
 
-    await pool.query(
-      'UPDATE usuario SET username = ?, updated_at = NOW() WHERE id_usuario = ?',
-      [username, userId]
-    );
-
+    // Insertar en la tabla ranking con las columnas exactas de la web y de MySQL
     const [resultado] = await pool.query(
       `INSERT INTO ranking
-        (id_usuario, puntos, modo, dificultad, creado_en)
-       VALUES (?, ?, ?, ?, NOW())`,
-      [userId, puntos, modo, dificultad]
+        (id_usuario, superviviente, estado, puntos, modo, dificultad, creado_en)
+       VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+      [userId || null, username, estado, puntos, modo, dificultad]
     );
 
     return Response.json(

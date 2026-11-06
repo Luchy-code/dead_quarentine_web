@@ -8,13 +8,40 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type'
 };
 
-export async function GET() {
+export async function GET(request) {
   try {
-    const [usuario] = await getPool().query(
-      'SELECT id_usuario, username, email, created_at, updated_at FROM usuario ORDER BY created_at DESC'
+    const searchParams = new URL(request.url).searchParams;
+    const requestedUserId = String(
+      searchParams.get('user_id') ?? searchParams.get('id_usuario') ?? ''
+    ).trim();
+
+    const pool = getPool();
+
+    // 1. Si Unity consulta por un usuario específico (para recuperar o transferir cuenta)
+    if (requestedUserId) {
+      const [rows] = await pool.query(
+        'SELECT id_usuario AS user_id, username, email, nivel, record, created_at, updated_at FROM usuario WHERE id_usuario = ? LIMIT 1',
+        [requestedUserId]
+      );
+
+      if (rows.length === 0) {
+        return Response.json(
+          { error: 'Usuario no encontrado' },
+          { status: 404, headers: corsHeaders }
+        );
+      }
+
+      return Response.json(rows[0], { headers: corsHeaders });
+    }
+
+    // 2. Si no especifica user_id, devuelve el listado general
+    const [usuarios] = await pool.query(
+      'SELECT id_usuario AS user_id, username, email, created_at, updated_at FROM usuario ORDER BY created_at DESC LIMIT 50'
     );
-    return Response.json(usuario, { headers: corsHeaders });
+    return Response.json(usuarios, { headers: corsHeaders });
+
   } catch (error) {
+    console.error('Error al obtener usuario(s):', error);
     return Response.json(
       { error: 'Error al obtener usuario', detalle: error.sqlMessage || error.message },
       { status: 500, headers: corsHeaders }
@@ -37,16 +64,14 @@ export async function POST(request) {
     );
   }
 
-  const rawUserId = body.id_usuario;
-  const userId = typeof rawUserId === 'number' ||
-    (typeof rawUserId === 'string' && /^\d+$/.test(rawUserId.trim()))
-    ? Number(rawUserId)
-    : Number.NaN;
+  // Acepta 'user_id' (enviado por CharacterRenameManager.cs) o 'id_usuario'
+  const rawUserId = body.user_id ?? body.id_usuario ?? '';
+  const userId = String(rawUserId).trim();
   const username = typeof body.username === 'string' ? body.username.trim().slice(0, 50) : '';
 
-  if (!Number.isSafeInteger(userId) || userId < 1 || !username) {
+  if (!userId || !username) {
     return Response.json(
-      { error: 'id_usuario y username son requeridos' },
+      { error: 'user_id y username son requeridos' },
       { status: 400, headers: corsHeaders }
     );
   }
@@ -54,10 +79,12 @@ export async function POST(request) {
   try {
     const pool = getPool();
 
+    // 1. Validar que el nombre no esté duplicado por otro usuario distinto
     const [existingUsers] = await pool.query(
       'SELECT id_usuario FROM usuario WHERE LOWER(TRIM(username)) = LOWER(?) AND id_usuario <> ? LIMIT 1',
       [username, userId]
     );
+
     if (existingUsers.length > 0) {
       return Response.json(
         { error: 'Ese nombre ya está en uso. Elegí otro.' },
@@ -65,26 +92,20 @@ export async function POST(request) {
       );
     }
 
-    const [existingUser] = await pool.query(
-      'SELECT id_usuario FROM usuario WHERE id_usuario = ? LIMIT 1',
-      [userId]
-    );
-
-    if (existingUser.length === 0) {
-      return Response.json(
-        { error: 'Usuario no encontrado' },
-        { status: 404, headers: corsHeaders }
-      );
-    }
-
+    // 2. Insertar nuevo usuario o actualizar su nombre si ya existía (Upsert atómico)
     await pool.query(
-      'UPDATE usuario SET username = ?, updated_at = NOW() WHERE id_usuario = ?',
-      [username, userId]
+      `INSERT INTO usuario (id_usuario, username, created_at, updated_at)
+       VALUES (?, ?, NOW(), NOW())
+       ON DUPLICATE KEY UPDATE 
+         username = VALUES(username), 
+         updated_at = NOW()`,
+      [userId, username]
     );
 
     return Response.json({
+      success: true,
       message: 'Usuario sincronizado exitosamente',
-      id_usuario: userId,
+      user_id: userId,
       username
     }, { status: 200, headers: corsHeaders });
 

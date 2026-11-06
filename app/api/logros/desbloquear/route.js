@@ -2,99 +2,103 @@ import { getPool } from '../../../../lib/mysql';
 
 export const dynamic = 'force-dynamic';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type'
+};
+
 export async function POST(request) {
   let body;
 
   try {
     body = await request.json();
   } catch {
-    return Response.json({ error: 'El cuerpo de la solicitud no es JSON válido' }, { status: 400 });
+    return Response.json(
+      { success: false, error: 'El cuerpo de la solicitud no es JSON válido' },
+      { status: 400, headers: corsHeaders }
+    );
   }
 
-  const rawUsuarioId = body?.id_usuario;
-  const usuarioId = typeof rawUsuarioId === 'number' ||
-    (typeof rawUsuarioId === 'string' && /^\d+$/.test(rawUsuarioId.trim()))
-    ? Number(rawUsuarioId)
-    : Number.NaN;
-  const sublogroClave = typeof body?.sublogro_clave === 'string'
-    ? body.sublogro_clave.trim()
-    : '';
+  // Soporta tanto 'id_local' (el que envía AchievementsManager.cs) como 'id_usuario'
+  const rawUsuarioId = body?.id_local || body?.id_usuario;
+  const usuarioId = typeof rawUsuarioId === 'string' ? rawUsuarioId.trim() : String(rawUsuarioId || '').trim();
+  
+  const sublogroClave = typeof body?.sublogro_clave === 'string' ? body.sublogro_clave.trim() : '';
+  const username = typeof body?.username === 'string' && body.username.trim() ? body.username.trim() : 'Superviviente';
 
-  if (!Number.isSafeInteger(usuarioId) || usuarioId < 1 || !sublogroClave) {
-    return Response.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
+  if (!usuarioId || !sublogroClave) {
+    return Response.json(
+      { success: false, error: 'Faltan campos obligatorios (id_local y sublogro_clave son requeridos)' },
+      { status: 400, headers: corsHeaders }
+    );
   }
 
   try {
     const pool = getPool();
 
-    const [[usuario]] = await pool.query(
-      'SELECT id_usuario FROM usuario WHERE id_usuario = ? LIMIT 1',
-      [usuarioId]
+    // 1. Asegurar que el usuario exista en la tabla 'usuario' (lo crea si es su primera vez)
+    await pool.query(
+      `INSERT INTO usuario (id_usuario, username, created_at, updated_at)
+       VALUES (?, ?, NOW(), NOW())
+       ON DUPLICATE KEY UPDATE username = VALUES(username), updated_at = NOW()`,
+      [usuarioId, username]
     );
 
-    if (!usuario) {
-      return Response.json({ error: 'Usuario no encontrado' }, { status: 404 });
-    }
-
+    // 2. Buscar el sublogro correspondiente por su sublogro_clave
     const [[sublogro]] = await pool.query(
-      'SELECT id, logro_id FROM sublogros WHERE clave = ?',
+      'SELECT id_sublogro, id_logro, rango, objetivo_cantidad FROM sublogro WHERE sublogro_clave = ? LIMIT 1',
       [sublogroClave]
     );
 
     if (!sublogro) {
-      return Response.json({ error: 'Sublogro no encontrado en la base' }, { status: 404 });
-    }
-
-    const [[sublogroExistente]] = await pool.query(
-      'SELECT usuario_id FROM usuario_sublogro WHERE usuario_id = ? AND sublogro_id = ? LIMIT 1',
-      [usuario.id_usuario, sublogro.id]
-    );
-    if (!sublogroExistente) {
-      await pool.query(
-        'INSERT IGNORE INTO usuario_sublogro (usuario_id, sublogro_id) VALUES (?, ?)',
-        [usuario.id_usuario, sublogro.id]
+      return Response.json(
+        { success: false, error: `Sublogro '${sublogroClave}' no encontrado en la base de datos.` },
+        { status: 404, headers: corsHeaders }
       );
     }
 
-    const [[{ total_completados }]] = await pool.query(
-      `SELECT COUNT(*) AS total_completados
-      FROM usuario_sublogro us
-      JOIN sublogros s ON us.sublogro_id = s.id
-      WHERE us.usuario_id = ? AND s.logro_id = ?`,
-      [usuario.id_usuario, sublogro.logro_id]
+    // 3. Registrar o actualizar el sublogro completado en usuario_sublogro
+    await pool.query(
+      `INSERT INTO usuario_sublogro (id_usuario, id_sublogro, progreso_actual, completado, updated_at)
+       VALUES (?, ?, ?, TRUE, NOW())
+       ON DUPLICATE KEY UPDATE completado = TRUE, progreso_actual = VALUES(progreso_actual), updated_at = NOW()`,
+      [usuarioId, sublogro.id_sublogro, sublogro.objetivo_cantidad]
     );
 
-    const [[logroInfo]] = await pool.query(
-      'SELECT titulo, sublogros_requeridos FROM logros WHERE id = ?',
-      [sublogro.logro_id]
-    );
-
-    if (!logroInfo) {
-      throw new Error(`No se encontró el logro padre para el sublogro ${sublogro.id}.`);
-    }
-
+    // 4. Desbloquear el logro padre principal si completó el rango final ('Oro' o 'Unico')
     let logroDesbloqueado = null;
-    if (total_completados >= logroInfo.sublogros_requeridos) {
-      const [[logroExistente]] = await pool.query(
-        'SELECT usuario_id FROM usuario_logro WHERE usuario_id = ? AND logro_id = ? LIMIT 1',
-        [usuario.id_usuario, sublogro.logro_id]
+    if (sublogro.rango === 'Oro' || sublogro.rango === 'Unico') {
+      const [[logroInfo]] = await pool.query(
+        'SELECT id_logro, nombre FROM logro WHERE id_logro = ? LIMIT 1',
+        [sublogro.id_logro]
       );
-      if (!logroExistente) {
+
+      if (logroInfo) {
         await pool.query(
-          'INSERT IGNORE INTO usuario_logro (usuario_id, logro_id) VALUES (?, ?)',
-          [usuario.id_usuario, sublogro.logro_id]
+          `INSERT IGNORE INTO usuario_logro (id_usuario, id_logro, fecha_desbloqueo)
+           VALUES (?, ?, NOW())`,
+          [usuarioId, sublogro.id_logro]
         );
+        logroDesbloqueado = logroInfo.nombre;
       }
-      logroDesbloqueado = logroInfo.titulo;
     }
 
     return Response.json({
       success: true,
       mensaje: 'Sublogro registrado con éxito',
       logro_padre_desbloqueado: logroDesbloqueado
-    });
+    }, { headers: corsHeaders });
+
   } catch (error) {
     console.error('Error al desbloquear sublogro:', error);
-    return Response.json({ error: 'Error interno en base de datos' }, { status: 500 });
+    return Response.json(
+      { success: false, error: 'Error interno en base de datos', detalle: error.message },
+      { status: 500, headers: corsHeaders }
+    );
   }
+}
+
+export function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }
