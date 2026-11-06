@@ -140,7 +140,7 @@ describe('POST /api/logros/desbloquear', () => {
     expect(query).toHaveBeenCalledTimes(8);
     expect(query).toHaveBeenNthCalledWith(
       5,
-      'SELECT id FROM usuario_sublogros WHERE usuario_id = ? AND sublogro_id = ? LIMIT 1',
+      'SELECT usuario_id FROM usuario_sublogros WHERE usuario_id = ? AND sublogro_id = ? LIMIT 1',
       [2, 9]
     );
     expect(query).toHaveBeenNthCalledWith(7, expect.stringContaining('COUNT(*) AS total_completados'), [2, 4]);
@@ -195,12 +195,12 @@ describe('POST /api/logros/desbloquear', () => {
     expect(response.status).toBe(200);
     expect(query).toHaveBeenNthCalledWith(
       5,
-      'SELECT id FROM usuario_sublogros WHERE usuario_id = ? AND sublogro_id = ? LIMIT 1',
+      'SELECT usuario_id FROM usuario_sublogros WHERE usuario_id = ? AND sublogro_id = ? LIMIT 1',
       [2, 9]
     );
     expect(query).toHaveBeenNthCalledWith(
       8,
-      'SELECT id FROM usuario_logros WHERE usuario_id = ? AND logro_id = ? LIMIT 1',
+      'SELECT usuario_id FROM usuario_logros WHERE usuario_id = ? AND logro_id = ? LIMIT 1',
       [2, 4]
     );
     expect(query).not.toHaveBeenCalledWith(

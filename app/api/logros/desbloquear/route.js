@@ -58,7 +58,7 @@ export async function POST(request) {
     }
 
     const [[sublogroExistente]] = await pool.query(
-      'SELECT id FROM usuario_sublogros WHERE usuario_id = ? AND sublogro_id = ? LIMIT 1',
+      'SELECT usuario_id FROM usuario_sublogros WHERE usuario_id = ? AND sublogro_id = ? LIMIT 1',
       [usuario.id, sublogro.id]
     );
     if (!sublogroExistente) {
@@ -88,7 +88,7 @@ export async function POST(request) {
     let logroDesbloqueado = null;
     if (total_completados >= logroInfo.sublogros_requeridos) {
       const [[logroExistente]] = await pool.query(
-        'SELECT id FROM usuario_logros WHERE usuario_id = ? AND logro_id = ? LIMIT 1',
+        'SELECT usuario_id FROM usuario_logros WHERE usuario_id = ? AND logro_id = ? LIMIT 1',
         [usuario.id, sublogro.logro_id]
       );
       if (!logroExistente) {

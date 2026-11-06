@@ -103,16 +103,13 @@ try {
         google_id: googleId
       }
     }, { headers: corsHeaders });
-  } } catch (error) {
-  console.error('Error al desbloquear sublogro:', error);
-  return Response.json(
-    {
-      error: 'Error interno en base de datos',
-      detalle: error.message,
-      code: error.code
-    },
-    { status: 500 }
-  );
+  } catch (error) {
+    console.error('Error al autenticar usuario en la base de datos:', error);
+    return Response.json(
+      { success: false, error: 'Error en base de datos' },
+      { status: 500, headers: corsHeaders }
+    );
+  }
 }
 
 export function OPTIONS() {
