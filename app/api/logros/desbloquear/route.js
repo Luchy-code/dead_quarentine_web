@@ -98,7 +98,12 @@ export async function POST(request) {
     );
   }
 }
-
+export async function GET() {
+  return Response.json(
+    { status: "ok", mensaje: "Endpoint /api/logros/desbloquear activo" },
+    { headers: corsHeaders }
+  );
+}
 export function OPTIONS() {
   return new Response(null, { status: 204, headers: corsHeaders });
 }
