@@ -52,11 +52,11 @@ export async function POST(request) {
     );
 
     if (!sublogro) {
-      return Response.json(
-        { success: false, error: `Sublogro '${sublogroClave}' no encontrado en la base de datos.` },
-        { status: 404, headers: corsHeaders }
-      );
-    }
+  return Response.json(
+    { success: false, error: `Sublogro '${sublogroClave}' no encontrado en la base de datos.` },
+    { status: 404, headers: corsHeaders }
+  );
+}
 
     // 3. Registrar o actualizar el sublogro completado en usuario_sublogro
     await pool.query(
