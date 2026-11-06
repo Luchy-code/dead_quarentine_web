@@ -56,11 +56,11 @@ describe('POST /api/auth', () => {
   it('verifies the Google token and inserts a new user with the current schema', async () => {
     verifyIdToken.mockResolvedValueOnce({ getPayload: () => tokenPayload });
     const user = {
-      id: 7,
-      id_local: tokenPayload.sub,
+      id_usuario: 7,
+      username: tokenPayload.email,
       email: tokenPayload.email,
-      nombre: tokenPayload.email,
-      creado_en: '2026-11-03T00:00:00.000Z'
+      created_at: '2026-11-03T00:00:00.000Z',
+      updated_at: '2026-11-03T00:00:00.000Z'
     };
     query
       .mockResolvedValueOnce([[]])
@@ -84,32 +84,32 @@ describe('POST /api/auth', () => {
     });
     expect(query).toHaveBeenNthCalledWith(
       1,
-      'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
-      [tokenPayload.sub]
+      'SELECT id_usuario FROM usuario WHERE email = ? LIMIT 1',
+      [tokenPayload.email]
     );
     expect(query).toHaveBeenNthCalledWith(
       2,
-      expect.stringContaining('INSERT INTO usuarios (id_local, email, nombre, creado_en)'),
-      [tokenPayload.sub, tokenPayload.email, tokenPayload.email]
+      expect.stringContaining('INSERT INTO usuario (email, username, created_at, updated_at)'),
+      [tokenPayload.email, tokenPayload.email]
     );
     expect(query).toHaveBeenNthCalledWith(
       3,
-      'SELECT id, id_local, email, nombre, creado_en FROM usuarios WHERE id_local = ? LIMIT 1',
-      [tokenPayload.sub]
+      'SELECT id_usuario, username, email, created_at, updated_at FROM usuario WHERE email = ? LIMIT 1',
+      [tokenPayload.email]
     );
   });
 
   it('updates an existing Google user without inserting another row', async () => {
     verifyIdToken.mockResolvedValueOnce({ getPayload: () => tokenPayload });
     const user = {
-      id: 7,
-      id_local: tokenPayload.sub,
+      id_usuario: 7,
+      username: 'Chosen Player',
       email: tokenPayload.email,
-      nombre: tokenPayload.email,
-      creado_en: '2026-11-03T00:00:00.000Z'
+      created_at: '2026-11-03T00:00:00.000Z',
+      updated_at: '2026-11-03T00:00:00.000Z'
     };
     query
-      .mockResolvedValueOnce([[{ id: user.id }]])
+      .mockResolvedValueOnce([[{ id_usuario: user.id_usuario }]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([[user]]);
 
@@ -118,11 +118,11 @@ describe('POST /api/auth', () => {
     expect(response.status).toBe(200);
     expect(query).toHaveBeenNthCalledWith(
       2,
-      'UPDATE usuarios SET email = ?, nombre = ? WHERE id_local = ?',
-      [tokenPayload.email, tokenPayload.email, tokenPayload.sub]
+      'UPDATE usuario SET updated_at = NOW() WHERE id_usuario = ?',
+      [user.id_usuario]
     );
     expect(query).not.toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO usuarios'),
+      expect.stringContaining('INSERT INTO usuario'),
       expect.anything()
     );
   });

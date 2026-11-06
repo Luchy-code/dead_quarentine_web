@@ -11,41 +11,29 @@ export async function POST(request) {
     return Response.json({ error: 'El cuerpo de la solicitud no es JSON válido' }, { status: 400 });
   }
 
-  const idLocal = typeof body?.id_local === 'string' ? body.id_local.trim() : '';
-  const username = typeof body?.username === 'string' ? body.username.trim() : '';
+  const rawUsuarioId = body?.id_usuario;
+  const usuarioId = typeof rawUsuarioId === 'number' ||
+    (typeof rawUsuarioId === 'string' && /^\d+$/.test(rawUsuarioId.trim()))
+    ? Number(rawUsuarioId)
+    : Number.NaN;
   const sublogroClave = typeof body?.sublogro_clave === 'string'
     ? body.sublogro_clave.trim()
     : '';
 
-  if (!idLocal || idLocal.length > 255 || !username || !sublogroClave) {
+  if (!Number.isSafeInteger(usuarioId) || usuarioId < 1 || !sublogroClave) {
     return Response.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
   }
 
   try {
     const pool = getPool();
 
-    const [existingUser] = await pool.query(
-      'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
-      [idLocal]
-    );
-
-    if (existingUser.length > 0) {
-      await pool.query('UPDATE usuarios SET nombre = ? WHERE id_local = ?', [username, idLocal]);
-    } else {
-      await pool.query(
-        `INSERT INTO usuarios (id_local, nombre, creado_en)
-         VALUES (?, ?, NOW())`,
-        [idLocal, username]
-      );
-    }
-
     const [[usuario]] = await pool.query(
-      'SELECT id FROM usuarios WHERE id_local = ?',
-      [idLocal]
+      'SELECT id_usuario FROM usuario WHERE id_usuario = ? LIMIT 1',
+      [usuarioId]
     );
 
     if (!usuario) {
-      throw new Error('No se pudo obtener el usuario después de crearlo.');
+      return Response.json({ error: 'Usuario no encontrado' }, { status: 404 });
     }
 
     const [[sublogro]] = await pool.query(
@@ -58,22 +46,22 @@ export async function POST(request) {
     }
 
     const [[sublogroExistente]] = await pool.query(
-      'SELECT usuario_id FROM usuario_sublogros WHERE usuario_id = ? AND sublogro_id = ? LIMIT 1',
-      [usuario.id, sublogro.id]
+      'SELECT usuario_id FROM usuario_sublogro WHERE usuario_id = ? AND sublogro_id = ? LIMIT 1',
+      [usuario.id_usuario, sublogro.id]
     );
     if (!sublogroExistente) {
       await pool.query(
-        'INSERT IGNORE INTO usuario_sublogros (usuario_id, sublogro_id) VALUES (?, ?)',
-        [usuario.id, sublogro.id]
+        'INSERT IGNORE INTO usuario_sublogro (usuario_id, sublogro_id) VALUES (?, ?)',
+        [usuario.id_usuario, sublogro.id]
       );
     }
 
     const [[{ total_completados }]] = await pool.query(
       `SELECT COUNT(*) AS total_completados
-      FROM usuario_sublogros us
+      FROM usuario_sublogro us
       JOIN sublogros s ON us.sublogro_id = s.id
       WHERE us.usuario_id = ? AND s.logro_id = ?`,
-      [usuario.id, sublogro.logro_id]
+      [usuario.id_usuario, sublogro.logro_id]
     );
 
     const [[logroInfo]] = await pool.query(
@@ -88,13 +76,13 @@ export async function POST(request) {
     let logroDesbloqueado = null;
     if (total_completados >= logroInfo.sublogros_requeridos) {
       const [[logroExistente]] = await pool.query(
-        'SELECT usuario_id FROM usuario_logros WHERE usuario_id = ? AND logro_id = ? LIMIT 1',
-        [usuario.id, sublogro.logro_id]
+        'SELECT usuario_id FROM usuario_logro WHERE usuario_id = ? AND logro_id = ? LIMIT 1',
+        [usuario.id_usuario, sublogro.logro_id]
       );
       if (!logroExistente) {
         await pool.query(
-          'INSERT IGNORE INTO usuario_logros (usuario_id, logro_id) VALUES (?, ?)',
-          [usuario.id, sublogro.logro_id]
+          'INSERT IGNORE INTO usuario_logro (usuario_id, logro_id) VALUES (?, ?)',
+          [usuario.id_usuario, sublogro.logro_id]
         );
       }
       logroDesbloqueado = logroInfo.titulo;

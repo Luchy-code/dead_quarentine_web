@@ -10,13 +10,13 @@ const corsHeaders = {
 
 export async function GET() {
   try {
-    const [usuarios] = await getPool().query(
-      'SELECT id, id_local, email, nombre, creado_en FROM usuarios ORDER BY creado_en DESC'
+    const [usuario] = await getPool().query(
+      'SELECT id_usuario, username, email, created_at, updated_at FROM usuario ORDER BY created_at DESC'
     );
-    return Response.json(usuarios, { headers: corsHeaders });
+    return Response.json(usuario, { headers: corsHeaders });
   } catch (error) {
     return Response.json(
-      { error: 'Error al obtener usuarios', detalle: error.sqlMessage || error.message },
+      { error: 'Error al obtener usuario', detalle: error.sqlMessage || error.message },
       { status: 500, headers: corsHeaders }
     );
   }
@@ -37,12 +37,16 @@ export async function POST(request) {
     );
   }
 
-  const userId = typeof body.user_id === 'string' ? body.user_id.trim() : '';
+  const rawUserId = body.id_usuario;
+  const userId = typeof rawUserId === 'number' ||
+    (typeof rawUserId === 'string' && /^\d+$/.test(rawUserId.trim()))
+    ? Number(rawUserId)
+    : Number.NaN;
   const username = typeof body.username === 'string' ? body.username.trim().slice(0, 50) : '';
 
-  if (!userId || userId.length > 255 || !username) {
+  if (!Number.isSafeInteger(userId) || userId < 1 || !username) {
     return Response.json(
-      { error: 'user_id y username son requeridos' },
+      { error: 'id_usuario y username son requeridos' },
       { status: 400, headers: corsHeaders }
     );
   }
@@ -51,7 +55,7 @@ export async function POST(request) {
     const pool = getPool();
 
     const [existingUsers] = await pool.query(
-      'SELECT id FROM usuarios WHERE LOWER(TRIM(nombre)) = LOWER(?) AND id_local <> ? LIMIT 1',
+      'SELECT id_usuario FROM usuario WHERE LOWER(TRIM(username)) = LOWER(?) AND id_usuario <> ? LIMIT 1',
       [username, userId]
     );
     if (existingUsers.length > 0) {
@@ -62,23 +66,25 @@ export async function POST(request) {
     }
 
     const [existingUser] = await pool.query(
-      'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
+      'SELECT id_usuario FROM usuario WHERE id_usuario = ? LIMIT 1',
       [userId]
     );
 
-    if (existingUser.length > 0) {
-      await pool.query('UPDATE usuarios SET nombre = ? WHERE id_local = ?', [username, userId]);
-    } else {
-      await pool.query(
-        `INSERT INTO usuarios (id_local, nombre, creado_en)
-         VALUES (?, ?, NOW())`,
-        [userId, username]
+    if (existingUser.length === 0) {
+      return Response.json(
+        { error: 'Usuario no encontrado' },
+        { status: 404, headers: corsHeaders }
       );
     }
 
+    await pool.query(
+      'UPDATE usuario SET username = ?, updated_at = NOW() WHERE id_usuario = ?',
+      [username, userId]
+    );
+
     return Response.json({
       message: 'Usuario sincronizado exitosamente',
-      user_id: userId,
+      id_usuario: userId,
       username
     }, { status: 200, headers: corsHeaders });
 

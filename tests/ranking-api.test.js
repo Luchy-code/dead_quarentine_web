@@ -35,9 +35,9 @@ describe('GET /api/ranking', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(query).toHaveBeenCalledWith(expect.stringContaining('WITH ranking_general'), ['']);
-    expect(query.mock.calls[0][0]).toContain('COALESCE(u.nombre, r.user_id) AS username');
-    expect(query.mock.calls[0][0]).toContain('LEFT JOIN usuarios u ON r.user_id = u.id_local');
-    expect(query.mock.calls[0][0]).toContain('r.user_id');
+    expect(query.mock.calls[0][0]).toContain('COALESCE(u.username, r.id_usuario) AS username');
+    expect(query.mock.calls[0][0]).toContain('LEFT JOIN usuario u ON r.id_usuario = u.id_usuario');
+    expect(query.mock.calls[0][0]).toContain('r.id_usuario AS user_id');
     expect(query.mock.calls[0][0]).toContain('r.dificultad');
     expect(query.mock.calls[0][0]).not.toMatch(/r\.(username|ip|pais|codigo_pais|usa_vpn)\b/);
   });
@@ -67,6 +67,17 @@ describe('GET /api/ranking', () => {
     expect(sql.indexOf('filtered_ranking AS'))
       .toBeLessThan(sql.indexOf('WHERE (username LIKE ?'));
     expect(params).toEqual(['%FRAN%', '%FRAN%', '']);
+  });
+
+  it('accepts id_usuario to include the player personal best', async () => {
+    query.mockResolvedValueOnce([[]]);
+
+    await GET(new Request('http://localhost/api/ranking?id_usuario=7'));
+
+    expect(query).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE user_id = ?'),
+      ['7']
+    );
   });
 
   it('ignores legacy metadata filters and limits the regular ranking to five rows', async () => {
@@ -118,7 +129,7 @@ describe('GET /api/ranking', () => {
     });
     expect(query).toHaveBeenNthCalledWith(
       1,
-      expect.stringContaining('r.puntos DESC, r.creado_en ASC, r.id ASC'),
+      expect.stringContaining('r.puntos DESC, r.creado_en ASC, r.id_ranking ASC'),
       ['singleplayer', 'pesadilla', '%Luna%', '%Luna%', 25, 50]
     );
     expect(query).toHaveBeenNthCalledWith(2, expect.stringContaining('COUNT(*) AS total'), [
@@ -132,10 +143,9 @@ describe('GET /api/ranking', () => {
     expect(rowsSql).toContain('ORDER BY puntos DESC, creado_en ASC, id ASC');
     expect(query).toHaveBeenNthCalledWith(
       5,
-      expect.stringContaining('COUNT(*) AS puntajes_totales'),
-      []
+      expect.stringContaining('COUNT(*) AS puntajes_totales')
     );
-    expect(query.mock.calls[4][0]).toContain('MAX(puntos) AS mejor_puntaje');
+    expect(query.mock.calls[4][0]).toContain('COALESCE(MAX(puntos), 0) AS mejor_puntaje');
     expect(query.mock.calls[4][0]).toContain('FROM ranking');
   });
 
@@ -223,33 +233,33 @@ describe('POST /api/ranking', () => {
   });
 
   it.each([
-    [{ user_id: 'local-1', puntos: 10 }, 'missing username'],
-    [{ user_id: 'local-1', username: ' ', puntos: 10 }, 'blank username'],
-    [{ user_id: 'local-1', username: 'user' }, 'missing points'],
-    [{ user_id: 'local-1', username: 'user', puntos: null }, 'null points'],
-    [{ user_id: 'local-1', username: 'user', puntos: '' }, 'empty points'],
-    [{ user_id: 'local-1', username: 'user', puntos: -1 }, 'negative points'],
-    [{ user_id: 'local-1', username: 'user', puntos: 'not a number' }, 'non-numeric points'],
-    [{ user_id: 'local-1', username: 'user', puntos: Infinity }, 'infinite points'],
+    [{ id_usuario: 1, puntos: 10 }, 'missing username'],
+    [{ id_usuario: 1, username: ' ', puntos: 10 }, 'blank username'],
+    [{ id_usuario: 1, username: 'user' }, 'missing points'],
+    [{ id_usuario: 1, username: 'user', puntos: null }, 'null points'],
+    [{ id_usuario: 1, username: 'user', puntos: '' }, 'empty points'],
+    [{ id_usuario: 1, username: 'user', puntos: -1 }, 'negative points'],
+    [{ id_usuario: 1, username: 'user', puntos: 'not a number' }, 'non-numeric points'],
+    [{ id_usuario: 1, username: 'user', puntos: Infinity }, 'infinite points'],
     [{ username: 'user', puntos: 10 }, 'missing user id']
   ])('rejects invalid score input (%s)', async (body) => {
     const response = await POST(jsonRequest(body));
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({
-      error: 'user_id, username, modo, dificultad y puntos válidos son obligatorios'
+      error: 'id_usuario, username, modo, dificultad y puntos válidos son obligatorios'
     });
     expect(query).not.toHaveBeenCalled();
   });
 
   it('stores only normalized ranking data and synchronizes the user name separately', async () => {
     query
-      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[{ id_usuario: 1 }]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([{ insertId: 42 }]);
 
     const response = await POST(jsonRequest({
-      user_id: ' local-1 ',
+      id_usuario: ' 1 ',
       username: '  Player  ',
       puntos: '0',
       modo: '  Multiplayer ',
@@ -263,62 +273,62 @@ describe('POST /api/ranking', () => {
     });
     expect(query).toHaveBeenNthCalledWith(
       1,
-      'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
-      ['local-1']
+      'SELECT id_usuario FROM usuario WHERE id_usuario = ? LIMIT 1',
+      [1]
     );
     expect(query).toHaveBeenNthCalledWith(
       2,
-      expect.stringContaining('INSERT INTO usuarios (id_local, nombre'),
-      ['local-1', 'Player']
+      'UPDATE usuario SET username = ?, updated_at = NOW() WHERE id_usuario = ?',
+      ['Player', 1]
     );
     expect(query.mock.calls[2][0]).toContain(
-      '(puntos, modo, dificultad, creado_en, user_id)'
+      '(id_usuario, puntos, modo, dificultad, creado_en)'
     );
     expect(query.mock.calls[2][0]).not.toMatch(/username|ip|pais|usa_vpn/);
-    expect(query.mock.calls[2][1]).toEqual([0, 'multiplayer', 'pesadilla', 'local-1']);
+    expect(query.mock.calls[2][1]).toEqual([1, 0, 'multiplayer', 'pesadilla']);
   });
 
   it('defaults missing mode and difficulty to singleplayer and normal', async () => {
     query
-      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[{ id_usuario: 1 }]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([{ insertId: 7 }]);
 
     await POST(jsonRequest({
-      user_id: 'local-1',
+      id_usuario: 1,
       username: 'Player',
       puntos: 25
     }));
 
-    expect(query.mock.calls[2][1]).toEqual([25, 'singleplayer', 'normal', 'local-1']);
+    expect(query.mock.calls[2][1]).toEqual([1, 25, 'singleplayer', 'normal']);
   });
 
-  it('requires and stores the local user id without storing the username in ranking', async () => {
+  it('requires and stores id_usuario without storing the username in ranking', async () => {
     query
-      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[{ id_usuario: 1 }]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([{ insertId: 5 }]);
 
     await POST(jsonRequest({
-      user_id: ' external-123 ',
+      id_usuario: 1,
       username: 'Player',
       puntos: 10
     }));
 
-    expect(query.mock.calls[1][0]).toContain('INSERT INTO usuarios (id_local, nombre');
-    expect(query.mock.calls[2][0]).toContain('(puntos, modo, dificultad, creado_en, user_id)');
+    expect(query.mock.calls[1][0]).toContain('UPDATE usuario SET username');
+    expect(query.mock.calls[2][0]).toContain('(id_usuario, puntos, modo, dificultad, creado_en)');
     expect(query.mock.calls[2][0]).not.toContain('username');
-    expect(query.mock.calls[2][1]).toEqual([10, 'singleplayer', 'normal', 'external-123']);
+    expect(query.mock.calls[2][1]).toEqual([1, 10, 'singleplayer', 'normal']);
   });
 
   it('updates an existing user before inserting another ranking score', async () => {
     query
-      .mockResolvedValueOnce([[{ id: 9 }]])
+      .mockResolvedValueOnce([[{ id_usuario: 9 }]])
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([{ insertId: 6 }]);
 
     const response = await POST(jsonRequest({
-      user_id: 'local-1',
+      id_usuario: 9,
       username: 'Player',
       puntos: 10
     }));
@@ -326,19 +336,19 @@ describe('POST /api/ranking', () => {
     expect(response.status).toBe(201);
     expect(query).toHaveBeenNthCalledWith(
       2,
-      'UPDATE usuarios SET nombre = ? WHERE id_local = ?',
-      ['Player', 'local-1']
+      'UPDATE usuario SET username = ?, updated_at = NOW() WHERE id_usuario = ?',
+      ['Player', 9]
     );
     expect(query).not.toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO usuarios'),
+      expect.stringContaining('INSERT INTO usuario'),
       expect.anything()
     );
     expect(query.mock.calls[2][0]).toContain('INSERT INTO ranking');
   });
 
-  it('rejects invalid external user ids', async () => {
+  it('rejects invalid user ids', async () => {
     const response = await POST(jsonRequest({
-      user_id: 12,
+      id_usuario: 'not-an-id',
       username: 'Player',
       puntos: 10
     }));
@@ -347,10 +357,24 @@ describe('POST /api/ranking', () => {
     expect(query).not.toHaveBeenCalled();
   });
 
+  it('does not save scores for an unknown user', async () => {
+    query.mockResolvedValueOnce([[]]);
+
+    const response = await POST(jsonRequest({
+      id_usuario: 404,
+      username: 'Player',
+      puntos: 10
+    }));
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'Usuario no encontrado' });
+    expect(query).toHaveBeenCalledOnce();
+  });
+
   it('rejects unsupported mode and difficulty values', async () => {
     for (const body of [
-      { user_id: 'local-1', username: 'Player', puntos: 1, modo: 'horda' },
-      { user_id: 'local-1', username: 'Player', puntos: 1, dificultad: 'facil' }
+      { id_usuario: 1, username: 'Player', puntos: 1, modo: 'horda' },
+      { id_usuario: 1, username: 'Player', puntos: 1, dificultad: 'facil' }
     ]) {
       const response = await POST(jsonRequest(body));
 
@@ -360,11 +384,14 @@ describe('POST /api/ranking', () => {
   });
 
   it('returns a server error if inserting the score fails', async () => {
-    query.mockResolvedValueOnce([{}]).mockRejectedValueOnce(new Error('database unavailable'));
+    query
+      .mockResolvedValueOnce([[{ id_usuario: 1 }]])
+      .mockResolvedValueOnce([{}])
+      .mockRejectedValueOnce(new Error('database unavailable'));
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const response = await POST(jsonRequest({
-      user_id: 'local-1',
+      id_usuario: 1,
       username: 'Player',
       puntos: 1
     }));

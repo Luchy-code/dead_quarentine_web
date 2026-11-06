@@ -17,11 +17,11 @@ beforeEach(() => {
 describe('GET /api/usuarios', () => {
   it('returns users with the current database columns', async () => {
     const users = [{
-      id: 1,
-      id_local: 'local-1',
+      id_usuario: 1,
+      username: 'Player',
       email: null,
-      nombre: 'Player',
-      creado_en: '2026-10-20T00:00:00.000Z'
+      created_at: '2026-10-20T00:00:00.000Z',
+      updated_at: '2026-10-20T00:00:00.000Z'
     }];
     query.mockResolvedValueOnce([users]);
 
@@ -30,7 +30,7 @@ describe('GET /api/usuarios', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(users);
     expect(query).toHaveBeenCalledWith(
-      'SELECT id, id_local, email, nombre, creado_en FROM usuarios ORDER BY creado_en DESC'
+      'SELECT id_usuario, username, email, created_at, updated_at FROM usuario ORDER BY created_at DESC'
     );
   });
 });
@@ -43,24 +43,23 @@ describe('POST /api/usuarios', () => {
       body: '{'
     }));
     const invalidObject = await POST(jsonRequest(null));
-    const missingFields = await POST(jsonRequest({ user_id: 'id' }));
-    const tooLongId = await POST(jsonRequest({
-      user_id: 'x'.repeat(256),
-      username: 'Player'
-    }));
+    const missingFields = await POST(jsonRequest({ username: 'Player' }));
+    const invalidId = await POST(jsonRequest({ id_usuario: 'not-an-id', username: 'Player' }));
+    const booleanId = await POST(jsonRequest({ id_usuario: true, username: 'Player' }));
 
     expect(malformed.status).toBe(400);
     expect(invalidObject.status).toBe(400);
     expect(missingFields.status).toBe(400);
-    expect(tooLongId.status).toBe(400);
+    expect(invalidId.status).toBe(400);
+    expect(booleanId.status).toBe(400);
     expect(query).not.toHaveBeenCalled();
   });
 
   it('rejects a username already used by another user', async () => {
-    query.mockResolvedValueOnce([[{ id: 2 }]]);
+    query.mockResolvedValueOnce([[{ id_usuario: 2 }]]);
 
     const response = await POST(jsonRequest({
-      user_id: 'external-123',
+      id_usuario: 1,
       username: '  PLAYER  '
     }));
 
@@ -70,66 +69,45 @@ describe('POST /api/usuarios', () => {
     });
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
     expect(query).toHaveBeenCalledWith(
-      'SELECT id FROM usuarios WHERE LOWER(TRIM(nombre)) = LOWER(?) AND id_local <> ? LIMIT 1',
-      ['PLAYER', 'external-123']
+      'SELECT id_usuario FROM usuario WHERE LOWER(TRIM(username)) = LOWER(?) AND id_usuario <> ? LIMIT 1',
+      ['PLAYER', 1]
     );
     expect(query).toHaveBeenCalledOnce();
   });
 
-  it('inserts a new user without writing the name to ranking rows', async () => {
+  it('updates an existing user by id_usuario without inserting another row', async () => {
     query
       .mockResolvedValueOnce([[]])
-      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[{ id_usuario: 8 }]])
       .mockResolvedValueOnce([{}]);
 
     const response = await POST(jsonRequest({
-      user_id: ' external-123 ',
-      username: `  ${'A'.repeat(55)}  `
+      id_usuario: 8,
+      username: 'Player'
     }));
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       message: 'Usuario sincronizado exitosamente',
-      user_id: 'external-123',
-      username: 'A'.repeat(50)
+      id_usuario: 8,
+      username: 'Player'
     });
-    expect(response.headers.get('access-control-allow-origin')).toBe('*');
-    expect(query).toHaveBeenNthCalledWith(
-      1,
-      'SELECT id FROM usuarios WHERE LOWER(TRIM(nombre)) = LOWER(?) AND id_local <> ? LIMIT 1',
-      ['A'.repeat(50), 'external-123']
-    );
-    expect(query).toHaveBeenNthCalledWith(
-      2,
-      'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
-      ['external-123']
-    );
     expect(query).toHaveBeenNthCalledWith(
       3,
-      expect.stringContaining('INSERT INTO usuarios (id_local, nombre'),
-      ['external-123', 'A'.repeat(50)]
+      'UPDATE usuario SET username = ?, updated_at = NOW() WHERE id_usuario = ?',
+      ['Player', 8]
     );
     expect(query).toHaveBeenCalledTimes(3);
   });
 
-  it('updates an existing user without inserting another row', async () => {
-    query
-      .mockResolvedValueOnce([[]])
-      .mockResolvedValueOnce([[{ id: 8 }]])
-      .mockResolvedValueOnce([{}]);
+  it('does not create users when the supplied id_usuario does not exist', async () => {
+    query.mockResolvedValueOnce([[]]).mockResolvedValueOnce([[]]);
 
-    const response = await POST(jsonRequest({
-      user_id: 'external-123',
-      username: 'Player'
-    }));
+    const response = await POST(jsonRequest({ id_usuario: 8, username: 'Player' }));
 
-    expect(response.status).toBe(200);
-    expect(query).toHaveBeenNthCalledWith(
-      3,
-      'UPDATE usuarios SET nombre = ? WHERE id_local = ?',
-      ['Player', 'external-123']
-    );
-    expect(query).toHaveBeenCalledTimes(3);
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'Usuario no encontrado' });
+    expect(query).toHaveBeenCalledTimes(2);
   });
 
   it('returns a server error and logs database failures', async () => {
@@ -137,7 +115,7 @@ describe('POST /api/usuarios', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const response = await POST(jsonRequest({
-      user_id: 'external-123',
+      id_usuario: 1,
       username: 'Player'
     }));
 

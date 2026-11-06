@@ -15,7 +15,9 @@ function normalizeGameValue(value) {
 
 export async function GET(request) {
   const searchParams = new URL(request.url).searchParams;
-  const currentUserId = searchParams.get('user_id') ? String(searchParams.get('user_id')).trim() : '';
+  const currentUserId = String(
+    searchParams.get('id_usuario') ?? searchParams.get('user_id') ?? ''
+  ).trim();
   const rawMode = searchParams.get('mode');
   const mode = rawMode ? normalizeGameValue(rawMode.trim()) : '';
   const rawDifficulty = searchParams.get('dificultad');
@@ -65,12 +67,14 @@ export async function GET(request) {
       const filteredRanking = `
         WITH ranking_general AS (
           SELECT ROW_NUMBER() OVER (
-                   ORDER BY r.puntos DESC, r.creado_en ASC, r.id ASC
+                   ORDER BY r.puntos DESC, r.creado_en ASC, r.id_ranking ASC
                  ) AS puesto,
-                 r.id, COALESCE(u.nombre, r.user_id) AS username, r.user_id,
+                 r.id_ranking AS id,
+                 COALESCE(u.username, r.id_usuario) AS username,
+                 r.id_usuario AS user_id,
                  r.puntos, r.modo, r.dificultad, r.creado_en
           FROM ranking r
-          LEFT JOIN usuarios u ON r.user_id = u.id_local
+          LEFT JOIN usuario u ON r.id_usuario = u.id_usuario
         ),
         filtered_ranking AS (
           SELECT * FROM ranking_general
@@ -131,16 +135,18 @@ export async function GET(request) {
     const sql = `
       WITH ranking_general AS (
         SELECT 
-          ROW_NUMBER() OVER (ORDER BY r.puntos DESC, r.creado_en ASC, r.id ASC) AS puesto,
-          r.id,
-          COALESCE(u.nombre, r.user_id) AS username,
-          r.user_id,
+          ROW_NUMBER() OVER (
+            ORDER BY r.puntos DESC, r.creado_en ASC, r.id_ranking ASC
+          ) AS puesto,
+          r.id_ranking AS id,
+          COALESCE(u.username, r.id_usuario) AS username,
+          r.id_usuario AS user_id,
           r.puntos,
           r.modo,
           r.dificultad,
           r.creado_en
         FROM ranking r
-        LEFT JOIN usuarios u ON r.user_id = u.id_local
+        LEFT JOIN usuario u ON r.id_usuario = u.id_usuario
       ),
       filtered_ranking AS (
         SELECT * FROM ranking_general
@@ -250,22 +256,26 @@ export async function POST(request) {
     (typeof body.puntos === 'string' && body.puntos.trim() !== '')
     ? Number(body.puntos)
     : Number.NaN;
-  const userId = typeof body.user_id === 'string' ? body.user_id.trim() : '';
+  const rawUserId = body.id_usuario;
+  const userId = typeof rawUserId === 'number' ||
+    (typeof rawUserId === 'string' && /^\d+$/.test(rawUserId.trim()))
+    ? Number(rawUserId)
+    : Number.NaN;
 
   if (
     !username ||
-    !userId ||
+    !Number.isSafeInteger(userId) ||
+    userId < 1 ||
     !modo ||
     !dificultad ||
     body.puntos === undefined ||
     body.puntos === null ||
     body.puntos === '' ||
     !Number.isFinite(puntos) ||
-    puntos < 0 ||
-    userId.length > 255
+    puntos < 0
   ) {
     return Response.json(
-      { error: 'user_id, username, modo, dificultad y puntos válidos son obligatorios' },
+      { error: 'id_usuario, username, modo, dificultad y puntos válidos son obligatorios' },
       { status: 400, headers: corsHeaders }
     );
   }
@@ -274,25 +284,27 @@ export async function POST(request) {
     const pool = getPool();
 
     const [existingUser] = await pool.query(
-      'SELECT id FROM usuarios WHERE id_local = ? LIMIT 1',
+      'SELECT id_usuario FROM usuario WHERE id_usuario = ? LIMIT 1',
       [userId]
     );
 
-    if (existingUser.length > 0) {
-      await pool.query('UPDATE usuarios SET nombre = ? WHERE id_local = ?', [username, userId]);
-    } else {
-      await pool.query(
-        `INSERT INTO usuarios (id_local, nombre, creado_en)
-         VALUES (?, ?, NOW())`,
-        [userId, username]
+    if (existingUser.length === 0) {
+      return Response.json(
+        { error: 'Usuario no encontrado' },
+        { status: 404, headers: corsHeaders }
       );
     }
 
+    await pool.query(
+      'UPDATE usuario SET username = ?, updated_at = NOW() WHERE id_usuario = ?',
+      [username, userId]
+    );
+
     const [resultado] = await pool.query(
       `INSERT INTO ranking
-        (puntos, modo, dificultad, creado_en, user_id)
-       VALUES (?, ?, ?, NOW(), ?)`,
-      [puntos, modo, dificultad, userId]
+        (id_usuario, puntos, modo, dificultad, creado_en)
+       VALUES (?, ?, ?, ?, NOW())`,
+      [userId, puntos, modo, dificultad]
     );
 
     return Response.json(

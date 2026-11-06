@@ -16,46 +16,41 @@ configurada por variables de entorno.
 La portada consulta `/api/telemetria` para mostrar el total de usuarios
 registrados, la cantidad/porcentaje de usuarios con al menos un récord, logro o
 sublogro, y los usuarios sin actividad registrada. Se consideran activos los
-usuarios cuyo `id_local` tiene un récord en `ranking` o cuyo id interno tiene
-una fila en `usuario_logros` o `usuario_sublogros`.
+usuarios cuyo `id_usuario` tiene un récord en `ranking` o una fila en
+`usuario_logro` o `usuario_sublogro`.
 
 ## Sincronización de usuarios del juego
 
-La tabla `usuarios` debe tener las columnas `id` (AUTO_INCREMENT),
-`id_local` (identificador del jugador), `email` (nullable), `nombre` y
-`creado_en` (timestamp). Ejecuta una vez `database/add_google_email.sql` para
-agregar `email` a una base existente. No ejecutes la antigua migración
-`database/add_external_user_id.sql` para esta tabla: agrega columnas del esquema
-anterior. `id_local` debe tener un índice `UNIQUE` para que cada jugador tenga
-una sola fila; si todavía no lo tiene, ejecuta una vez
-`database/add_local_user_id.sql`. La tabla `ranking` debe tener únicamente
-`id` (AUTO_INCREMENT), `puntos`, `modo`, `dificultad`, `creado_en` y `user_id`.
-Los `id` son contadores internos, no un conteo de filas: MySQL puede dejar
-saltos tras eliminaciones, errores o escrituras duplicadas anteriores.
-`user_id` guarda el mismo
-identificador local que `usuarios.id_local` y es obligatorio al registrar un
-puntaje. El nombre no se duplica en `ranking`: las APIs lo leen de `usuarios`.
+La tabla `usuario` usa las columnas `id_usuario` (AUTO_INCREMENT), `username`,
+`email`, `created_at` y `updated_at`. El inicio de sesión con Google busca la
+cuenta por email y devuelve `id_usuario`; el juego debe conservar ese ID y
+enviarlo al registrar nombres, puntajes y logros. La tabla `ranking` debe tener
+únicamente `id_ranking` (AUTO_INCREMENT), `id_usuario`, `puntos`, `modo`,
+`dificultad` y `creado_en`. `id_ranking` es un contador interno, no un conteo de
+filas: MySQL puede dejar saltos tras eliminaciones, errores o escrituras
+duplicadas anteriores. `id_usuario` guarda la clave primaria de `usuario` y es
+obligatorio al registrar un puntaje. El nombre no se duplica en `ranking`: las
+APIs lo leen de `usuario`.
+Las migraciones SQL de `database/` que modifican `usuarios` pertenecen al
+esquema anterior y no deben ejecutarse sobre esta tabla.
 Modo y dificultad se guardan normalizados como `singleplayer` o `multiplayer`,
 y `normal`, `dificil` o `pesadilla`, respectivamente. El país, la IP y el
 estado de VPN no se guardan ni se ofrecen como filtros del ranking.
 
-El juego puede registrar o actualizar el nombre de un usuario con un `POST` a
-`/api/usuarios`, enviando `{ "user_id": "id-local", "username": "Jugador" }`.
-La API mantiene esos nombres de campos por compatibilidad y los guarda en
-`usuarios.id_local` y `usuarios.nombre`. Para desbloquear un logro, envía
-también `id_local` junto con `username` y `sublogro_clave` a
-`/api/logros/desbloquear`; así el progreso queda asociado al usuario correcto
-aunque su nombre cambie. Para guardar una puntuación, envía `user_id`,
-`username`, `puntos`, `modo` y `dificultad` a `/api/ranking`; el nombre se
-sincroniza con `usuarios` y no se duplica en la tabla `ranking`. Por ejemplo,
-al terminar una partida:
+El juego puede actualizar el nombre con un `POST` a `/api/usuarios`, enviando
+`{ "id_usuario": 1, "username": "Jugador" }`. Para desbloquear un logro, envía
+`id_usuario` y `sublogro_clave` a `/api/logros/desbloquear`; el progreso queda
+asociado a la clave primaria del usuario aunque cambie su nombre. Para guardar
+una puntuación, envía `id_usuario`, `username`, `puntos`, `modo` y
+`dificultad` a `/api/ranking`; el nombre se actualiza en `usuario` y no se
+duplica en `ranking`. Por ejemplo, al terminar una partida:
 
 ```js
 await fetch('/api/ranking', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    user_id: 'id-local',
+    id_usuario: 1,
     username: 'Jugador',
     puntos: 1200,
     modo: 'multiplayer',
@@ -66,10 +61,10 @@ await fetch('/api/ranking', {
 
 Para registrar o iniciar sesión con Google, configura `GOOGLE_CLIENT_ID` con el
 ID de cliente OAuth y envía el ID token a `POST /api/auth` como
-`{ "id_token": "..." }`. La API verifica el token y su email, usa el `sub` de
-Google como `usuarios.id_local` y guarda el correo en `usuarios.email` y
-`usuarios.nombre`. El nombre se limita a 50 caracteres para coincidir con la
-longitud aceptada por `/api/usuarios`.
+`{ "id_token": "..." }`. La API verifica el token y el email, busca o crea la
+cuenta en `usuario`, y devuelve `id_usuario` para usarlo en las siguientes
+solicitudes. Al crear la cuenta, el username inicial es el email (hasta 50
+caracteres).
 
 La página web consulta `GET /api/ranking?view=table` y pagina los registros de
 la base (hasta 100 filas por petición). Para conservar el comportamiento del

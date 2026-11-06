@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const pool = getPool();
     const [[{ total_usuarios }]] = await pool.query(
-      'SELECT COUNT(*) AS total_usuarios FROM usuarios'
+      'SELECT COUNT(*) AS total_usuarios FROM usuario'
     );
 
     const [logros] = await pool.query(
@@ -16,7 +16,7 @@ export async function GET() {
         COUNT(DISTINCT ul.usuario_id) AS completados_global,
         ROUND((COUNT(DISTINCT ul.usuario_id) * 100.0) / NULLIF(?, 0), 1) AS porcentaje_global
       FROM logros l
-      LEFT JOIN usuario_logros ul ON l.id = ul.logro_id
+      LEFT JOIN usuario_logro ul ON l.id = ul.logro_id
       GROUP BY l.id, l.clave, l.titulo, l.descripcion, l.categoria, l.modo, l.sublogros_requeridos
       ORDER BY l.id ASC`,
       [total_usuarios]
@@ -28,7 +28,7 @@ export async function GET() {
         COUNT(DISTINCT us.usuario_id) AS completados_global,
         ROUND((COUNT(DISTINCT us.usuario_id) * 100.0) / NULLIF(?, 0), 1) AS porcentaje_global
       FROM sublogros s
-      LEFT JOIN usuario_sublogros us ON s.id = us.sublogro_id
+      LEFT JOIN usuario_sublogro us ON s.id = us.sublogro_id
       GROUP BY s.id, s.logro_id, s.clave, s.titulo, s.orden
       ORDER BY s.logro_id ASC, s.orden ASC`,
       [total_usuarios]
