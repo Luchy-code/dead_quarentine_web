@@ -23,7 +23,7 @@ export async function GET(request) {
   try {
     const pool = getPool();
 
-    // 1. Cálculo del puesto antes de guardar (Invocado por GuardarScoreCartelUI.cs)
+    // 1. Cálculo de puesto preliminar (invocado por GuardarScoreCartelUI.cs)
     const scoreParam = searchParams.get('score');
     if (scoreParam !== null && scoreParam !== '' && Number.isFinite(Number(scoreParam))) {
       const [r] = await pool.query(
@@ -33,7 +33,7 @@ export async function GET(request) {
       return Response.json({ puesto: Number(r[0].puesto) }, { headers: rankingHeaders });
     }
 
-    // 2. Parámetros de filtrado
+    // 2. Filtros
     const rawMode = searchParams.get('mode') ?? searchParams.get('modo');
     const mode = rawMode ? normalizeGameValue(rawMode.trim()) : '';
     const rawDifficulty = searchParams.get('dificultad');
@@ -53,7 +53,7 @@ export async function GET(request) {
       filterParams.push(difficulty);
     }
     if (search) {
-      filterConditions.push('(COALESCE(u.username, r.superviviente) LIKE ? OR r.id_usuario LIKE ?)');
+      filterConditions.push('(u.username LIKE ? OR r.id_usuario LIKE ?)');
       filterParams.push(`%${search}%`, `%${search}%`);
     }
 
@@ -61,7 +61,7 @@ export async function GET(request) {
       ? `WHERE ${filterConditions.join(' AND ')}`
       : '';
 
-    // 3. Vista de tabla para la página web (dead-quarentine-web)
+    // 3. Vista de tabla para la web (dead-quarentine-web)
     if (tableView) {
       const requestedPage = Number(searchParams.get('page'));
       const requestedLimit = Number(searchParams.get('limit'));
@@ -77,8 +77,8 @@ export async function GET(request) {
                    ORDER BY r.puntos DESC, r.creado_en ASC, r.id_ranking ASC
                  ) AS puesto,
                  r.id_ranking AS id,
-                 COALESCE(u.username, r.superviviente) AS username,
-                 COALESCE(r.estado, 'Vivo') AS estado,
+                 COALESCE(u.username, 'Superviviente') AS username,
+                 'Vivo' AS estado,
                  r.id_usuario AS user_id,
                  r.puntos, 
                  r.modo, 
@@ -147,7 +147,7 @@ export async function GET(request) {
       );
     }
 
-    // 4. Vista simplificada para Unity / Menú de Score
+    // 4. Vista simplificada para Unity
     const sql = `
       WITH ranking_general AS (
         SELECT 
@@ -155,8 +155,8 @@ export async function GET(request) {
             ORDER BY r.puntos DESC, r.creado_en ASC, r.id_ranking ASC
           ) AS puesto,
           r.id_ranking AS id,
-          COALESCE(u.username, r.superviviente) AS username,
-          COALESCE(r.estado, 'Vivo') AS estado,
+          COALESCE(u.username, 'Superviviente') AS username,
+          'Vivo' AS estado,
           r.id_usuario AS user_id,
           r.puntos,
           r.modo,
@@ -249,7 +249,7 @@ export async function POST(request) {
     return Response.json({ error: 'El cuerpo debe ser JSON válido' }, { status: 400, headers: corsHeaders });
   }
 
-  // Admite 'user_id' o 'id_usuario' de tipo string (UUID persistente) o número
+  // user_id proveniente de GuardarScoreCartelUI.cs
   const rawUserId = body.user_id ?? body.id_usuario ?? '';
   const userId = String(rawUserId).trim();
 
@@ -260,11 +260,10 @@ export async function POST(request) {
   const puntos = Number(body.puntos);
   const modo = typeof body.modo === 'string' && body.modo.trim() ? body.modo.trim() : 'Singleplayer';
   const dificultad = typeof body.dificultad === 'string' && body.dificultad.trim() ? body.dificultad.trim() : 'Normal';
-  const estado = typeof body.estado === 'string' && body.estado.trim() ? body.estado.trim() : 'Vivo';
 
-  if (!Number.isFinite(puntos) || puntos < 0) {
+  if (!userId || !Number.isFinite(puntos) || puntos < 0) {
     return Response.json(
-      { error: 'Puntaje inválido' },
+      { error: 'user_id y puntos válidos son obligatorios' },
       { status: 400, headers: corsHeaders }
     );
   }
@@ -272,22 +271,20 @@ export async function POST(request) {
   try {
     const pool = getPool();
 
-    // Si viene con ID de dispositivo, asegurar que el usuario exista o actualizar su nombre
-    if (userId) {
-      await pool.query(
-        `INSERT INTO usuario (id_usuario, username, created_at, updated_at)
-         VALUES (?, ?, NOW(), NOW())
-         ON DUPLICATE KEY UPDATE username = VALUES(username), updated_at = NOW()`,
-        [userId, username]
-      );
-    }
+    // 1. Asegurar la existencia del usuario en la tabla 'usuario'
+    await pool.query(
+      `INSERT INTO usuario (id_usuario, username, created_at, updated_at)
+       VALUES (?, ?, NOW(), NOW())
+       ON DUPLICATE KEY UPDATE username = VALUES(username), updated_at = NOW()`,
+      [userId, username]
+    );
 
-    // Insertar en la tabla ranking con las columnas exactas de la web y de MySQL
+    // 2. Insertar únicamente en las columnas reales de ranking (id_usuario, puntos, modo, dificultad, creado_en)
     const [resultado] = await pool.query(
       `INSERT INTO ranking
-        (id_usuario, superviviente, estado, puntos, modo, dificultad, creado_en)
-       VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-      [userId || null, username, estado, puntos, modo, dificultad]
+        (id_usuario, puntos, modo, dificultad, creado_en)
+       VALUES (?, ?, ?, ?, NOW())`,
+      [userId, puntos, modo, dificultad]
     );
 
     return Response.json(
