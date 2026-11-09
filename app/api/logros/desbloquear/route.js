@@ -21,8 +21,15 @@ export async function POST(request) {
   }
 
   // Soporta tanto 'id_local' (el que envía AchievementsManager.cs) como 'id_usuario'
-  const rawUsuarioId = body?.id_local || body?.id_usuario;
-  const usuarioId = typeof rawUsuarioId === 'string' ? rawUsuarioId.trim() : String(rawUsuarioId || '').trim();
+  const rawUsuarioId = body?.id_local ?? body?.id_usuario;
+  if ((typeof rawUsuarioId !== 'string' && typeof rawUsuarioId !== 'number') ||
+      (typeof rawUsuarioId === 'number' && !Number.isSafeInteger(rawUsuarioId))) {
+    return Response.json(
+      { success: false, error: 'Faltan campos obligatorios (id_local y sublogro_clave son requeridos)' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+  const usuarioId = String(rawUsuarioId).trim();
   
   const sublogroClave = typeof body?.sublogro_clave === 'string' ? body.sublogro_clave.trim() : '';
   const username = typeof body?.username === 'string' && body.username.trim() ? body.username.trim() : 'Superviviente';

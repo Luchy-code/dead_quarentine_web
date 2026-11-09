@@ -249,15 +249,33 @@ export async function POST(request) {
     return Response.json({ error: 'El cuerpo debe ser JSON válido' }, { status: 400, headers: corsHeaders });
   }
 
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return Response.json(
+      { error: 'El cuerpo debe ser un objeto JSON' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
   // user_id proveniente de GuardarScoreCartelUI.cs
   const rawUserId = body.user_id ?? body.id_usuario ?? '';
+  if ((typeof rawUserId !== 'string' && typeof rawUserId !== 'number') ||
+      (typeof rawUserId === 'number' && !Number.isSafeInteger(rawUserId))) {
+    return Response.json(
+      { error: 'user_id y puntos válidos son obligatorios' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
   const userId = String(rawUserId).trim();
 
   const username = typeof body.username === 'string' && body.username.trim()
     ? body.username.trim().slice(0, 50)
     : 'Superviviente';
 
-  const puntos = Number(body.puntos);
+  const rawPoints = body.puntos;
+  const pointsValid = (typeof rawPoints === 'number' ||
+    (typeof rawPoints === 'string' && rawPoints.trim() !== '')) &&
+    Number.isFinite(Number(rawPoints));
+  const puntos = pointsValid ? Number(rawPoints) : Number.NaN;
   const modo = typeof body.modo === 'string' && body.modo.trim() ? body.modo.trim() : 'Singleplayer';
   const dificultad = typeof body.dificultad === 'string' && body.dificultad.trim() ? body.dificultad.trim() : 'Normal';
 

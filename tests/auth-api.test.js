@@ -53,30 +53,28 @@ describe('POST /api/auth', () => {
     expect(query).not.toHaveBeenCalled();
   });
 
-  it('verifies the Google token and inserts a new user with the current schema', async () => {
+  it('verifies the Google token and registers a new user with the current schema', async () => {
     verifyIdToken.mockResolvedValueOnce({ getPayload: () => tokenPayload });
-    const user = {
-      id_usuario: 7,
-      username: tokenPayload.email,
-      email: tokenPayload.email,
-      created_at: '2026-11-03T00:00:00.000Z',
-      updated_at: '2026-11-03T00:00:00.000Z'
-    };
     query
       .mockResolvedValueOnce([[]])
-      .mockResolvedValueOnce([{}])
-      .mockResolvedValueOnce([[user]]);
+      .mockResolvedValueOnce([{}]);
 
     const response = await POST(jsonRequest({ id_token: 'valid-google-token' }));
+    const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
+    expect(body).toMatchObject({
       success: true,
       usuario: {
-        ...user,
-        google_id: tokenPayload.sub
+        id: 0,
+        google_id: tokenPayload.sub,
+        email: tokenPayload.email,
+        nombre: tokenPayload.name,
+        nivel: 1,
+        record: 0
       }
     });
+    expect(body.usuario.id_local).toMatch(/^usr_google-user-123_/);
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
     expect(verifyIdToken).toHaveBeenCalledWith({
       idToken: 'valid-google-token',
@@ -84,19 +82,15 @@ describe('POST /api/auth', () => {
     });
     expect(query).toHaveBeenNthCalledWith(
       1,
-      'SELECT id_usuario FROM usuario WHERE email = ? LIMIT 1',
-      [tokenPayload.email]
+      expect.stringContaining('SELECT id_usuario, username, email, google_id, nivel, record FROM usuario'),
+      [tokenPayload.sub, tokenPayload.email]
     );
     expect(query).toHaveBeenNthCalledWith(
       2,
-      expect.stringContaining('INSERT INTO usuario (email, username, created_at, updated_at)'),
-      [tokenPayload.email, tokenPayload.email]
+      expect.stringContaining('INSERT INTO usuario (id_usuario, google_id, username, email, nivel, record'),
+      expect.arrayContaining([tokenPayload.sub, tokenPayload.name, tokenPayload.email])
     );
-    expect(query).toHaveBeenNthCalledWith(
-      3,
-      'SELECT id_usuario, username, email, created_at, updated_at FROM usuario WHERE email = ? LIMIT 1',
-      [tokenPayload.email]
-    );
+    expect(query).toHaveBeenCalledTimes(2);
   });
 
   it('updates an existing Google user without inserting another row', async () => {
@@ -105,21 +99,34 @@ describe('POST /api/auth', () => {
       id_usuario: 7,
       username: 'Chosen Player',
       email: tokenPayload.email,
-      created_at: '2026-11-03T00:00:00.000Z',
-      updated_at: '2026-11-03T00:00:00.000Z'
+      google_id: tokenPayload.sub,
+      nivel: 4,
+      record: 800
     };
     query
-      .mockResolvedValueOnce([[{ id_usuario: user.id_usuario }]])
-      .mockResolvedValueOnce([{}])
-      .mockResolvedValueOnce([[user]]);
+      .mockResolvedValueOnce([[user]])
+      .mockResolvedValueOnce([{}]);
 
     const response = await POST(jsonRequest({ id_token: 'valid-google-token' }));
+    const body = await response.json();
 
     expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      success: true,
+      usuario: {
+        id: 0,
+        id_local: user.id_usuario,
+        google_id: tokenPayload.sub,
+        email: tokenPayload.email,
+        nombre: user.username,
+        nivel: 4,
+        record: 800
+      }
+    });
     expect(query).toHaveBeenNthCalledWith(
       2,
-      'UPDATE usuario SET updated_at = NOW() WHERE id_usuario = ?',
-      [user.id_usuario]
+      expect.stringContaining('SET google_id = ?'),
+      [tokenPayload.sub, tokenPayload.email, user.id_usuario]
     );
     expect(query).not.toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO usuario'),
@@ -160,7 +167,7 @@ describe('POST /api/auth', () => {
     const response = await POST(jsonRequest({ id_token: 'valid-google-token' }));
 
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({
+    expect(await response.json()).toMatchObject({
       success: false,
       error: 'Error en base de datos'
     });

@@ -62,7 +62,19 @@
   <header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_2px_16px_rgba(0,0,0,0.85)]"><div class="h-20 w-full px-gutter flex items-center justify-between gap-space-md"><a href="/index.html" aria-label="Ir al inicio" class="flex items-center gap-space-md flex-shrink-0"><img alt="Dead Quarantine Emblem" class="h-9 w-auto object-contain" src="/img/logo2.0.jpeg"/><span class="flex flex-col"><span class="font-headline-sm text-headline-sm uppercase tracking-widest text-on-surface font-bold">DEAD QUARANTINE</span><span class="font-label-sm text-outline tracking-widest">CO-OP ZOMBIE SURVIVAL FPS</span></span></a><nav class="hidden xl:flex items-center justify-center gap-space-sm font-label-md text-label-md uppercase" aria-label="Navegación principal"><a class="whitespace-nowrap text-center px-space-md py-space-md rounded transition-all text-on-surface-variant hover:bg-surface-container hover:text-on-surface" data-path="historia-y-supervivientes" href="/index.html#historia-y-supervivientes">HISTORIA &amp; SUPERVIVIENTES</a><a class="whitespace-nowrap text-center px-space-md py-space-md rounded transition-all text-on-surface-variant hover:bg-surface-container hover:text-on-surface" data-path="top-global-ranking" href="/ranking.html">TOP GLOBAL RANKING</a><a class="whitespace-nowrap text-center px-space-md py-space-md rounded transition-all text-on-surface-variant hover:bg-surface-container hover:text-on-surface" data-path="matriz-de-logros" href="/logros_globales.html">MATRIZ DE LOGROS</a></nav></div><nav class="flex xl:hidden items-center justify-center gap-space-xs px-space-sm pb-space-sm font-label-sm text-label-sm uppercase" aria-label="Navegación principal móvil"><a class="flex-1 whitespace-nowrap text-center px-space-sm py-space-md rounded transition-colors text-on-surface-variant hover:text-on-surface" data-path="historia-y-supervivientes" href="/index.html#historia-y-supervivientes">HISTORIA</a><a class="flex-1 whitespace-nowrap text-center px-space-sm py-space-md rounded transition-colors text-on-surface-variant hover:text-on-surface" data-path="top-global-ranking" href="/ranking.html">RANKING</a><a class="flex-1 whitespace-nowrap text-center px-space-sm py-space-md rounded transition-colors text-on-surface-variant hover:text-on-surface" data-path="matriz-de-logros" href="/logros_globales.html">LOGROS</a></nav></header>
 
   <main class="w-full pt-32 xl:pt-20 min-h-screen px-6 max-w-7xl mx-auto pb-16">
-    
+    <nav class="flex gap-2 mb-6" role="tablist" aria-label="Vistas de telemetría">
+      <button id="nav-ranking" type="button" role="tab" aria-controls="vista-ranking" aria-selected="true"
+              onclick="mostrarPestaña('ranking')"
+              class="px-4 py-2 rounded font-bold transition-all bg-primary-container text-black shadow-[0_0_12px_rgba(255,85,69,0.35)]">
+        RANKING
+      </button>
+      <button id="nav-logros" type="button" role="tab" aria-controls="vista-logros" aria-selected="false"
+              onclick="mostrarPestaña('logros')"
+              class="px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">
+        LOGROS
+      </button>
+    </nav>
+
     <!-- ==================== PESTAÑA 1: RANKING ==================== -->
     <section id="vista-ranking" class="flex flex-col gap-6">
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-surface-container-high pb-4">
@@ -160,11 +172,15 @@
       if (pestaña === 'ranking') {
         vistaRanking.classList.remove('hidden');
         vistaLogros.classList.add('hidden');
+        btnRanking.setAttribute('aria-selected', 'true');
+        btnLogros.setAttribute('aria-selected', 'false');
         btnRanking.className = 'px-4 py-2 rounded font-bold transition-all bg-primary-container text-black shadow-[0_0_12px_rgba(255,85,69,0.35)]';
         btnLogros.className = 'px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all';
       } else {
         vistaRanking.classList.add('hidden');
         vistaLogros.classList.remove('hidden');
+        btnRanking.setAttribute('aria-selected', 'false');
+        btnLogros.setAttribute('aria-selected', 'true');
         btnLogros.className = 'px-4 py-2 rounded font-bold transition-all bg-primary-container text-black shadow-[0_0_12px_rgba(255,85,69,0.35)]';
         btnRanking.className = 'px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all';
       }

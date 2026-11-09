@@ -31,8 +31,10 @@ describe('GET /api/telemetria', () => {
     expect(query).toHaveBeenCalledOnce();
     expect(query.mock.calls[0][0]).toContain('WHERE EXISTS');
     expect(query.mock.calls[0][0]).toContain('FROM ranking r WHERE r.id_usuario = u.id_usuario');
-    expect(query.mock.calls[0][0]).toContain('FROM usuario_logro ul WHERE ul.usuario_id = u.id_usuario');
-    expect(query.mock.calls[0][0]).toContain('FROM usuario_sublogro us WHERE us.usuario_id = u.id_usuario');
+    expect(query.mock.calls[0][0]).toContain('FROM usuario_logro ul WHERE ul.id_usuario = u.id_usuario');
+    expect(query.mock.calls[0][0]).toContain('FROM usuario_sublogro us WHERE us.id_usuario = u.id_usuario');
+    expect(query.mock.calls[0][0]).not.toContain('ul.usuario_id');
+    expect(query.mock.calls[0][0]).not.toContain('us.usuario_id');
   });
 
   it('returns zero active percentage when there are no registered users', async () => {

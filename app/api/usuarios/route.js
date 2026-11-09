@@ -66,6 +66,13 @@ export async function POST(request) {
 
   // Acepta 'user_id' (enviado por CharacterRenameManager.cs) o 'id_usuario'
   const rawUserId = body.user_id ?? body.id_usuario ?? '';
+  if ((typeof rawUserId !== 'string' && typeof rawUserId !== 'number') ||
+      (typeof rawUserId === 'number' && !Number.isSafeInteger(rawUserId))) {
+    return Response.json(
+      { error: 'user_id y username son requeridos' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
   const userId = String(rawUserId).trim();
   const username = typeof body.username === 'string' ? body.username.trim().slice(0, 50) : '';
 

@@ -14,10 +14,10 @@ export async function GET() {
             SELECT 1 FROM ranking r WHERE r.id_usuario = u.id_usuario
           )
           OR EXISTS (
-            SELECT 1 FROM usuario_logro ul WHERE ul.usuario_id = u.id_usuario
+            SELECT 1 FROM usuario_logro ul WHERE ul.id_usuario = u.id_usuario
           )
           OR EXISTS (
-            SELECT 1 FROM usuario_sublogro us WHERE us.usuario_id = u.id_usuario
+            SELECT 1 FROM usuario_sublogro us WHERE us.id_usuario = u.id_usuario
           )
           ) AS usuarios_activos
     `);

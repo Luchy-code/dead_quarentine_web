@@ -387,22 +387,33 @@
     2: { label: 'PLATA', className: 'border-slate-300/40 bg-slate-400/20 text-slate-200' },
     3: { label: 'ORO', className: 'border-amber-400/50 bg-amber-500/20 text-amber-300' }
   };
+  const subAchievementRankOrder = { bronce: 1, plata: 2, oro: 3 };
 
   function createSubAchievement(subAchievement, totalUsers) {
-    const order = Number(subAchievement.orden);
+    const rankName = String(subAchievement.rango ?? '').trim().toLocaleLowerCase('es');
+    const order = Number(subAchievement.orden ?? subAchievementRankOrder[rankName]);
     const rank = subAchievementRanks[order];
+    const rankLabel = rank?.label || (rankName ? rankName.toLocaleUpperCase('es') : 'SUBLOGRO');
     const orderLabel = Number.isInteger(order)
       ? String(order).padStart(2, '0')
       : '--';
+    const title = subAchievement.titulo ?? subAchievement.nombre ?? subAchievement.sublogro_clave;
+    const percent = Number(subAchievement.porcentaje_global);
+    const progressWidth = Number.isFinite(percent)
+      ? Math.min(100, Math.max(0, percent))
+      : 0;
     return `<div class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
       <div class="flex items-center gap-space-md">
         <div class="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center flex-shrink-0">
           <span class="font-label-sm text-label-sm font-bold text-on-surface-variant">${orderLabel}</span>
         </div>
-        <span class="font-headline-sm text-headline-sm text-on-surface font-semibold">${escapeHtml(subAchievement.titulo)}</span>
+        <span class="font-headline-sm text-headline-sm text-on-surface font-semibold">${escapeHtml(title)}</span>
       </div>
       <div class="flex items-center gap-space-lg justify-between sm:justify-end">
-        <span class="px-space-sm py-0.5 rounded border ${rank?.className || 'border-surface-variant bg-surface-container-high text-on-surface-variant'} font-label-sm text-label-sm uppercase tracking-wider">${rank?.label || 'SUBLOGRO'}</span>
+        <span class="px-space-sm py-0.5 rounded border ${rank?.className || 'border-surface-variant bg-surface-container-high text-on-surface-variant'} font-label-sm text-label-sm uppercase tracking-wider">${escapeHtml(rankLabel)}</span>
+        <div class="w-20 bg-surface-container-lowest h-1.5 rounded overflow-hidden" role="progressbar" aria-label="Desbloqueo global de ${escapeHtml(title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progressWidth}">
+          <div class="bg-tertiary h-full" style="width: ${progressWidth}%;"></div>
+        </div>
         <span class="font-label-sm text-label-sm text-on-surface-variant">${formatPercent(subAchievement.porcentaje_global)} GLOBAL · ${formatCount(subAchievement.completados_global)}/${formatCount(totalUsers)}</span>
       </div>
     </div>`;
@@ -412,9 +423,10 @@
     const category = String(achievement.categoria ?? '');
     const subAchievements = Array.isArray(achievement.sublogros) ? achievement.sublogros : [];
     const required = Number(achievement.sublogros_requeridos);
-    const achievementId = escapeHtml(achievement.id);
-    const achievementKey = String(achievement.clave ?? '').trim().toLocaleLowerCase('es');
-    const achievementTitle = String(achievement.titulo ?? '').trim().toLocaleLowerCase('es');
+    const achievementId = escapeHtml(achievement.id ?? achievement.id_logro);
+    const achievementKey = String(achievement.clave ?? achievement.logro_clave ?? '').trim().toLocaleLowerCase('es');
+    const titleValue = achievement.titulo ?? achievement.nombre;
+    const achievementTitle = String(titleValue ?? '').trim().toLocaleLowerCase('es');
     const identity = achievementTitle === 'me duele la cabeza'
       ? achievementIcons.me_duele_la_cabeza
       : achievementTitle === 'historiador'
@@ -427,7 +439,7 @@
           badge: '',
           badgeColor: ''
         };
-    const title = escapeHtml(achievement.titulo);
+    const title = escapeHtml(titleValue);
     const description = escapeHtml(achievement.descripcion);
     const mode = escapeHtml(achievement.modo);
     const categoryLabel = escapeHtml(category || 'Sin categoría');

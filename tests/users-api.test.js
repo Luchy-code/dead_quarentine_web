@@ -17,7 +17,7 @@ beforeEach(() => {
 describe('GET /api/usuarios', () => {
   it('returns users with the current database columns', async () => {
     const users = [{
-      id_usuario: 1,
+      user_id: 1,
       username: 'Player',
       email: null,
       created_at: '2026-10-20T00:00:00.000Z',
@@ -25,12 +25,12 @@ describe('GET /api/usuarios', () => {
     }];
     query.mockResolvedValueOnce([users]);
 
-    const response = await GET();
+    const response = await GET(new Request('http://localhost/api/usuarios'));
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(users);
     expect(query).toHaveBeenCalledWith(
-      'SELECT id_usuario, username, email, created_at, updated_at FROM usuario ORDER BY created_at DESC'
+      'SELECT id_usuario AS user_id, username, email, created_at, updated_at FROM usuario ORDER BY created_at DESC LIMIT 50'
     );
   });
 });
@@ -44,7 +44,7 @@ describe('POST /api/usuarios', () => {
     }));
     const invalidObject = await POST(jsonRequest(null));
     const missingFields = await POST(jsonRequest({ username: 'Player' }));
-    const invalidId = await POST(jsonRequest({ id_usuario: 'not-an-id', username: 'Player' }));
+    const invalidId = await POST(jsonRequest({ id_usuario: '', username: 'Player' }));
     const booleanId = await POST(jsonRequest({ id_usuario: true, username: 'Player' }));
 
     expect(malformed.status).toBe(400);
@@ -70,16 +70,13 @@ describe('POST /api/usuarios', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
     expect(query).toHaveBeenCalledWith(
       'SELECT id_usuario FROM usuario WHERE LOWER(TRIM(username)) = LOWER(?) AND id_usuario <> ? LIMIT 1',
-      ['PLAYER', 1]
+      ['PLAYER', '1']
     );
     expect(query).toHaveBeenCalledOnce();
   });
 
-  it('updates an existing user by id_usuario without inserting another row', async () => {
-    query
-      .mockResolvedValueOnce([[]])
-      .mockResolvedValueOnce([[{ id_usuario: 8 }]])
-      .mockResolvedValueOnce([{}]);
+  it('upserts an existing user by id_usuario', async () => {
+    query.mockResolvedValueOnce([[]]).mockResolvedValueOnce([{}]);
 
     const response = await POST(jsonRequest({
       id_usuario: 8,
@@ -88,25 +85,31 @@ describe('POST /api/usuarios', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
+      success: true,
       message: 'Usuario sincronizado exitosamente',
-      id_usuario: 8,
+      user_id: '8',
       username: 'Player'
     });
     expect(query).toHaveBeenNthCalledWith(
-      3,
-      'UPDATE usuario SET username = ?, updated_at = NOW() WHERE id_usuario = ?',
-      ['Player', 8]
+      2,
+      expect.stringContaining('INSERT INTO usuario (id_usuario, username, created_at, updated_at)'),
+      ['8', 'Player']
     );
-    expect(query).toHaveBeenCalledTimes(3);
+    expect(query.mock.calls[1][0]).toContain('ON DUPLICATE KEY UPDATE');
+    expect(query).toHaveBeenCalledTimes(2);
   });
 
-  it('does not create users when the supplied id_usuario does not exist', async () => {
-    query.mockResolvedValueOnce([[]]).mockResolvedValueOnce([[]]);
+  it('creates a user when the supplied id_usuario does not exist', async () => {
+    query.mockResolvedValueOnce([[]]).mockResolvedValueOnce([{}]);
 
     const response = await POST(jsonRequest({ id_usuario: 8, username: 'Player' }));
 
-    expect(response.status).toBe(404);
-    expect(await response.json()).toEqual({ error: 'Usuario no encontrado' });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      success: true,
+      user_id: '8',
+      username: 'Player'
+    });
     expect(query).toHaveBeenCalledTimes(2);
   });
 

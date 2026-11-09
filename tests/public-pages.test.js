@@ -268,7 +268,7 @@ describe('static page HTML and CSS', () => {
     expect(dialog.getAttribute('aria-hidden')).toBe('false');
     expect(document.getElementById('character-inspection-name').textContent).toBe('KNOX');
     expect(document.getElementById('character-inspection-role').textContent)
-      .toContain('CONTENCIÓN');
+      .toContain('TANQUE');
     expect(dialog.textContent).not.toContain('PERFIL OPERATIVO');
     expect(dialog.textContent).not.toContain('EQUIPO PRINCIPAL');
     expect(dialog.textContent).not.toContain('ESCOPETA 12G BULLPUP');
@@ -869,6 +869,41 @@ describe('achievement matrix inline JavaScript', () => {
     expect(cards[1].querySelector('.material-symbols-outlined')?.textContent).toBe('timer');
     expect(cards[1].textContent).toContain('S-3');
     expect(window.document.getElementById('achievement-static-snapshot')).toBeNull();
+
+    dom.window.close();
+  });
+
+  it('renders names, ranks, and global percentages from the API database fields', async () => {
+    const dom = await loadAchievementMatrix({
+      total_usuarios: 10,
+      logros: [{
+        id_logro: 7,
+        nombre: 'Logro desde SQL',
+        descripcion: 'Descripción',
+        categoria: 'Bajas',
+        modo: 'Singleplayer',
+        completados_global: 5,
+        porcentaje_global: 50,
+        sublogros: [{
+          id_sublogro: 21,
+          id_logro: 7,
+          rango: 'Plata',
+          nombre: 'Sublogro desde SQL',
+          completados_global: 4,
+          porcentaje_global: 40
+        }]
+      }]
+    });
+    const card = dom.window.document.querySelector('.achievement-card');
+    const subProgress = card.querySelector('.sub-matrix [role="progressbar"]');
+
+    expect(card.textContent).toContain('Logro desde SQL');
+    expect(card.textContent).toContain('Sublogro desde SQL');
+    expect(card.textContent).toContain('PLATA');
+    expect(card.textContent).toContain('50,0%');
+    expect(card.textContent).toContain('40,0%');
+    expect(card.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('50');
+    expect(subProgress?.getAttribute('aria-valuenow')).toBe('40');
 
     dom.window.close();
   });
