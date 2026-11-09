@@ -164,7 +164,7 @@ describe('POST /api/logros/desbloquear', () => {
     );
   });
 
-  it('returns a server error when the parent achievement is missing', async () => {
+  it('keeps the recorded sub-achievement when its parent is missing', async () => {
     query
       .mockResolvedValueOnce([{}])
       .mockResolvedValueOnce([[
@@ -179,11 +179,13 @@ describe('POST /api/logros/desbloquear', () => {
       sublogro_clave: 'enemigo_derrotado'
     }));
 
-    expect(response.status).toBe(500);
-    expect(await response.json()).toMatchObject({
-      success: false,
-      error: 'Error interno en base de datos'
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      success: true,
+      mensaje: 'Sublogro registrado con éxito',
+      logro_padre_desbloqueado: null
     });
+    expect(query).toHaveBeenCalledTimes(4);
   });
 
   it('returns a server error if persistence fails', async () => {

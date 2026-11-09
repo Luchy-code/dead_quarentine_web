@@ -389,10 +389,13 @@
   };
   const subAchievementRankOrder = { bronce: 1, plata: 2, oro: 3 };
 
-  function createSubAchievement(subAchievement, totalUsers) {
+  function createSubAchievement(subAchievement, totalUsers, index) {
     const rankName = String(subAchievement.rango ?? '').trim().toLocaleLowerCase('es');
-    const order = Number(subAchievement.orden ?? subAchievementRankOrder[rankName]);
-    const rank = subAchievementRanks[order];
+    const rankOrder = subAchievement.orden !== null && subAchievement.orden !== undefined
+      ? Number(subAchievement.orden)
+      : subAchievementRankOrder[rankName];
+    const order = Number.isFinite(rankOrder) ? rankOrder : index + 1;
+    const rank = Number.isFinite(rankOrder) ? subAchievementRanks[rankOrder] : undefined;
     const rankLabel = rank?.label || (rankName ? rankName.toLocaleUpperCase('es') : 'SUBLOGRO');
     const orderLabel = Number.isInteger(order)
       ? String(order).padStart(2, '0')
@@ -452,7 +455,9 @@
       ? `${requiredLabel} / ${formatCount(subAchievements.length)}`
       : `-- / ${formatCount(subAchievements.length)}`;
     const subAchievementRows = subAchievements.length
-      ? subAchievements.map((subAchievement) => createSubAchievement(subAchievement, totalUsers)).join('')
+      ? subAchievements.map((subAchievement, index) =>
+        createSubAchievement(subAchievement, totalUsers, index)
+      ).join('')
       : '<p class="p-space-md text-on-surface-variant">Este logro no tiene sublogros registrados en la base.</p>';
 
     return `<article class="achievement-card bg-surface-container rounded overflow-hidden shadow-lg transition-all" data-category="${escapeHtml(category)}" data-clave="${escapeHtml(achievement.clave)}">

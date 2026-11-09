@@ -194,14 +194,12 @@ describe('static page HTML and CSS', () => {
     }
     expect(mutantSection.textContent).toContain('AMENAZA: APOCALÍPTICA');
     expect(mutantSection.textContent).toContain('JEFE ACTIVO');
-    expect(mutantSection.querySelector('.bg-surface-container-low > div span')?.textContent.trim())
-      .toBe('Estrategia');
-    expect(mutantSection.textContent).toContain('Clasificación');
+    expect(mutantSection.textContent).toContain('BESTIARIO MUTAGÉNICO CLASIFICADO');
     expect(mutantSection.querySelector('img[alt="Comando de Jefes Mutantes"]')?.getAttribute('src'))
       .toBe('/img/jefes.jpg');
     expect(document.querySelector('[data-path="expediente-y-jugadores"]')).toBeNull();
-    expect(document.querySelectorAll('a[href="/ranking.html"]')).toHaveLength(4);
-    expect(document.querySelectorAll('a[href="/logros_globales.html"]')).toHaveLength(4);
+    expect(document.querySelectorAll('a[href="/ranking.html"]')).toHaveLength(3);
+    expect(document.querySelectorAll('a[href="/logros_globales.html"]')).toHaveLength(3);
     expect(document.querySelector('nav[aria-label="Navegación principal móvil"]')).toBeTruthy();
     expect(document.querySelector('#historia-y-supervivientes')).toBeTruthy();
     expect(document.querySelector('main')?.classList.contains('pt-32')).toBe(true);
@@ -887,7 +885,7 @@ describe('achievement matrix inline JavaScript', () => {
         sublogros: [{
           id_sublogro: 21,
           id_logro: 7,
-          rango: 'Plata',
+          rango: 'Unico',
           nombre: 'Sublogro desde SQL',
           completados_global: 4,
           porcentaje_global: 40
@@ -899,11 +897,13 @@ describe('achievement matrix inline JavaScript', () => {
 
     expect(card.textContent).toContain('Logro desde SQL');
     expect(card.textContent).toContain('Sublogro desde SQL');
-    expect(card.textContent).toContain('PLATA');
+    expect(card.textContent).toContain('UNICO');
     expect(card.textContent).toContain('50,0%');
     expect(card.textContent).toContain('40,0%');
     expect(card.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('50');
     expect(subProgress?.getAttribute('aria-valuenow')).toBe('40');
+    expect(card.querySelector('.sub-matrix > div > div:first-child > div')?.textContent.trim())
+      .toBe('01');
 
     dom.window.close();
   });
