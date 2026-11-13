@@ -856,7 +856,7 @@ describe('achievement matrix inline JavaScript', () => {
     expect(cards[0].textContent).toContain('Bajas iniciales');
     expect(cards[0].textContent).toContain('Primera baja');
     expect(cards[0].textContent).toContain('50,0%');
-    expect(cards[0].querySelector('.material-symbols-outlined')?.textContent).toBe('skull');
+    expect(cards[0].querySelector('.material-symbols-outlined')?.textContent).toBe('skull_list');
     expect(cards[0].textContent).toContain('S-1');
     expect(cards[0].querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('50');
     expect(cards[0].querySelector('[role="progressbar"] > div')?.getAttribute('style'))
@@ -933,11 +933,11 @@ describe('achievement matrix inline JavaScript', () => {
 
   it('restores the original icon and sector badge for each known achievement key', async () => {
     const identities = [
-      ['derrotador_supremo', 'Bajas', 'skull', 'S-1', 'text-primary-container', 'bg-primary'],
-      ['superviviente_infierno', 'Historia', 'shield_with_heart', 'S-2', 'text-secondary-fixed-dim', 'bg-secondary-container'],
+      ['derrotador_supremo', 'Bajas', 'skull_list', 'S-1', 'text-primary-container', 'bg-primary'],
+      ['superviviente_infierno', 'Historia', 'swords', 'S-2', 'text-secondary-fixed-dim', 'bg-secondary-container'],
       ['completador_rondas', 'Historia', 'timer', 'S-3', 'text-primary', 'bg-primary'],
       ['campeon_poligono', 'Minijuego', 'adjust', 'S-4', 'text-tertiary', 'bg-tertiary-container'],
-      ['donde_esta_wally', 'Easter Egg', 'travel_explore', 'S-5', 'text-secondary-fixed-dim', 'bg-secondary-container']
+      ['donde_esta_wally', 'Easter Egg', 'not_listed_location', 'S-5', 'text-secondary-fixed-dim', 'bg-secondary-container']
     ];
     const data = {
       ...achievementData,
@@ -1008,6 +1008,52 @@ describe('achievement matrix inline JavaScript', () => {
     const icon = dom.window.document.querySelector('.achievement-card .material-symbols-outlined');
 
     expect(icon?.textContent).toBe('book_ribbon');
+
+    dom.window.close();
+  });
+
+  it('uses the requested icons for teammate revives and PvP achievements', async () => {
+    const dom = await loadAchievementMatrix({
+      ...achievementData,
+      logros: [
+        {
+          ...achievementData.logros[0],
+          id: 1,
+          clave: 'rescate',
+          titulo: 'Revivir a un compañero'
+        },
+        {
+          ...achievementData.logros[0],
+          id: 2,
+          clave: 'logro_pvp',
+          titulo: 'Combate entre jugadores'
+        }
+      ]
+    });
+    const icons = [...dom.window.document.querySelectorAll('.achievement-card')]
+      .map((card) => card.querySelector('.material-symbols-outlined')?.textContent);
+
+    expect(icons).toEqual(['local_hospital', 'groups_2']);
+
+    dom.window.close();
+  });
+
+  it.each([
+    ['Campeón desconectado', 'wifi_off'],
+    ['Victoria en equipo', 'groups'],
+    ['Nadie se queda atrás', 'sports_kabaddi']
+  ])('uses the requested icon for %s', async (titulo, expectedIcon) => {
+    const dom = await loadAchievementMatrix({
+      ...achievementData,
+      logros: [{
+        ...achievementData.logros[0],
+        clave: 'achievement_key',
+        titulo
+      }]
+    });
+    const icon = dom.window.document.querySelector('.achievement-card .material-symbols-outlined');
+
+    expect(icon?.textContent).toBe(expectedIcon);
 
     dom.window.close();
   });
