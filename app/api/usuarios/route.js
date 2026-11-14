@@ -8,6 +8,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type'
 };
 
+function isDuplicateEntry(error) {
+  return error?.code === 'ER_DUP_ENTRY' || error?.errno === 1062;
+}
+
 export async function GET(request) {
   try {
     const searchParams = new URL(request.url).searchParams;
@@ -99,15 +103,45 @@ export async function POST(request) {
       );
     }
 
-    // 2. Insertar nuevo usuario o actualizar su nombre si ya existía (Upsert atómico)
-    await pool.query(
-      `INSERT INTO usuario (id_usuario, username, created_at, updated_at)
-       VALUES (?, ?, NOW(), NOW())
-       ON DUPLICATE KEY UPDATE 
-         username = VALUES(username), 
-         updated_at = NOW()`,
-      [userId, username]
+    // Actualizar por ID primero para que un conflicto en username no active el upsert de otra fila.
+    const [updateResult] = await pool.query(
+      'UPDATE usuario SET username = ?, updated_at = NOW() WHERE id_usuario = ?',
+      [username, userId]
     );
+
+    if (updateResult.affectedRows === 0) {
+      const [existingUsersById] = await pool.query(
+        'SELECT id_usuario FROM usuario WHERE id_usuario = ? LIMIT 1',
+        [userId]
+      );
+
+      if (existingUsersById.length === 0) {
+        try {
+          await pool.query(
+            'INSERT INTO usuario (id_usuario, username, created_at, updated_at) VALUES (?, ?, NOW(), NOW())',
+            [userId, username]
+          );
+        } catch (error) {
+          if (!isDuplicateEntry(error)) {
+            throw error;
+          }
+
+          // Otra solicitud pudo crear este mismo ID después de la consulta.
+          const [usersAfterConflict] = await pool.query(
+            'SELECT id_usuario FROM usuario WHERE id_usuario = ? LIMIT 1',
+            [userId]
+          );
+          if (usersAfterConflict.length === 0) {
+            throw error;
+          }
+
+          await pool.query(
+            'UPDATE usuario SET username = ?, updated_at = NOW() WHERE id_usuario = ?',
+            [username, userId]
+          );
+        }
+      }
+    }
 
     return Response.json({
       success: true,
@@ -117,6 +151,13 @@ export async function POST(request) {
     }, { status: 200, headers: corsHeaders });
 
   } catch (error) {
+    if (isDuplicateEntry(error)) {
+      return Response.json(
+        { error: 'Ese nombre ya está en uso. Elegí otro.' },
+        { status: 409, headers: corsHeaders }
+      );
+    }
+
     console.error('Error al sincronizar usuario:', error);
     return Response.json(
       { error: 'Error en base de datos', detalle: error.sqlMessage || error.message },

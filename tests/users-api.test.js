@@ -75,8 +75,8 @@ describe('POST /api/usuarios', () => {
     expect(query).toHaveBeenCalledOnce();
   });
 
-  it('upserts an existing user by id_usuario', async () => {
-    query.mockResolvedValueOnce([[]]).mockResolvedValueOnce([{}]);
+  it('updates an existing user by id_usuario', async () => {
+    query.mockResolvedValueOnce([[]]).mockResolvedValueOnce([{ affectedRows: 1 }]);
 
     const response = await POST(jsonRequest({
       id_usuario: 8,
@@ -92,15 +92,17 @@ describe('POST /api/usuarios', () => {
     });
     expect(query).toHaveBeenNthCalledWith(
       2,
-      expect.stringContaining('INSERT INTO usuario (id_usuario, username, created_at, updated_at)'),
-      ['8', 'Player']
+      'UPDATE usuario SET username = ?, updated_at = NOW() WHERE id_usuario = ?',
+      ['Player', '8']
     );
-    expect(query.mock.calls[1][0]).toContain('ON DUPLICATE KEY UPDATE');
     expect(query).toHaveBeenCalledTimes(2);
   });
 
   it('creates a user when the supplied id_usuario does not exist', async () => {
-    query.mockResolvedValueOnce([[]]).mockResolvedValueOnce([{}]);
+    query.mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([{ affectedRows: 0 }])
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }]);
 
     const response = await POST(jsonRequest({ id_usuario: 8, username: 'Player' }));
 
@@ -110,7 +112,43 @@ describe('POST /api/usuarios', () => {
       user_id: '8',
       username: 'Player'
     });
-    expect(query).toHaveBeenCalledTimes(2);
+    expect(query).toHaveBeenNthCalledWith(
+      4,
+      'INSERT INTO usuario (id_usuario, username, created_at, updated_at) VALUES (?, ?, NOW(), NOW())',
+      ['8', 'Player']
+    );
+    expect(query).toHaveBeenCalledTimes(4);
+  });
+
+  it('returns a conflict if the unique index rejects a concurrent duplicate', async () => {
+    const duplicateEntry = Object.assign(new Error('Duplicate entry'), {
+      code: 'ER_DUP_ENTRY',
+      errno: 1062
+    });
+    query.mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([{ affectedRows: 0 }])
+      .mockResolvedValueOnce([[]])
+      .mockRejectedValueOnce(duplicateEntry)
+      .mockResolvedValueOnce([[]]);
+
+    const response = await POST(jsonRequest({ id_usuario: 8, username: 'Player' }));
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      error: 'Ese nombre ya está en uso. Elegí otro.'
+    });
+    expect(query).toHaveBeenCalledTimes(5);
+  });
+
+  it('updates an existing user even when its username did not change', async () => {
+    query.mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([{ affectedRows: 0 }])
+      .mockResolvedValueOnce([[{ id_usuario: '8' }]]);
+
+    const response = await POST(jsonRequest({ id_usuario: 8, username: 'Player' }));
+
+    expect(response.status).toBe(200);
+    expect(query).toHaveBeenCalledTimes(3);
   });
 
   it('returns a server error and logs database failures', async () => {

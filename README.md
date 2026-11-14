@@ -33,6 +33,10 @@ obligatorio al registrar un puntaje. El nombre no se duplica en `ranking`: las
 APIs lo leen de `usuario`.
 Las migraciones SQL de `database/` que modifican `usuarios` pertenecen al
 esquema anterior y no deben ejecutarse sobre esta tabla.
+Para impedir usernames repetidos (ignorando mayúsculas y espacios al inicio o
+al final), ejecuta `database/add_unique_username.sql` sobre la base actual. Si
+ya existen nombres equivalentes, resuélvelos antes de aplicar la migración;
+MySQL rechazará crear el índice mientras esos duplicados sigan presentes.
 Modo y dificultad se guardan normalizados como `singleplayer` o `multiplayer`,
 y `normal`, `dificil` o `pesadilla`, respectivamente. El país, la IP y el
 estado de VPN no se guardan ni se ofrecen como filtros del ranking.
