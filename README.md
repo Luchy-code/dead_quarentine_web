@@ -1,60 +1,176 @@
 # Dead Quarantine II Web
 
+Sitio web y API de **Dead Quarantine II**. El sitio publica las páginas del
+juego y las APIs que conectan el cliente Unity con MySQL para autenticación,
+usuarios, puntajes y logros.
+
+## Contenido
+
+- [Funciones y páginas](#funciones-y-páginas)
+- [Tecnologías](#tecnologías)
+- [Desarrollo local](#desarrollo-local)
+- [Base de datos](#base-de-datos)
+- [API](#api)
+- [Pruebas](#pruebas)
+- [Despliegue en Wasmer](#despliegue-en-wasmer)
+- [Seguridad y solución de problemas](#seguridad-y-solución-de-problemas)
+
+## Funciones y páginas
+
+| Ruta | Descripción |
+| --- | --- |
+| `/` o `/index.html` | Portada e información del juego |
+| `/ranking.html` | Ranking global con búsqueda, filtros y paginación |
+| `/logros_globales.html` | Logros y sublogros con porcentajes globales |
+| `/telemetria.html` | Dashboard de telemetría |
+
+Las páginas están en `public/`. Consultan las APIs del mismo sitio; no se
+conectan directamente a MySQL. La portada muestra el total de usuarios y la
+cantidad de usuarios activos. Se considera activo a quien tenga un puntaje,
+logro o sublogro registrado.
+
+## Tecnologías
+
+- Node.js 20.9 o posterior
+- Next.js 16 y React 19
+- MySQL mediante `mysql2`
+- Google ID Token mediante `google-auth-library`
+- Vitest para las pruebas
+
 ## Desarrollo local
 
 1. Instala Node.js 20.9 o posterior.
-2. Ejecuta `npm install`.
-3. Copia `.env.example` a `.env.local` y reemplaza los valores de ejemplo con
-   los datos de conexión de MySQL. `.env.local` está excluido de Git: no guardes
-   credenciales reales en `.env.example` ni las subas al repositorio.
-4. Ejecuta `npm run dev` y abre `http://localhost:3000`.
+2. Instala dependencias:
 
-La portada está en `public/index.html`; el dashboard anterior de ranking y
-logros se conserva en `public/telemetria.html` y se abre desde los accesos de
-ranking y logros. Las APIs se ejecutan en Next.js y usan la conexión MySQL
-configurada por variables de entorno.
-La portada consulta `/api/telemetria` para mostrar el total de usuarios
-registrados, la cantidad/porcentaje de usuarios con al menos un récord, logro o
-sublogro, y los usuarios sin actividad registrada. Se consideran activos los
-usuarios cuyo `id_usuario` tiene un récord en `ranking` o una fila en
-`usuario_logro` o `usuario_sublogro`.
+   ```sh
+   npm install
+   ```
 
-## Sincronización de usuarios del juego
+3. Copia `.env.example` como `.env.local` y completa los valores de tu entorno.
+   En PowerShell:
 
-La tabla `usuario` usa las columnas `id_usuario` (AUTO_INCREMENT), `username`,
-`email`, `created_at` y `updated_at`. El inicio de sesión con Google busca la
-cuenta por email y devuelve `id_usuario`; el juego debe conservar ese ID y
-enviarlo al registrar nombres, puntajes y logros. La tabla `ranking` debe tener
-únicamente `id_ranking` (AUTO_INCREMENT), `id_usuario`, `puntos`, `modo`,
-`dificultad` y `creado_en`. `id_ranking` es un contador interno, no un conteo de
-filas: MySQL puede dejar saltos tras eliminaciones, errores o escrituras
-duplicadas anteriores. `id_usuario` guarda la clave primaria de `usuario` y es
-obligatorio al registrar un puntaje. El nombre no se duplica en `ranking`: las
-APIs lo leen de `usuario`.
-Las migraciones SQL de `database/` que modifican `usuarios` pertenecen al
-esquema anterior y no deben ejecutarse sobre esta tabla.
-Para impedir usernames repetidos (ignorando mayúsculas y espacios al inicio o
-al final), ejecuta `database/add_unique_username.sql` sobre la base actual. Si
-ya existen nombres equivalentes, resuélvelos antes de aplicar la migración;
-MySQL rechazará crear el índice mientras esos duplicados sigan presentes.
-Modo y dificultad se guardan normalizados como `singleplayer` o `multiplayer`,
-y `normal`, `dificil` o `pesadilla`, respectivamente. El país, la IP y el
-estado de VPN no se guardan ni se ofrecen como filtros del ranking.
+   ```powershell
+   Copy-Item .env.example .env.local
+   ```
 
-El juego puede actualizar el nombre con un `POST` a `/api/usuarios`, enviando
-`{ "id_usuario": 1, "username": "Jugador" }`. Para desbloquear un logro, envía
-`id_usuario` y `sublogro_clave` a `/api/logros/desbloquear`; el progreso queda
-asociado a la clave primaria del usuario aunque cambie su nombre. Para guardar
-una puntuación, envía `id_usuario`, `username`, `puntos`, `modo` y
-`dificultad` a `/api/ranking`; el nombre se actualiza en `usuario` y no se
-duplica en `ranking`. Por ejemplo, al terminar una partida:
+   En macOS o Linux:
+
+   ```sh
+   cp .env.example .env.local
+   ```
+
+4. Inicia el servidor:
+
+   ```sh
+   npm run dev
+   ```
+
+5. Abre <http://localhost:3000>.
+
+### Variables de entorno
+
+| Variable | Requerida | Descripción |
+| --- | --- | --- |
+| `MYSQL_HOST` | Sí | Host del servidor MySQL |
+| `MYSQL_PORT` | Sí | Puerto MySQL |
+| `MYSQL_USER` | Sí | Usuario de la base de datos |
+| `MYSQL_PASSWORD` | Sí | Contraseña de MySQL |
+| `MYSQL_DATABASE` | Sí | Base de datos |
+| `MYSQL_SSL_CA` | No | Certificado CA PEM para validar TLS |
+| `GOOGLE_CLIENT_ID` | Para Google | ID de cliente OAuth usado para verificar ID tokens |
+
+`MYSQL_SSL_CA` puede contener el PEM con saltos de línea o `\n` escapados. La
+aplicación convierte los saltos escapados y valida el certificado cuando se
+proporciona la CA.
+
+## Base de datos
+
+La aplicación necesita una base MySQL ya provisionada. Los archivos de
+`database/` son migraciones puntuales, no un esquema inicial completo. Antes de
+desplegar, verifica que existan las tablas y columnas usadas por las APIs:
+
+- `usuario`: `id_usuario`, `google_id`, `username`, `email`, `nivel`, `record`,
+  `created_at` y `updated_at`.
+- `ranking`: `id_ranking`, `id_usuario`, `puntos`, `modo`, `dificultad` y
+  `creado_en`.
+- `logro`, `sublogro`, `usuario_logro` y `usuario_sublogro`, con las claves y
+  columnas consultadas por sus APIs.
+
+`id_usuario` debe admitir IDs de texto: la autenticación de Google genera IDs
+como `usr_...`, y el cliente del juego también puede enviar un ID como texto.
+No configures esta columna únicamente como un entero autoincremental. El
+`id_usuario` de `ranking` y de las tablas de progreso debe referenciar al mismo
+ID de `usuario`.
+
+### Unicidad de username
+
+Ejecuta `database/add_unique_username.sql` una sola vez en la base actual. La
+migración agrega un índice único sobre `LOWER(TRIM(username))`: no permite
+duplicados que solo cambien en mayúsculas/minúsculas o espacios al principio o
+al final. La API `POST /api/usuarios` también responde HTTP `409` si el nombre
+ya está ocupado.
+
+Si la tabla ya contiene usernames equivalentes, resuélvelos antes de aplicar la
+migración. MySQL no podrá crear el índice mientras esos duplicados existan.
+La migración no borra ni renombra cuentas automáticamente.
+
+No ejecutes todas las migraciones a ciegas: algunos archivos modifican el
+esquema anterior (`usuarios`, en plural), mientras que esta aplicación usa
+`usuario`. Revisa cada archivo y confirma que corresponde al esquema de tu
+base antes de aplicarlo.
+
+## API
+
+Todas las respuestas son JSON. Las APIs de escritura aceptan JSON con
+`Content-Type: application/json`.
+
+| Ruta | Método | Uso |
+| --- | --- | --- |
+| `/api/auth` | `POST` | Verifica un ID token de Google y busca o crea la cuenta |
+| `/api/usuarios` | `GET` | Lista usuarios o consulta uno con `user_id` / `id_usuario` |
+| `/api/usuarios` | `POST` | Crea o actualiza el username asociado a un ID |
+| `/api/ranking` | `GET` | Ranking para Unity, posición por puntaje o vista tabular web |
+| `/api/ranking` | `POST` | Registra un puntaje |
+| `/api/logros/globales` | `GET` | Logros, sublogros y porcentajes globales |
+| `/api/logros/desbloquear` | `POST` | Registra un sublogro completado |
+| `/api/telemetria` | `GET` | Total y porcentaje de usuarios activos |
+
+### Autenticación con Google
+
+Envía el ID token obtenido por el cliente de Google:
+
+```json
+{ "id_token": "GOOGLE_ID_TOKEN" }
+```
+
+La respuesta incluye `usuario.id_local`, que es el ID que debe conservar el
+juego para las siguientes solicitudes. El token debe corresponder al mismo
+`GOOGLE_CLIENT_ID` configurado en el servidor.
+
+### Actualizar el username
+
+```json
+{
+  "id_usuario": "usr_...",
+  "username": "Jugador"
+}
+```
+
+También se acepta `user_id` en lugar de `id_usuario`. Los usernames tienen un
+límite de 50 caracteres. Si el nombre ya pertenece a otro usuario, el endpoint
+responde `409 Conflict`.
+
+### Registrar un puntaje
+
+Envía `id_usuario` (o `user_id`), `puntos` y, opcionalmente, `username`, `modo`
+y `dificultad` a `POST /api/ranking`:
 
 ```js
 await fetch('/api/ranking', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    id_usuario: 1,
+    id_usuario: 'usr_...',
     username: 'Jugador',
     puntos: 1200,
     modo: 'multiplayer',
@@ -63,51 +179,78 @@ await fetch('/api/ranking', {
 });
 ```
 
-Para registrar o iniciar sesión con Google, configura `GOOGLE_CLIENT_ID` con el
-ID de cliente OAuth y envía el ID token a `POST /api/auth` como
-`{ "id_token": "..." }`. La API verifica el token y el email, busca o crea la
-cuenta en `usuario`, y devuelve `id_usuario` para usarlo en las siguientes
-solicitudes. Al crear la cuenta, el username inicial es el email (hasta 50
-caracteres).
+Los valores usados por el juego para modo son `singleplayer` y `multiplayer`;
+las dificultades esperadas son `normal`, `dificil` y `pesadilla`. El ranking
+guarda el ID del usuario y obtiene el username desde `usuario`, no duplica el
+nombre en cada puntaje.
 
-La página web consulta `GET /api/ranking?view=table` y pagina los registros de
-la base (hasta 100 filas por petición). Para conservar el comportamiento del
-juego, este debe seguir consultando `GET /api/ranking` sin `view=table`: esa
-respuesta mantiene el formato del top 5 y el récord personal del jugador.
+Para la respuesta simplificada del juego, consulta `GET /api/ranking` y, si
+corresponde, envía `id_usuario` para obtener también el mejor puntaje propio.
+La página web usa `GET /api/ranking?view=table`; acepta `page`, `limit` (máximo
+100), `search`, `mode` o `modo` y `dificultad`. Para calcular la posición
+preliminar de un puntaje, se puede enviar `score`.
+
+### Registrar un sublogro
+
+Envía el ID del usuario y la clave del sublogro a
+`POST /api/logros/desbloquear`:
+
+```json
+{
+  "id_local": "usr_...",
+  "sublogro_clave": "clave_del_sublogro",
+  "username": "Jugador"
+}
+```
+
+También se acepta `id_usuario` en lugar de `id_local`. La clave debe existir en
+la tabla `sublogro`. Al completar el rango final, la API registra el logro
+principal correspondiente.
 
 ## Pruebas
 
-Ejecuta `npm test` para probar las APIs con una base de datos simulada, la
-configuración de MySQL, las redirecciones y las interacciones de las páginas
-HTML/CSS/JavaScript. Las pruebas no necesitan credenciales ni conexión a MySQL.
+Ejecuta todas las pruebas con:
 
-## Wasmer Edge
+```sh
+npm test
+```
 
-Despliega la raíz del repositorio como una app Next.js. Desde la raíz, inicia
-sesión en Wasmer CLI y ejecuta `wasmer deploy`, o conecta este repositorio desde
-el panel de Wasmer.
+Las pruebas usan una conexión MySQL simulada y no requieren credenciales ni
+acceso a una base real.
 
-En la configuración del servicio web de Wasmer, crea secretos/variables de
-entorno con estos nombres exactos y los valores de conexión del servicio MySQL
-de Aiven: `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD` y
-`MYSQL_DATABASE`. Para la autenticación con Google, configura también
-`GOOGLE_CLIENT_ID` con el ID de cliente OAuth. La aplicación los lee
-directamente de `process.env`; los
-secretos de Aiven no se comparten automáticamente con Wasmer. Para verificar el
-certificado TLS de Aiven, configura además `MYSQL_SSL_CA` con el contenido de su
-certificado CA. En `.env.local`, encierra el certificado PEM completo entre
-comillas dobles para conservar los saltos de línea; en Wasmer, pega el PEM
-completo como secreto multilínea o usa `\n` entre las líneas. La aplicación
-convierte los `\n` escapados y verifica la cadena del certificado cuando se
-configura la CA. Si el certificado no se valida, descarga la CA actual desde
-Aiven y actualiza `MYSQL_SSL_CA`; no desactives la verificación TLS.
+## Despliegue en Wasmer
 
-Guarda los secretos en Wasmer y reinicia o vuelve a desplegar el servicio para
-que Node.js los reciba. No agregues credenciales al código ni a `.env.example`.
-Si alguna contraseña real estuvo guardada en un archivo del proyecto, rótala
-en Aiven antes de desplegar.
+Despliega la raíz del repositorio como una aplicación Next.js con Wasmer CLI o
+desde el panel de Wasmer. Configura como secretos/variables de entorno del
+servicio:
 
-Después del despliegue, valida `/`, `/api/ranking` y `/api/logros/globales`.
-`GET /api/ranking` debe devolver registros con `username` y `puntos`; una
-respuesta HTTP 200 que sólo contenga usuarios no confirma que el ranking
-actualizado esté desplegado.
+- `MYSQL_HOST`
+- `MYSQL_PORT`
+- `MYSQL_USER`
+- `MYSQL_PASSWORD`
+- `MYSQL_DATABASE`
+- `GOOGLE_CLIENT_ID` si se habilita el inicio de sesión con Google
+- `MYSQL_SSL_CA` si el servidor MySQL requiere una CA específica
+
+Los secretos de Aiven no se transfieren automáticamente a Wasmer. Si usas Aiven,
+configura su CA actual en `MYSQL_SSL_CA`; no desactives la verificación TLS para
+resolver errores de certificado. Después de guardar variables, reinicia o
+vuelve a desplegar la aplicación.
+
+Tras el despliegue, comprueba `/`, `/api/telemetria`, `/api/ranking` y
+`/api/logros/globales`. Una respuesta HTTP 200 del ranking debería incluir
+registros con `username` y `puntos`.
+
+## Seguridad y solución de problemas
+
+- No guardes contraseñas, tokens ni certificados privados en el repositorio.
+  `.env.local` está excluido de Git; `.env.example` debe contener solo valores
+  de ejemplo.
+- Si una variable de MySQL falta o es inválida, revisa los nombres y valores
+  configurados en el entorno donde se ejecuta Next.js.
+- Si falla la autenticación, confirma que `GOOGLE_CLIENT_ID` coincide con la
+  audiencia del ID token.
+- Si falla la migración de username, busca y resuelve primero nombres repetidos
+  tras normalizar mayúsculas y espacios.
+- Las tablas del esquema actual usan singular (`usuario`); las migraciones que
+  mencionan `usuarios` pueden pertenecer a un esquema anterior.
