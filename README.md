@@ -3,6 +3,7 @@
 Sitio web y API de **Dead Quarantine II**. El sitio publica las páginas del
 juego y las APIs que conectan el cliente Unity con MySQL para autenticación,
 usuarios, puntajes y logros.
+URL: https://dead-quarentine-web.wasmer.app/index.html
 
 ## Contenido
 
