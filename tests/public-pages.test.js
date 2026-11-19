@@ -843,12 +843,28 @@ describe('achievement matrix inline JavaScript', () => {
     return dom;
   }
 
+  it('renders achievements and updates the database status after a successful response', async () => {
+    const dom = await loadAchievementMatrix();
+    const { window } = dom;
+
+    expect(window.document.querySelectorAll('.achievement-card')).toHaveLength(2);
+    expect(window.document.querySelector('#achievements-container').textContent)
+      .not.toContain('CONSULTANDO LOGROS');
+    expect(window.document.getElementById('database-connection-footer').textContent)
+      .toBe('CONSULTA COMPLETADA');
+
+    dom.window.close();
+  });
+
   it('renders achievement names, counts, and percentages from the database response', async () => {
     const dom = await loadAchievementMatrix();
     const { window } = dom;
     const cards = [...window.document.querySelectorAll('.achievement-card')];
     expect(cards).toHaveLength(2);
-    expect(window.fetch).toHaveBeenCalledWith('/api/logros/globales', { cache: 'no-store' });
+    expect(window.fetch).toHaveBeenCalledWith('/api/logros/globales', expect.objectContaining({
+      cache: 'no-store',
+      signal: expect.any(window.AbortSignal)
+    }));
     expect(window.document.getElementById('achievement-total').textContent).toBe('2');
     expect(window.document.getElementById('subachievement-total').textContent).toBe('1');
     expect(window.document.getElementById('registered-users').textContent).toBe('10');
@@ -1118,9 +1134,35 @@ describe('achievement matrix inline JavaScript', () => {
     expect(window.document.querySelector('#achievements-container').textContent)
       .toContain('No se pudieron consultar los logros en la base de datos');
     expect(window.document.querySelectorAll('.achievement-card')).toHaveLength(0);
-    expect(window.document.getElementById('database-connection-status').textContent)
+    expect(window.document.getElementById('database-connection-footer').textContent)
       .toBe('ERROR DE CONEXIÓN');
 
     dom.window.close();
+  });
+
+  it('shows a retry option when the achievements request never responds', async () => {
+    const dom = await createPage('logros_globales.html');
+    const { window } = dom;
+    window.fetch = vi.fn((_url, { signal }) => new Promise((resolve, reject) => {
+      signal.addEventListener('abort', () => {
+        reject(new window.DOMException('Aborted', 'AbortError'));
+      }, { once: true });
+    }));
+    window.console.error = vi.fn();
+    vi.useFakeTimers();
+
+    try {
+      executeInlineScript(dom, (script) => script.includes('async function loadAchievements'));
+      await vi.advanceTimersByTimeAsync(15000);
+
+      expect(window.document.querySelector('#achievements-container').textContent)
+        .toContain('La consulta tardó demasiado');
+      expect(window.document.getElementById('retry-achievements')).not.toBeNull();
+      expect(window.document.getElementById('database-connection-footer').textContent)
+        .toBe('ERROR DE CONEXIÓN');
+    } finally {
+      vi.useRealTimers();
+      dom.window.close();
+    }
   });
 });

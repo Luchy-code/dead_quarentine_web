@@ -547,11 +547,10 @@
     chevron.classList.toggle('rotate-180', expanded);
   }
 
-  function showError() {
-    document.getElementById('database-connection-status').textContent = 'ERROR DE CONEXIÓN';
-    document.getElementById('database-connection-footer').textContent = 'ERROR';
+  function showError(message = 'No se pudieron consultar los logros en la base de datos.') {
+    document.getElementById('database-connection-footer').textContent = 'ERROR DE CONEXIÓN';
     container.innerHTML = `<div class="p-space-lg bg-surface-container rounded text-center">
-      <p class="text-error mb-space-md">No se pudieron consultar los logros en la base de datos.</p>
+      <p class="text-error mb-space-md">${escapeHtml(message)}</p>
       <button class="px-space-md py-space-sm bg-surface-container-high rounded text-on-surface" id="retry-achievements" type="button">REINTENTAR</button>
     </div>`;
     document.getElementById('retry-achievements').addEventListener('click', loadAchievements);
@@ -559,8 +558,13 @@
 
   async function loadAchievements() {
     container.innerHTML = '<p class="p-space-lg text-center text-on-surface-variant">CONSULTANDO LOGROS EN LA BASE DE DATOS...</p>';
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 15000);
     try {
-      const response = await fetch('/api/logros/globales', { cache: 'no-store' });
+      const response = await fetch('/api/logros/globales', {
+        cache: 'no-store',
+        signal: controller.signal
+      });
       if (!response.ok) throw new Error(`La API respondió con estado ${response.status}`);
       const data = await response.json();
       if (!data || !Array.isArray(data.logros) || !Number.isFinite(Number(data.total_usuarios))) {
@@ -584,7 +588,6 @@
       document.getElementById('subachievement-total').textContent = formatCount(subAchievements.length);
       document.getElementById('unlock-average').textContent = formatPercent(average);
       document.getElementById('registered-users').textContent = formatCount(totalUsers);
-      document.getElementById('database-connection-status').textContent = 'BASE DE DATOS CONECTADA';
       document.getElementById('database-connection-footer').textContent = 'CONSULTA COMPLETADA';
       renderCategories(achievements);
       container.innerHTML = achievements.length
@@ -593,7 +596,11 @@
       filterCards();
     } catch (error) {
       console.error('No se pudieron cargar los logros desde la base de datos:', error);
-      showError();
+      showError(error.name === 'AbortError'
+        ? 'La consulta tardó demasiado. Verifica la conexión con la base de datos e inténtalo de nuevo.'
+        : undefined);
+    } finally {
+      window.clearTimeout(timeoutId);
     }
   }
 
